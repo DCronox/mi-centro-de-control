@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mi Centro de Control</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<style>
+:root{color-scheme:dark;--bg:#0b0d12;--bg2:#10131b;--card:#141824;--card2:#1a1f2e;--line:rgba(255,255,255,.08);--tx:#eef0f7;--mut:#8b94ab;--ac:#6ee7c8;--on:#04201a;--ok:#4ade80;--bad:#fb7185;--warn:#fbbf24;--navbg:rgba(16,19,27,.94);--r1:8px;--r2:12px;--r3:16px;--sh:0 1px 2px rgba(0,0,0,.25);box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+:root[data-theme=light]{color-scheme:light;--bg:#f3f5fa;--bg2:#f4f6fb;--card:#fff;--card2:#eef1f7;--line:rgba(20,24,40,.09);--tx:#141828;--mut:#5f6880;--ac:#0d9f86;--on:#fff;--ok:#16a34a;--bad:#e11d48;--warn:#b45309;--navbg:rgba(255,255,255,.95);--sh:0 1px 2px rgba(30,40,80,.06)}
+*{box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px);-webkit-text-size-adjust:100%}
+body{margin:0;overflow-x:hidden;background:var(--bg);color:var(--tx);font:14.5px/1.5 Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-feature-settings:"tnum","cv11"}
+button svg,button span{pointer-events:none}.i{flex:none}
+.shell{display:grid;grid-template-columns:240px minmax(0,1fr);gap:28px;max-width:1220px;margin:auto;padding:16px}
+aside{position:sticky;top:16px;align-self:start;background:var(--card);border:1px solid var(--line);border-radius:var(--r3);padding:16px 12px;display:flex;flex-direction:column;gap:20px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:600;line-height:1.2;padding:0 6px}
+.logo{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;background:var(--ac);color:var(--on);font-size:14px;flex:none}
+nav{display:flex;flex-direction:column;gap:2px}
+nav button{display:flex;align-items:center;gap:11px;background:none;border:0;color:var(--mut);padding:9px 10px;border-radius:var(--r1);cursor:pointer;font:inherit;font-weight:500;text-align:left;transition:background .15s,color .15s}
+nav button:hover{background:var(--card2);color:var(--tx)}
+nav button.on{background:var(--card2);color:var(--tx)}nav button.on .i{color:var(--ac)}
+.sf{display:flex;flex-direction:column;gap:10px;border-top:1px solid var(--line);padding-top:14px}
+#fecha{color:var(--mut);font-size:12px;text-transform:capitalize;padding:0 6px}
+main{min-width:0;padding-bottom:40px}
+.ph{margin:4px 2px 20px}.ph h1{font-size:26px;font-weight:700;letter-spacing:-.02em;margin:0;line-height:1.2}.ph p{margin:2px 0 0;color:var(--mut);font-size:13.5px;text-transform:capitalize}
+h2{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:14.5px;font-weight:600;margin:0 0 12px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r3);padding:20px;margin-bottom:16px;box-shadow:var(--sh)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:16px}
+.grid .card,.cols .card{margin:0}.grid .card{padding:16px}
+.cols{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;align-items:start;margin-bottom:16px}.cols .wide{grid-column:1/-1}
+.k{color:var(--mut);font-size:12.5px;font-weight:500}
+small.k{font-size:12.5px}
+.v{font-size:22px;font-weight:700;margin-top:2px;letter-spacing:-.02em;word-break:break-word}
+.big{font-size:34px;font-weight:700;letter-spacing:-.03em;line-height:1.15;margin:2px 0 18px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:14px;border-top:1px solid var(--line);padding-top:14px}
+.stats b{display:block;font-size:16px;font-weight:600;margin-top:1px}
+.ok{color:var(--ok)}.bad{color:var(--bad)}.warn{color:var(--warn)}
+.lk{background:none;border:0;color:var(--mut);font-size:12.5px;font-weight:500;cursor:pointer;padding:4px 8px;border-radius:6px;transition:.15s}.lk:hover{color:var(--tx);background:var(--card2)}
+form{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:8px;align-items:end}
+.fl{display:grid;gap:5px;font-size:12.5px;color:var(--mut);font-weight:500}label.k{display:grid;gap:5px}
+input,select,textarea{background:var(--bg2);color:var(--tx);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font:inherit;font-size:16px;width:100%;min-height:44px;outline:0;transition:border-color .15s,box-shadow .15s}
+input:hover,select:hover{border-color:rgba(255,255,255,.16)}
+input:focus,select:focus{border-color:var(--ac);box-shadow:0 0 0 3px color-mix(in srgb,var(--ac) 20%,transparent)}
+input::placeholder{color:var(--mut)}input[type=date],input[type=time]{min-width:0}
+button{font:inherit}button:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
+button.b{background:var(--ac);color:var(--on);border:0;border-radius:10px;padding:10px 18px;font-weight:600;cursor:pointer;min-height:44px;transition:filter .15s,transform .1s}
+button.b:hover{filter:brightness(1.08)}button.b:active{transform:scale(.98)}
+button.g{display:inline-flex;align-items:center;justify-content:center;gap:6px;background:transparent;border:1px solid var(--line);color:var(--mut);border-radius:var(--r1);padding:6px 11px;cursor:pointer;font-size:13px;min-height:36px;transition:.15s}
+button.g:hover{color:var(--tx);background:var(--card2)}button.ic-b{width:36px;padding:0}
+.seg{display:inline-grid;grid-auto-flow:column;background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:3px;gap:2px}
+.seg label{position:relative;cursor:pointer}.seg input{position:absolute;opacity:0;width:0;height:0;min-height:0;padding:0;border:0}
+.seg span{display:block;padding:8px 16px;border-radius:7px;color:var(--mut);font-weight:500;text-align:center;font-size:13.5px;transition:.15s}
+.seg input:checked+span{background:var(--card2);color:var(--tx);box-shadow:0 1px 2px rgba(0,0,0,.25)}
+.seg input:focus-visible+span{outline:2px solid var(--ac)}
+.row{display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:12px 0;border-top:1px solid var(--line)}
+.row:first-child,.dh+.row{border-top:0}.row .g1{flex:1 1 150px;min-width:0}
+.row small{color:var(--mut);display:block;font-size:12.5px}
+.ti{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:var(--bg2);color:var(--mut);flex:none}
+.ti.in{color:var(--ok);background:color-mix(in srgb,var(--ok) 12%,transparent)}
+.amt{font-weight:600;white-space:nowrap}
+.dh{font-size:12px;font-weight:600;color:var(--mut);padding:14px 0 2px;text-transform:capitalize}
+.done{opacity:.7}.done .t{text-decoration:line-through;color:var(--mut)}
+input[type=checkbox]{appearance:none;-webkit-appearance:none;width:22px;height:22px;min-height:0;border-radius:7px;border:1.5px solid var(--mut);background:transparent;padding:0;cursor:pointer;flex:none;display:grid;place-content:center;transition:.15s}
+input[type=checkbox]:checked{background:var(--ac);border-color:var(--ac)}
+input[type=checkbox]:checked::after{content:"✓";color:var(--on);font-size:14px;font-weight:700;line-height:1}
+.tag{display:inline-block;font-size:11px;font-weight:500;border-radius:99px;padding:1px 8px;background:var(--bg2);color:var(--mut);border:1px solid var(--line)}
+.bar{height:6px;background:var(--bg2);border-radius:99px;overflow:hidden;margin:10px 0}
+.bar i{display:block;height:100%;background:var(--ac);border-radius:99px;transition:width .4s}
+.empty{color:var(--mut);padding:22px 12px;text-align:center;border:1px dashed var(--line);border-radius:var(--r2);font-size:13.5px}
+.cb{display:flex;align-items:center;gap:10px;margin:9px 0;font-size:13px}.cb>span:first-child{width:112px;color:var(--mut);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.cb>span:last-child{min-width:92px;text-align:right;font-weight:600}.cb .bar{flex:1;margin:0}
+.cb label{display:flex;align-items:center;gap:7px;background:var(--bg2);border:1px solid var(--line);padding:6px 11px;border-radius:99px;font-weight:500}
+#toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,12px);background:var(--card2);color:var(--tx);border:1px solid var(--line);padding:10px 16px;border-radius:10px;font-size:13.5px;opacity:0;pointer-events:none;transition:.2s;z-index:30}#toast.show{opacity:1;transform:translate(-50%,0)}
+#cloudPanel{margin-bottom:16px;padding:14px 16px}#cloudPanel h2{margin-bottom:8px}#cloudPanel .cloud-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;align-items:end}#cloudPanel .cloud-msg{font-size:12.5px;color:var(--mut);margin:8px 0}#cloudPanel .cloud-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}#cloudPanel .cloud-actions button{min-height:40px}#cloudPanel .cloud-hidden{display:none!important}#backupTools{border-top:1px solid var(--line);margin-top:12px;padding-top:10px}#backupTools summary{cursor:pointer;color:var(--tx);font-weight:600;font-size:13px}#backupTools .cloud-actions{align-items:center}#backupTools input[type=file]{max-width:260px;font-size:13px}nav button:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+@media(max-width:820px){
+.shell{display:block;padding:12px 14px 96px}
+aside{position:static;flex-direction:row;align-items:center;justify-content:space-between;padding:10px 12px;margin-bottom:14px}
+.sf{border:0;padding:0;flex-direction:row;align-items:center}#fecha{display:none}
+nav{position:fixed;left:0;right:0;bottom:0;z-index:20;flex-direction:row;justify-content:space-around;gap:0;padding:6px 6px calc(6px + env(safe-area-inset-bottom,0px));background:var(--navbg);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border-top:1px solid var(--line)}
+nav button{flex:1;flex-direction:column;gap:3px;padding:7px 2px;font-size:11px;text-align:center}
+.ph h1{font-size:22px}.card{padding:16px}.big{font-size:30px}.cols{grid-template-columns:minmax(0,1fr)}.cb>span:first-child{width:88px}
+#toast{bottom:calc(76px + env(safe-area-inset-bottom,0px))}
+}
+</style>
+<link rel="manifest" href="./manifest.webmanifest">
+<meta name="theme-color" content="#0b0d12">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="./apple-touch-icon.png">
+</head>
+<body>
+<div class="shell"><aside><div class="brand"><span class="logo">◆</span><span>Mi Centro<br>de Control</span></div><nav id="nav"></nav>
+<div class="sf"><div id="fecha"></div><button id="th" class="g" type="button">◐ Tema</button></div></aside><main><section id="cloudPanel" class="card">
+<h2>Sincronización privada entre dispositivos</h2>
+<div id="cloudStatus" class="cloud-msg">Tus cambios siguen guardándose en este dispositivo. Inicia sesión para activar la nube.</div>
+<form id="cloudAuth" class="cloud-grid">
+<label class="fl">Correo electrónico<input id="cloudEmail" type="email" autocomplete="email" placeholder="tu correo" required></label>
+<label class="fl">Contraseña<input id="cloudPassword" type="password" autocomplete="current-password" minlength="6" placeholder="Mínimo 6 caracteres" required></label>
+<div class="cloud-actions"><button class="b" type="button" id="cloudLogin">Iniciar sesión</button><button class="g" type="button" id="cloudSignup">Crear cuenta</button></div>
+</form>
+<div id="cloudChoices" class="cloud-hidden"><div class="cloud-msg">Ya hay datos en la nube para esta cuenta. Elige qué versión conservar. Si cargas la nube, primero se hará una copia local de los datos actuales.</div><div class="cloud-actions"><button class="b" type="button" id="cloudLoad">Cargar datos de la nube</button><button class="g" type="button" id="cloudUpload">Subir los datos de este dispositivo</button></div></div>
+<div id="cloudLogged" class="cloud-hidden"><div class="cloud-msg" id="cloudAccount"></div><div class="cloud-actions"><button class="g" type="button" id="cloudSyncNow">Sincronizar ahora</button><button class="g" type="button" id="cloudLogout">Cerrar sesión</button></div></div>
+<details id="backupTools"><summary>Copia de seguridad</summary><div class="cloud-msg">Descarga tus datos para guardarlos fuera del navegador. El archivo contiene información personal; guárdalo en un lugar seguro.</div><div class="cloud-actions"><button class="g" type="button" id="exportData">Descargar copia</button><label class="g" for="importData" style="cursor:pointer">Restaurar copia</label><input id="importData" type="file" accept="application/json,.json" aria-label="Seleccionar copia de seguridad"></div></details>
+</section><div id="app"></div></main></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+try{const t=localStorage.getItem('mcc-theme');if(t)document.documentElement.dataset.theme=t}catch(e){}
+const TZ='America/Bogota';
+const CATS=['Alimentación','Transporte','Universidad','Gimnasio','Hogar','Entretenimiento','Salud','Compras personales','Suscripciones','Trabajo','Otros'];
+const fmt=n=>'$'+Math.round(n).toLocaleString('es-CO')+' COP';
+const hoy=()=>new Intl.DateTimeFormat('en-CA',{timeZone:TZ}).format(new Date());
+const hora=()=>new Intl.DateTimeFormat('en-GB',{timeZone:TZ,hour:'2-digit',minute:'2-digit'}).format(new Date());
+const uid=()=>Math.random().toString(36).slice(2,10);
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+let S={tx:[],goals:[],routines:[],inst:{},rate:13000,shifts:[]};
+try{const r=localStorage.getItem('mcc1');if(r)S=Object.assign(S,JSON.parse(r))}catch(e){}
+let cloudUser=null,cloudReady=false,cloudPending=null,cloudClient=null,cloudExistingData=null,cloudUpdatedAt=null,cloudSaving=false;
+const CLOUD_URL='https://xruxsuobpctyekkyracr.supabase.co';
+const CLOUD_KEY='sb_publishable_-0Zepm3uTSMSM1wMKTvpmA_ZP3vyPaM';
+try{if(window.supabase?.createClient)cloudClient=window.supabase.createClient(CLOUD_URL,CLOUD_KEY)}catch(e){}
+const cloudStatus=(m)=>{const el=document.getElementById('cloudStatus');if(el)el.textContent=m};
+const cloudSchedule=()=>{if(!cloudClient||!cloudUser||!cloudReady)return;clearTimeout(cloudPending);cloudPending=setTimeout(()=>cloudSave().catch(e=>cloudStatus('No se pudo sincronizar: '+(e.message||e))),900)};
+async function cloudSave(){if(!cloudClient||!cloudUser||!cloudReady||cloudSaving)return;cloudSaving=true;const revision=localRevision;try{const {data:remote,error:readError}=await cloudClient.from('mcc_data').select('updated_at').eq('user_id',cloudUser.id).maybeSingle();if(readError)throw readError;if(cloudUpdatedAt&&remote?.updated_at&&remote.updated_at!==cloudUpdatedAt){cloudReady=false;cloudStatus('Hay una versión más reciente en la nube (posiblemente de otro dispositivo). Tus cambios locales siguen guardados; usa “Sincronizar ahora” solo después de revisar qué versión quieres conservar.');return}const updatedAt=new Date().toISOString();let result;if(cloudUpdatedAt){result=await cloudClient.from('mcc_data').update({data:S,updated_at:updatedAt}).eq('user_id',cloudUser.id).eq('updated_at',cloudUpdatedAt).select('updated_at');if(!result.error&&!result.data?.length){cloudReady=false;cloudStatus('Otro dispositivo actualizó la nube al mismo tiempo. Tus datos locales siguen guardados; elige SUBIR o CARGAR en “Sincronizar ahora”.');return}}else{result=await cloudClient.from('mcc_data').upsert({user_id:cloudUser.id,data:S,updated_at:updatedAt},{onConflict:'user_id'}).select('updated_at').single()}if(result.error)throw result.error;cloudUpdatedAt=result.data?.updated_at||updatedAt;if(revision!==localRevision)cloudSchedule();else cloudStatus('Sincronizado · '+new Intl.DateTimeFormat('es-CO',{timeZone:TZ,hour:'2-digit',minute:'2-digit'}).format(new Date())+'.')}finally{cloudSaving=false}}
+let localRevision=0;
+const save=()=>{localRevision++;try{localStorage.setItem('mcc1',JSON.stringify(S))}catch(e){cloudStatus('No se pudo guardar en este navegador. Descarga una copia de seguridad.')}cloudSchedule()};
+function validData(d){return d&&typeof d==='object'&&Array.isArray(d.tx)&&Array.isArray(d.goals)&&Array.isArray(d.routines)&&d.inst&&typeof d.inst==='object'&&Array.isArray(d.shifts)}
+function exportBackup(){const payload={app:'Mi Centro de Control',version:1,exportedAt:new Date().toISOString(),data:S};const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='mi-centro-de-control-'+hoy()+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);toast('Copia descargada')}
+document.getElementById('exportData').addEventListener('click',exportBackup);
+document.getElementById('importData').addEventListener('change',async e=>{const f=e.target.files?.[0];if(!f)return;try{const parsed=JSON.parse(await f.text()),d=parsed?.data||parsed;if(!validData(d))throw new Error('La copia no tiene el formato esperado.');if(!confirm('Restaurar esta copia reemplazará los datos actuales de este dispositivo. Se guardará una copia local de respaldo. ¿Continuar?'))return;try{localStorage.setItem('mcc1-backup-before-import-'+Date.now(),JSON.stringify(S))}catch(_){}S=Object.assign({tx:[],goals:[],routines:[],inst:{},rate:13000,shifts:[]},d);gen();save();render();toast('Copia restaurada')}catch(err){alert('No se pudo restaurar la copia: '+(err.message||err))}finally{e.target.value=''}});
+let tab='dash',day=hoy(),viewDay=day;
+
+function fechaLarga(d){return new Intl.DateTimeFormat('es-CO',{timeZone:TZ,weekday:'long',day:'numeric',month:'long',year:'numeric'}).format(new Date(d+'T12:00:00-05:00'))}
+function dow(d){return new Date(d+'T12:00:00-05:00').getUTCDay()}
+const addDays=(d,n)=>{const x=new Date(d+'T12:00:00Z');x.setUTCDate(x.getUTCDate()+n);return x.toISOString().slice(0,10)};
+const inst=d=>(S.inst[d]||[]).slice().sort((a,b)=>(a.time||'99').localeCompare(b.time||'99'));
+const getI=(d,id)=>(S.inst[d]||[]).find(i=>i.id===id);
+const DN=['D','L','M','X','J','V','S'],TCATS=['Universidad','Gimnasio','Trabajo','Estudio','Hogar','Personal','Descanso'];
+const mins=t=>{const[a,b]=t.split(':').map(Number);return a*60+b};
+let E=null;
+function clash(d,i){if(!i.time)return '';const s=mins(i.time),e=i.end?mins(i.end):s+60;const o=inst(d).find(j=>j.id!==i.id&&j.time&&s<(j.end?mins(j.end):mins(j.time)+60)&&mins(j.time)<e);return o?o.name:''}
+/* Genera las tareas de cada rutina para todos los días pendientes hasta hoy (incluye días con la app cerrada). Sin duplicados: una instancia por rutina y fecha. */
+function gen(){
+  const h=hoy();
+  S.routines.forEach(r=>{
+    if(!r.active)return;
+    let st=r.from;if(r.genTo&&r.genTo>=st)st=addDays(r.genTo,1);
+    const lim=addDays(h,-400);if(st<lim)st=lim;
+    for(let d=st;d<=h;d=addDays(d,1)){
+      if(r.to&&d>r.to)break;
+      if(!r.days.includes(dow(d)))continue;
+      const L=S.inst[d]=S.inst[d]||[];
+      if(L.some(i=>i.rid===r.id))continue;
+      L.push({id:uid(),rid:r.id,date:d,name:r.name,time:r.time,end:r.end,cat:r.cat,note:r.notes||''});
+    }
+    if(!r.genTo||r.genTo<h)r.genTo=h;
+  });
+  save();
+}
+function migrate(){
+  if(!S.tasks&&!S.log)return;
+  (S.tasks||[]).forEach(t=>{
+    if(t.rec)S.routines.push({id:t.id,name:t.name,time:t.time||'',end:'',cat:'Personal',notes:'',days:t.days,from:t.from,to:'',active:true});
+    else(S.inst[t.date]=S.inst[t.date]||[]).push({id:t.id,rid:null,date:t.date,name:t.name,time:t.time||'',end:'',cat:'Personal',note:''});
+  });
+  gen();
+  Object.entries(S.log||{}).forEach(([d,m])=>Object.entries(m).forEach(([k,e])=>{const i=(S.inst[d]||[]).find(x=>x.id===k||x.rid===k);if(i)Object.assign(i,e)}));
+  delete S.tasks;delete S.log;save();
+}
+function saveTask(v){
+  const isR=(E&&E.t==='r')||(!E&&v.rec==='1');
+  const days=DN.map((_,i)=>i).filter(i=>v['d'+i]);
+  if(isR&&!days.length){alert('Elige al menos un día de la semana.');return false}
+  const base={name:v.name,time:v.time||'',end:v.end||'',cat:v.cat||'Personal'},notes=v.notes||'';
+  if(E&&E.t==='i'){
+    const i=getI(E.d,E.id);
+    if(i){Object.assign(i,base,{note:notes});
+      const r=i.rid&&S.routines.find(x=>x.id===i.rid);
+      if(r&&confirm('¿Aplicar este cambio también a los días futuros de la rutina?\n\nAceptar = este día y los futuros\nCancelar = solo este día'))Object.assign(r,base,{notes});}
+  }else if(E&&E.t==='r'){
+    const r=S.routines.find(x=>x.id===E.id);
+    if(r){Object.assign(r,base,{notes,days,from:v.date||r.from,to:v.to||''});
+      const i=(S.inst[hoy()]||[]).find(x=>x.rid===r.id);if(i&&!i.done)Object.assign(i,base,{note:notes});}
+  }else if(isR){
+    S.routines.push({id:uid(),...base,notes,days,from:v.date||hoy(),to:v.to||'',active:true});gen();
+  }else{
+    const d=v.date||hoy();(S.inst[d]=S.inst[d]||[]).push({id:uid(),rid:null,date:d,...base,note:notes});
+  }
+  E=null;
+}
+migrate();gen();
+
+/* ---- cálculos financieros ---- */
+const mes=d=>d.slice(0,7);
+function calc(){
+  const m=mes(hoy());let c={bal:0,ing:0,gas:0,pIng:0,pGas:0,ah:0};
+  S.tx.forEach(t=>{
+    const paid=t.status==='recibido'||t.status==='pagado';
+    if(t.type==='ingreso'){if(paid){c.bal+=t.amount;if(mes(t.date)===m)c.ing+=t.amount}else c.pIng+=t.amount}
+    else{if(paid){c.bal-=t.amount;if(mes(t.date)===m)c.gas+=t.amount}else c.pGas+=t.amount}
+  });
+  S.goals.forEach(g=>g.aportes.forEach(a=>{c.bal-=a.amount;c.ah+=a.amount}));
+  return c;
+}
+
+/* ---- vistas ---- */
+const IC={dash:'<rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/>',wallet:'<path d="M3 7a2 2 0 0 1 2-2h13a1 1 0 0 1 1 1v2"/><path d="M3 7v11a2 2 0 0 0 2 2h14a1 1 0 0 0 1-1v-3"/><path d="M21 10h-4a2 2 0 0 0 0 4h4z"/>',check:'<circle cx="12" cy="12" r="9"/><path d="m8.5 12.5 2.5 2.5 4.5-5"/>',target:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/>',clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',x:'<path d="M18 6 6 18M6 6l12 12"/>',edit:'<path d="M4 20h4L19 9l-4-4L4 16z"/>',moon:'<path d="M20 14.5A8 8 0 1 1 9.5 4 6.5 6.5 0 0 0 20 14.5z"/>',up:'<path d="M12 19V5m0 0-6 6m6-6 6 6"/>',down:'<path d="M12 5v14m0 0-6-6m6 6 6-6"/>'};
+const ico=(n,z=18)=>`<svg class="i" width="${z}" height="${z}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${IC[n]}</svg>`;
+let _tt;function toast(m){let t=document.getElementById('toast');if(!t){t=document.createElement('div');t.id='toast';t.setAttribute('role','status');document.body.appendChild(t)}t.textContent=m;t.className='show';clearTimeout(_tt);_tt=setTimeout(()=>t.className='',2000)}
+const dlabel=d=>d===hoy()?'Hoy':d===addDays(hoy(),-1)?'Ayer':new Intl.DateTimeFormat('es-CO',{timeZone:TZ,weekday:'long',day:'numeric',month:'long'}).format(new Date(d+'T12:00:00-05:00'));
+const txRow=(t,act)=>{const inc=t.type==='ingreso',p=t.status==='pendiente';return `<div class="row"><span class="ti ${inc?'in':''}">${ico(inc?'up':'down',16)}</span><div class="g1"><b class="t">${esc(t.name)}</b><small>${act?'':t.date+' · '}${esc(t.cat)}${t.method?' · '+esc(t.method):''}${p?' · <span class="warn">Pendiente</span>':''}</small></div><b class="amt ${inc?'ok':''}">${inc?'+':'−'}${fmt(t.amount)}</b>${act?(p?`<button class="g" data-a="pay" data-id="${t.id}">${inc?'Recibido':'Pagado'}</button>`:'')+`<button class="g ic-b" data-a="delTx" data-id="${t.id}" aria-label="Eliminar">${ico('x',15)}</button>`:''}</div>`};
+const TABS=[['dash','Dashboard','Mi Dashboard','dash'],['mov','Dinero','Ingresos y gastos','wallet'],['dia','Mi día','Mi día','check'],['metas','Metas','Metas de ahorro','target'],['turnos','Turnos','Turnos de trabajo','clock']];
+function nav(){document.getElementById('nav').innerHTML=TABS.map(([k,n,,i])=>`<button type="button" class="${tab===k?'on':''}" data-t="${k}" aria-current="${tab===k?'page':'false'}" aria-label="${n}">${ico(i,18)}<span>${n}</span></button>`).join('')}
+document.getElementById('nav').onclick=e=>{const b=e.target.closest('button');if(b){tab=b.dataset.t;E=null;render();scrollTo(0,0)}};
+
+function render(){
+  document.getElementById('fecha').textContent=fechaLarga(hoy())+' · '+hora();
+  nav();
+  const a=document.getElementById('app');
+  const T=TABS.find(x=>x[0]===tab);a.innerHTML=`<div class="ph"><h1>${T[2]}</h1><p>${fechaLarga(hoy())}</p></div>`+{dash:vDash,mov:vMov,dia:vDia,metas:vMetas,turnos:vTurnos}[tab]();
+}
+
+function vDash(){
+  const c=calc(),h=hoy(),m=mes(h),ts=inst(h),dn=ts.filter(t=>t.done).length,pct=ts.length?Math.round(dn/ts.length*100):0;
+  const gm=S.goals.reduce((x,g)=>x+g.monthly,0),am=S.goals.reduce((x,g)=>x+g.aportes.filter(a=>mes(a.date)===m).reduce((y,a)=>y+a.amount,0),0),pm=gm?Math.min(100,am/gm*100):0;
+  const pend=S.tx.filter(t=>t.status==='pendiente'&&t.type==='gasto').sort((a,b)=>a.date.localeCompare(b.date)),rec=[...S.tx].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,5);
+  const porCat={};S.tx.filter(t=>t.type==='gasto'&&t.status==='pagado'&&mes(t.date)===m).forEach(t=>porCat[t.cat]=(porCat[t.cat]||0)+t.amount);
+  const mx=Math.max(1,...Object.values(porCat));
+  return `<div class="card"><div class="k">Saldo disponible</div><div class="big ${c.bal<0?'bad':''}">${fmt(c.bal)}</div>
+  <div class="stats"><div><span class="k">Ingresos del mes</span><b class="ok">${fmt(c.ing)}</b></div><div><span class="k">Gastos del mes</span><b>${fmt(c.gas)}</b></div><div><span class="k">Total ahorrado</span><b>${fmt(c.ah)}</b></div><div><span class="k">Por recibir</span><b>${fmt(c.pIng)}</b></div></div></div>
+  <div class="cols">
+  <div class="card"><h2>Hoy <button class="lk" data-a="go" data-id="dia">Ver día</button></h2><div class="k">${dn} de ${ts.length} completadas</div><div class="bar"><i style="width:${pct}%"></i></div>
+  ${ts.length?ts.slice(0,6).map(t=>`<div class="row ${t.done?'done':''}"><input type="checkbox" ${t.done?'checked':''} data-a="tgl" data-d="${h}" data-id="${t.id}" aria-label="Completar"><div class="g1"><span class="t">${esc(t.name)}</span><small>${t.time||'Sin hora'}</small></div></div>`).join(''):'<div class="empty">No tienes tareas para hoy.</div>'}</div>
+  <div class="card"><h2>Próximos pagos <span class="k">${fmt(c.pGas)}</span></h2>${pend.length?pend.slice(0,4).map(t=>`<div class="row"><span class="ti">${ico('clock',16)}</span><div class="g1"><b class="t">${esc(t.name)}</b><small>${t.date<h?'<span class="bad">Vencido</span> · ':''}${t.date}</small></div><b class="amt">${fmt(t.amount)}</b><button class="g" data-a="pay" data-id="${t.id}">Pagado</button></div>`).join(''):'<div class="empty">No tienes pagos pendientes.</div>'}</div>
+  <div class="card"><h2>Ahorro <button class="lk" data-a="go" data-id="metas">Ver metas</button></h2>${gm?`<div class="k">Meta mensual · ${fmt(am)} de ${fmt(gm)}</div><div class="bar"><i style="width:${pm}%"></i></div>`:'<div class="k">Define un aporte mensual en tus metas para ver tu avance del mes.</div>'}${S.goals.length?S.goals.map(goalHtml).join(''):'<div class="empty" style="margin-top:10px">Aún no tienes metas.</div>'}</div>
+  <div class="card"><h2>Actividad reciente <button class="lk" data-a="go" data-id="mov">Ver todo</button></h2>${rec.length?rec.map(t=>txRow(t,false)).join(''):'<div class="empty">Aún no hay movimientos.</div>'}</div>
+  <div class="card wide"><h2>Gastos del mes por categoría</h2>${Object.keys(porCat).length?Object.entries(porCat).sort((x,y)=>y[1]-x[1]).slice(0,6).map(([k,v])=>`<div class="cb"><span>${esc(k)}</span><div class="bar"><i style="width:${v/mx*100}%"></i></div><span>${fmt(v)}</span></div>`).join(''):'<div class="empty">Aún no hay gastos pagados este mes.</div>'}</div></div>`;
+}
+
+function vMov(){
+  const q=(window._q||'').toLowerCase(),f=window._f||'todos';
+  const l=[...S.tx].sort((a,b)=>b.date.localeCompare(a.date)).filter(t=>(f==='todos'||t.type===f)&&(!q||(t.name+t.cat).toLowerCase().includes(q)));
+  let last='',out='';l.forEach(t=>{if(t.date!==last){last=t.date;out+=`<div class="dh">${dlabel(t.date)}</div>`}out+=txRow(t,true)});
+  return `<div class="card"><h2>Nuevo movimiento</h2><form id="fTx">
+  <div class="seg" style="grid-column:1/-1;justify-self:start"><label><input type="radio" name="type" value="gasto" checked><span>Gasto</span></label><label><input type="radio" name="type" value="ingreso"><span>Ingreso</span></label></div>
+  <label class="fl">Valor (COP)<input name="amount" type="number" inputmode="numeric" min="1" placeholder="0" required></label>
+  <label class="fl">Concepto<input name="name" placeholder="Ej. Almuerzo" required></label>
+  <label class="fl">Categoría<input name="cat" list="cats" placeholder="Elige o crea una" required></label><datalist id="cats">${CATS.map(c=>`<option>${c}</option>`).join('')}</datalist>
+  <label class="fl">Fecha<input name="date" type="date" value="${hoy()}" required></label>
+  <label class="fl">Método de pago<select name="method"><option value="">Sin especificar</option><option>Efectivo</option><option>Débito</option><option>Crédito</option><option>Nequi / Daviplata</option><option>Transferencia</option></select></label>
+  <div class="fl">Estado<div class="seg"><label><input type="radio" name="status" value="hecho" checked><span>Ya ocurrió</span></label><label><input type="radio" name="status" value="pendiente"><span>Pendiente</span></label></div></div>
+  <button class="b">Guardar movimiento</button></form></div>
+  <div class="card"><h2>Historial</h2><form onsubmit="return false"><input placeholder="Buscar…" aria-label="Buscar" value="${esc(window._q||'')}" oninput="window._q=this.value;render2(this)">
+  <select aria-label="Filtrar" onchange="window._f=this.value;render()"><option value="todos">Todos</option><option value="ingreso" ${f==='ingreso'?'selected':''}>Ingresos</option><option value="gasto" ${f==='gasto'?'selected':''}>Gastos</option></select></form>
+  ${l.length?out:'<div class="empty">No hay movimientos registrados.</div>'}</div>`;
+}
+function render2(el){const p=el.selectionStart;render();const i=document.querySelector('#app input[placeholder="Buscar…"]');if(i){i.focus();i.setSelectionRange(p,p)}}
+
+function vDia(){
+  const d=viewDay,h=hoy();
+  let dv={name:'',time:'',end:'',cat:'',notes:'',date:d,to:'',days:[1,2,3,4,5],rec:'0'};
+  if(E&&E.t==='i'){const i=getI(E.d,E.id);if(i)dv={...dv,...i,notes:i.note||''}}
+  if(E&&E.t==='r'){const r=S.routines.find(x=>x.id===E.id);if(r)dv={...dv,...r,date:r.from,rec:'1'}}
+  let ts=inst(d);
+  if(d>h)ts=ts.concat(S.routines.filter(r=>r.active&&r.days.includes(dow(d))&&d>=r.from&&(!r.to||d<=r.to)).map(r=>({id:r.id,rid:r.id,name:r.name,time:r.time,end:r.end,cat:r.cat,preview:true}))).sort((a,b)=>(a.time||'99').localeCompare(b.time||'99'));
+  const hist=Object.keys(S.inst).filter(k=>k<h&&S.inst[k].some(t=>t.done)).sort().reverse().slice(0,7);
+  return `<div class="card"><h2>${E?'Editar':'Nueva tarea o rutina'}</h2><form id="fTask">
+  <input name="name" placeholder="Actividad" value="${esc(dv.name)}" required>
+  <input name="time" type="time" value="${dv.time||''}" title="Inicio"><input name="end" type="time" value="${dv.end||''}" title="Fin">
+  <input name="cat" list="tcats" placeholder="Categoría" value="${esc(dv.cat)}"><datalist id="tcats">${TCATS.map(c=>`<option>${c}</option>`).join('')}</datalist>
+  <input name="notes" placeholder="Notas predeterminadas" value="${esc(dv.notes)}">
+  <div style="display:${E&&E.t==='i'?'none':'contents'}">
+  <select name="rec" ${E?'disabled':''}><option value="0">Solo un día</option><option value="1" ${dv.rec==='1'?'selected':''}>Rutina (se repite)</option></select>
+  <label class="k">Fecha / inicio<input name="date" type="date" value="${dv.date||d}"></label>
+  <label class="k">Fin (opcional)<input name="to" type="date" value="${dv.to||''}"></label>
+  <div class="cb" style="grid-column:1/-1;flex-wrap:wrap">${DN.map((n,i)=>`<label><input type="checkbox" name="d${i}" ${dv.days.includes(i)?'checked':''}> ${n}</label>`).join(' ')}<small class="k">(días, solo para rutinas)</small></div></div>
+  <button class="b">${E?'Guardar cambios':'Agregar'}</button>${E?'<button type="button" class="g" data-a="canE">Cancelar</button>':''}</form></div>
+  <div class="card"><h2>Mis rutinas</h2>${S.routines.length?S.routines.map(r=>`<div class="row"><div class="g1"><b>${esc(r.name)}</b> <span class="tag">${esc(r.cat)}</span> ${r.active?'':'<span class="tag">pausada</span>'}<small>${DN.map((n,i)=>r.days.includes(i)?n:'·').join(' ')} · ${r.time||'Sin hora'}${r.end?'–'+r.end:''} · desde ${r.from}${r.to?' hasta '+r.to:''}</small></div>
+  <button class="g" data-a="edR" data-id="${r.id}">Editar</button><button class="g" data-a="togR" data-id="${r.id}">${r.active?'Pausar':'Activar'}</button><button class="g" data-a="delR" data-id="${r.id}">${ico('x',15)}</button></div>`).join(''):'<div class="empty">Aún no tienes rutinas. Crea una eligiendo “Rutina (se repite)”.</div>'}</div>
+  <div class="card"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><h2 style="margin:0">${d===h?'Hoy · ':''}${fechaLarga(d)}</h2>
+  <input type="date" value="${d}" style="width:auto" onchange="viewDay=this.value||hoy();render()"></div>
+  ${ts.length?ts.map(t=>{const c=t.preview?'':clash(d,t);return `<div class="row ${t.done?'done':''}">${t.preview?'<span class="tag">prog.</span>':`<input type="checkbox" ${t.done?'checked':''} data-a="tgl" data-id="${t.id}">`}
+  <div class="g1"><span class="t">${esc(t.name)}</span> ${t.rid?'<span class="tag">rutina</span>':''} ${t.cat?`<span class="tag">${esc(t.cat)}</span>`:''}<small>${t.time||'Sin hora'}${t.end?'–'+t.end:''}${t.real?' · real '+t.real:''}${c?` · <span class="warn">⚠ cruce con ${esc(c)}</span>`:''}</small>
+  ${t.preview?'':`<input placeholder="Notas del día" value="${esc(t.note||'')}" data-a="note" data-id="${t.id}" style="margin-top:4px">`}</div>
+  ${t.preview?'':`<button class="g" data-a="edI" data-id="${t.id}">${ico('edit',15)}</button><button class="g" data-a="delT" data-id="${t.id}">${ico('x',15)}</button>`}</div>`}).join(''):'<div class="empty">No hay tareas para este día.</div>'}</div>
+  <div class="card"><h2>Historial reciente</h2>${hist.length?hist.map(k=>`<div class="row"><div class="g1"><b>${k}</b> <small style="display:inline">${S.inst[k].filter(t=>t.done).length}/${S.inst[k].length} completadas</small><small>${S.inst[k].filter(t=>t.done).map(t=>esc(t.name)+(t.real?' '+t.real:'')+(t.note?' ('+esc(t.note)+')':'')).join(' · ')}</small></div></div>`).join(''):'<div class="empty">Aún no hay días completados.</div>'}</div>`;
+}
+
+function goalHtml(g){
+  const tot=g.aportes.reduce((s,a)=>s+a.amount,0),p=Math.min(100,tot/g.target*100),rest=Math.max(0,g.target-tot);
+  let proy='';if(rest>0&&g.monthly>0){const m=Math.ceil(rest/g.monthly),d=new Date();d.setMonth(d.getMonth()+m);proy=` · Meta en ~${m} mes(es) (${d.toLocaleDateString('es-CO',{month:'long',year:'numeric'})})`}
+  return `<div style="margin-bottom:12px"><b>${esc(g.name)}</b> <small class="k">${p.toFixed(0)}%</small><div class="bar"><i style="width:${p}%"></i></div><small class="k">${fmt(tot)} de ${fmt(g.target)} · faltan ${fmt(rest)}${proy}</small></div>`;
+}
+function vMetas(){
+  return `<div class="card"><h2>Nueva meta</h2><form id="fGoal"><input name="name" placeholder="Nombre (ej. Moto)" required><input name="target" type="number" min="1" placeholder="Meta en COP" required><input name="monthly" type="number" min="0" placeholder="Aporte mensual deseado"><button class="b">Crear</button></form></div>
+  ${S.goals.length?S.goals.map(g=>`<div class="card">${goalHtml(g)}
+  <form class="fAp" data-id="${g.id}"><input name="amount" type="number" min="1" placeholder="Aporte en COP" required><button class="b">Aportar desde mi saldo</button><button type="button" class="g" data-a="delG" data-id="${g.id}">Eliminar meta</button></form>
+  <small class="k">El aporte se descuenta de tu disponible como transferencia a ahorro, no como gasto.</small>
+  ${g.aportes.slice(-5).reverse().map(a=>`<div class="row"><div class="g1">${a.date}</div><b>${fmt(a.amount)}</b></div>`).join('')}</div>`).join(''):'<div class="empty">Aún no tienes metas de ahorro.</div>'}`;
+}
+
+function horas(s){const[a,b]=s.in.split(':').map(Number),[c,d]=s.out.split(':').map(Number);let m=(c*60+d)-(a*60+b);if(m<=0)m+=1440;return Math.max(0,m-(s.brk||0))/60}
+function vTurnos(){
+  const L=[...S.shifts].sort((a,b)=>b.date.localeCompare(a.date)),m=mes(hoy());
+  const hm=S.shifts.filter(s=>mes(s.date)===m).reduce((x,s)=>x+horas(s),0);
+  const pend=S.shifts.filter(s=>!s.paid).reduce((x,s)=>x+horas(s)*s.rate,0);
+  return `<div class="grid"><div class="card"><div class="k">Horas del mes</div><div class="v">${hm.toFixed(2)} h</div></div><div class="card"><div class="k">Pago pendiente de turnos</div><div class="v warn">${fmt(pend)}</div></div></div>
+  <div class="card"><h2>Nuevo turno</h2><form id="fShift"><input name="date" type="date" value="${hoy()}" required><input name="in" type="time" required><input name="out" type="time" required>
+  <input name="brk" type="number" min="0" placeholder="Descanso no pago (min)"><input name="rate" type="number" value="${S.rate}" placeholder="Tarifa por hora"><button class="b">Guardar</button></form>
+  <small class="k">Si la salida es menor que la entrada, se cuenta como turno que cruza la medianoche.</small></div>
+  <div class="card"><h2>Historial de turnos</h2>${L.length?L.map(s=>{const h=horas(s),e=h*s.rate;return `<div class="row"><div class="g1"><b>${s.date}</b> ${s.in}–${s.out}<small>${h.toFixed(2)} h × ${fmt(s.rate)} = ${fmt(e)} · ${s.paid?'Pagado: '+fmt(s.received):'Pendiente'}</small></div>
+  ${s.paid?'':`<button class="g" data-a="paySh" data-id="${s.id}">Registrar pago</button>`}<button class="g" data-a="delSh" data-id="${s.id}">${ico('x',15)}</button></div>`}).join(''):'<div class="empty">No hay turnos registrados.</div>'}</div>`;
+}
+
+/* ---- eventos ---- */
+const app=document.getElementById('app');
+app.addEventListener('submit',e=>{
+  e.preventDefault();const f=e.target,v=Object.fromEntries(new FormData(f));
+  if(f.id==='fTx'){S.tx.push({id:uid(),type:v.type,name:v.name,amount:+v.amount,date:v.date,cat:v.cat,method:v.method||'',status:v.status==='pendiente'?'pendiente':(v.type==='ingreso'?'recibido':'pagado')})}
+  else if(f.id==='fTask'){if(saveTask(v)===false)return}
+  else if(f.id==='fGoal'){S.goals.push({id:uid(),name:v.name,target:+v.target,monthly:+v.monthly||0,aportes:[]})}
+  else if(f.classList.contains('fAp')){const g=S.goals.find(x=>x.id===f.dataset.id);g.aportes.push({amount:+v.amount,date:hoy()})}
+  else if(f.id==='fShift'){const r=+v.rate||S.rate;S.rate=r;S.shifts.push({id:uid(),date:v.date,in:v.in,out:v.out,brk:+v.brk||0,rate:r,paid:false})}
+  else return;
+  save();render();toast('Cambios guardados');
+});
+app.addEventListener('click',e=>{
+  const a=e.target.dataset.a,id=e.target.dataset.id;if(!a)return;
+  if(a==='pay'){const t=S.tx.find(x=>x.id===id);t.status=t.type==='ingreso'?'recibido':'pagado'}
+  else if(a==='delTx'){if(!confirm('¿Eliminar este movimiento?'))return;S.tx=S.tx.filter(x=>x.id!==id)}
+  else if(a==='delT'){if(!confirm('¿Eliminar esta tarea solo de este día? Para dejar de repetirla, edita o elimina la rutina.'))return;S.inst[viewDay]=(S.inst[viewDay]||[]).filter(x=>x.id!==id)}
+  else if(a==='go'){tab=id;render();scrollTo(0,0);return}
+  else if(a==='edI'){E={t:'i',d:viewDay,id};render();scrollTo(0,0);return}
+  else if(a==='edR'){E={t:'r',id};render();scrollTo(0,0);return}
+  else if(a==='canE'){E=null;render();return}
+  else if(a==='togR'){const r=S.routines.find(x=>x.id===id);r.active=!r.active;if(r.active)r.genTo=addDays(hoy(),-1);gen()}
+  else if(a==='delR'){if(!confirm('¿Eliminar la rutina? El historial anterior se conserva; solo se quita la tarea pendiente de hoy.'))return;S.routines=S.routines.filter(x=>x.id!==id);S.inst[hoy()]=(S.inst[hoy()]||[]).filter(i=>!(i.rid===id&&!i.done))}
+  else if(a==='delG'){if(!confirm('¿Eliminar la meta? Sus aportes volverán a tu disponible.'))return;S.goals=S.goals.filter(x=>x.id!==id)}
+  else if(a==='delSh'){if(!confirm('¿Eliminar este turno?'))return;S.shifts=S.shifts.filter(x=>x.id!==id)}
+  else if(a==='paySh'){const s=S.shifts.find(x=>x.id===id),v=prompt('¿Cuánto recibiste realmente (COP)?',Math.round(horas(s)*s.rate));if(v===null)return;const n=+String(v).replace(/\D/g,'');s.paid=true;s.received=n;S.tx.push({id:uid(),type:'ingreso',name:'Pago de turno '+s.date,amount:n,date:hoy(),cat:'Trabajo',status:'recibido'})}
+  else return;
+  save();render();toast('Cambios guardados');
+});
+app.addEventListener('change',e=>{
+  const a=e.target.dataset.a,id=e.target.dataset.id;
+  if(a==='tgl'){const i=getI(e.target.dataset.d||viewDay,id);if(i){i.done=e.target.checked;i.real=i.done?hora():'';save();render()}}
+  else if(a==='note'){const i=getI(viewDay,id);if(i){i.note=e.target.value;save()}}
+});
+
+/* ---- cambio de día automático ---- */
+function check(){gen();const h=hoy();if(h!==day){if(viewDay===day)viewDay=h;day=h}render()}
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)check()});
+window.addEventListener('focus',check);
+setInterval(()=>{if(!app.contains(document.activeElement)||document.activeElement.tagName==='BODY')check();else{document.getElementById('fecha').textContent=fechaLarga(hoy())+' · '+hora();if(hoy()!==day)check()}},30000);
+document.getElementById('th').innerHTML=ico('moon',15)+' Tema';
+document.getElementById('th').onclick=()=>{const r=document.documentElement,n=r.dataset.theme==='light'?'dark':'light';r.dataset.theme=n;try{localStorage.setItem('mcc-theme',n)}catch(e){}};
+render();
+
+/* ---- Supabase: autenticación y sincronización ---- */
+(function setupCloud(){
+ const $=id=>document.getElementById(id);
+ const authForm=$('cloudAuth'), choices=$('cloudChoices'), logged=$('cloudLogged');
+ if(!cloudClient){cloudStatus('No se pudo cargar el cliente de conexión. Revisa tu conexión a internet y recarga la página.');return}
+ function showSignedOut(){cloudUser=null;cloudReady=false;cloudUpdatedAt=null;cloudExistingData=null;authForm.classList.remove('cloud-hidden');choices.classList.add('cloud-hidden');logged.classList.add('cloud-hidden');cloudStatus('Sesión cerrada. Tus datos locales siguen guardados en este dispositivo.')}
+ function showSignedIn(){authForm.classList.add('cloud-hidden');logged.classList.remove('cloud-hidden');choices.classList.add('cloud-hidden');$('cloudAccount').textContent='Sesión iniciada: '+(cloudUser.email||'cuenta Supabase')+'.';}
+ async function onSignedIn(user){cloudUser=user;cloudReady=false;cloudUpdatedAt=null;showSignedIn();cloudStatus('Buscando tus datos guardados en la nube…');
+  const {data,error}=await cloudClient.from('mcc_data').select('data,updated_at').eq('user_id',user.id).maybeSingle();
+  if(error){cloudStatus('No se pudieron leer los datos: '+error.message+'. Revisa que ejecutaste el SQL de la tabla mcc_data y sus políticas.');return}
+  if(data&&data.data&&Object.keys(data.data).length){cloudExistingData=data.data;cloudUpdatedAt=data.updated_at||null;choices.classList.remove('cloud-hidden');cloudStatus('Cuenta conectada. Hay una copia de datos en la nube; elige cuál conservar antes de sincronizar.');}
+  else{try{await cloudSaveForce();cloudReady=true;showSignedIn();cloudStatus('Cuenta conectada. Tus datos de este dispositivo se guardaron por primera vez en la nube.')}catch(e){cloudStatus('La cuenta inició sesión, pero no se pudo guardar: '+e.message)}}
+ }
+ async function cloudSaveForce(){try{localStorage.setItem('mcc1-backup-before-cloud-'+Date.now(),JSON.stringify(S))}catch(_){}const updatedAt=new Date().toISOString();const {data,error}=await cloudClient.from('mcc_data').upsert({user_id:cloudUser.id,data:S,updated_at:updatedAt},{onConflict:'user_id'}).select('updated_at').single();if(error)throw error;cloudUpdatedAt=data?.updated_at||updatedAt}
+ $('cloudLogin').addEventListener('click',async()=>{const email=$('cloudEmail').value.trim(),password=$('cloudPassword').value;if(!email||!password){cloudStatus('Escribe tu correo y contraseña.');return}cloudStatus('Iniciando sesión…');const {data,error}=await cloudClient.auth.signInWithPassword({email,password});if(error){cloudStatus('No se pudo iniciar sesión: '+error.message);return}await onSignedIn(data.user)});
+ $('cloudSignup').addEventListener('click',async()=>{const email=$('cloudEmail').value.trim(),password=$('cloudPassword').value;if(!email||!password){cloudStatus('Escribe tu correo y contraseña.');return}if(password.length<6){cloudStatus('La contraseña debe tener al menos 6 caracteres.');return}cloudStatus('Creando cuenta…');const {data,error}=await cloudClient.auth.signUp({email,password});if(error){cloudStatus('No se pudo crear la cuenta: '+error.message);return}if(data.session&&data.user){await onSignedIn(data.user)}else{cloudStatus('Cuenta solicitada. Revisa tu correo para confirmar la cuenta y después inicia sesión aquí.')}});
+ $('cloudLoad').addEventListener('click',()=>{if(!cloudExistingData||!cloudUser)return;try{localStorage.setItem('mcc1-backup-before-cloud-'+Date.now(),JSON.stringify(S))}catch(e){};S=Object.assign({tx:[],goals:[],routines:[],inst:{},rate:13000,shifts:[]},cloudExistingData);cloudReady=false;gen();cloudReady=true;render();showSignedIn();cloudStatus('Datos de la nube cargados. La copia local anterior quedó respaldada en este navegador.');});
+ $('cloudUpload').addEventListener('click',async()=>{if(!cloudUser)return;if(!confirm('Esto reemplazará la copia de la nube con los datos de este dispositivo. ¿Continuar?'))return;cloudStatus('Subiendo datos de este dispositivo…');try{await cloudSaveForce();cloudReady=true;cloudExistingData=null;showSignedIn();cloudStatus('Datos de este dispositivo guardados en la nube.')}catch(e){cloudStatus('No se pudo subir la información: '+e.message)}});
+ $('cloudSyncNow').addEventListener('click',async()=>{if(!cloudUser)return;const choose=prompt('Para evitar perder cambios, escribe SUBIR para reemplazar la nube con este dispositivo, o escribe CARGAR para usar la copia de la nube.');if(choose==='SUBIR'){cloudStatus('Guardando copia local y subiendo…');try{await cloudSaveForce();cloudReady=true;showSignedIn();cloudStatus('Versión de este dispositivo guardada en la nube.')}catch(e){cloudStatus('Error al sincronizar: '+e.message)}}else if(choose==='CARGAR'){const {data,error}=await cloudClient.from('mcc_data').select('data,updated_at').eq('user_id',cloudUser.id).maybeSingle();if(error){cloudStatus('No se pudo cargar la nube: '+error.message);return}if(data?.data){try{localStorage.setItem('mcc1-backup-before-cloud-'+Date.now(),JSON.stringify(S))}catch(_){}S=Object.assign({tx:[],goals:[],routines:[],inst:{},rate:13000,shifts:[]},data.data);cloudUpdatedAt=data.updated_at||null;cloudReady=false;gen();cloudReady=true;save();render();cloudStatus('Copia de la nube cargada. La versión local anterior quedó respaldada.')}}});
+ $('cloudLogout').addEventListener('click',async()=>{cloudReady=false;const {error}=await cloudClient.auth.signOut();if(error){cloudStatus('No se pudo cerrar sesión: '+error.message);return}showSignedOut()});
+ cloudClient.auth.getSession().then(async({data,error})=>{if(error){cloudStatus('Error al revisar la sesión: '+error.message);return}if(data.session)await onSignedIn(data.session.user);else showSignedOut()});
+})();
+</script>
+<script>
+if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+  window.addEventListener('load', () => navigator.serviceWorker.register('./service-worker.js').catch(() => {}));
+}
+</script>
+</body>
+</html>
