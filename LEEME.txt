@@ -1,0 +1,14 @@
+# Mi Centro de Control — aplicación móvil gratuita
+
+Esta carpeta convierte el HTML en una PWA instalable. No requiere Python ni una app nativa: se publica gratis como sitio HTTPS y luego se instala desde el menú del teléfono para abrirla en ventana independiente.
+
+## Archivos
+- `index.html`: la aplicación y sus funciones actuales.
+- `manifest.webmanifest`: nombre, icono y modo de ventana de la app.
+- `service-worker.js`: guarda la interfaz para que abra sin conexión; la sincronización en la nube requiere internet.
+- `icon-*.png`: iconos de instalación.
+
+## Importante
+Abrir `index.html` como archivo local sirve para usarla, pero **no permite instalarla como app**. Para instalarla, estos archivos deben estar publicados bajo HTTPS. El alojamiento estático puede ser gratuito. La app no sube registros financieros por el mero hecho de publicarse; la sincronización de datos sigue dependiendo del inicio de sesión de Supabase ya configurado en el HTML.
+
+Después de publicarla: en Android, abre su dirección en Chrome y elige **Instalar aplicación** o **Añadir a pantalla de inicio**. En iPhone, abre la dirección en Safari, toca **Compartir** y elige **Añadir a pantalla de inicio**.
