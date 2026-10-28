@@ -1,5 +1,5 @@
-const CACHE = 'mi-centro-control-v1';
-const CORE = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
+const CACHE = 'mi-centro-control-v3';
+const CORE = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png', './privacidad.html', './terminos.html', './cookies.html'];
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(CORE)));
   self.skipWaiting();
@@ -13,11 +13,14 @@ self.addEventListener('fetch', event => {
   const url = new URL(request.url);
   if (request.method !== 'GET' || url.origin !== self.location.origin) return;
   if (request.mode === 'navigate') {
+    const isApp = url.pathname.endsWith('/') || url.pathname.endsWith('/index.html');
     event.respondWith(fetch(request).then(response => {
-      const copy = response.clone();
-      caches.open(CACHE).then(cache => cache.put('./index.html', copy));
+      if (response.ok) {
+        const copy = response.clone();
+        caches.open(CACHE).then(cache => cache.put(isApp ? './index.html' : request, copy));
+      }
       return response;
-    }).catch(() => caches.match('./index.html')));
+    }).catch(() => caches.match(request).then(hit => hit || caches.match('./index.html'))));
     return;
   }
   event.respondWith(caches.match(request).then(cached => cached || fetch(request).then(response => {
