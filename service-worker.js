@@ -1,5 +1,5 @@
-const CACHE = 'mi-centro-control-v6';
-const CORE = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png', './privacidad.html', './terminos.html', './cookies.html', './nu-pdf-import.mjs', './nu-import-ui.mjs'];
+const CACHE = 'mi-centro-control-v7';
+const CORE = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png', './privacidad.html', './terminos.html', './cookies.html', './nu-pdf-import.mjs', './nu-pdf-reader.mjs', './nu-import-ui.mjs'];
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(CORE)));
   self.skipWaiting();

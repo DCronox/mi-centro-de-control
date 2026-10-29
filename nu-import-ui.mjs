@@ -1,7 +1,5 @@
-import {
-  MAX_PDF_BYTES, MAX_PDF_PAGES, matchPossibleDuplicates, parseNuStatementText,
-  pdfErrorMessage, pdfItemsToLines,
-} from './nu-pdf-import.mjs';
+import { matchPossibleDuplicates, parseNuStatementText, pdfErrorMessage } from './nu-pdf-import.mjs';
+import { readPdfDocument } from './nu-pdf-reader.mjs';
 
 const PDFJS_VERSION='6.4.299';
 const PDFJS_BASE='https://cdn.jsdelivr.net/npm/pdfjs-dist@'+PDFJS_VERSION+'/';
@@ -10,13 +8,13 @@ const TYPES=[
   ['pago_tarjeta','Pago de tarjeta'],['anulada','Anulada o reversada'],['por_revisar','Por clasificar'],
 ];
 const CATEGORIES=['Alimentación','Transporte','Universidad','Gimnasio','Hogar','Entretenimiento','Salud','Compras personales','Suscripciones','Trabajo','Otros'];
-let pdfjsPromise=null,draft=null,statusText='Los extractos se procesan en este dispositivo. El PDF no se sube ni se guarda.',statusError=false,working=false,currentTask=null;
+let pdfjsPromise=null,draft=null,statusText='Los extractos se procesan en este dispositivo. El PDF no se sube ni se guarda.',statusStage='idle',working=false,currentTask=null;
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const fmt=n=>'$'+Math.round(Number(n)||0).toLocaleString('es-CO')+' COP';
 const bytesText=n=>n<1024*1024?Math.ceil(n/1024)+' KB':(n/1024/1024).toFixed(1)+' MB';
 const uid=()=>globalThis.crypto?.randomUUID?.()||('nu-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,10));
 
-function setStatus(text,error=false){statusText=text;statusError=error;const node=document.getElementById('nuImportStatus');if(node){node.textContent=text;node.classList.toggle('bad',error);node.classList.toggle('ok',!error)}}
+function setStatus(text,stage='processing'){statusText=text;statusStage=stage;const node=document.getElementById('nuImportStatus');if(node){node.textContent=text;node.dataset.stage=stage;node.className='report-note nu-status nu-status-'+stage}}
 function typesOptions(value){return TYPES.map(([v,label])=>'<option value="'+v+'" '+(v===value?'selected':'')+'>'+label+'</option>').join('')}
 function totals(){const t={gasto:0,ingreso:0,devolucion:0,neutral:0,selected:0};for(const c of draft?.movements||[]){if(!c.selected)continue;t.selected++;if(c.type==='gasto'||c.type==='ingreso'||c.type==='devolucion')t[c.type]+=Number(c.amount)||0;else t.neutral++}return t}
 function duplicateLabel(c){if(!c.duplicates?.length)return'';const names=c.duplicates.slice(0,2).map(d=>d.name).filter(Boolean).join(', ');return '<div class="nu-duplicate" role="status">'+(c.duplicates.some(d=>d.exact)?'Coincide con una referencia importada':'Posible duplicado; compara con')+(names?': '+esc(names):'')+'. Decide si lo incluyes.</div>'}
@@ -29,7 +27,7 @@ function reviewHtml(){
 function productLabel(product){return product==='cuenta_nu'?'Cuenta Nu':product==='tarjeta_nu'?'Tarjeta de crédito Nu':'Producto Nu (por identificar)'}
 function renderPanel(){
   const mount=document.getElementById('nuImportMount');if(!mount)return;
-  mount.innerHTML='<section class="card nu-import-card"><h2>Importar extracto Nu</h2><p class="report-note">Selecciona un PDF de tu Cuenta Nu o tarjeta de crédito Nu. El archivo se lee en tu navegador y no se conserva.</p><div id="nuPdfDrop" class="nu-drop"><div><b>Arrastra aquí tu extracto</b><span>o selecciona un PDF de hasta 15 MB</span></div><input id="nuPdfInput" type="file" accept=".pdf,application/pdf" aria-label="Seleccionar extracto PDF de Nu" '+(working?'disabled':'')+'>'+(working?'<button class="g" type="button" data-nu-action="cancel">Cancelar lectura</button>':'<button class="g" type="button" data-nu-action="choose">Elegir PDF</button>')+'</div><p id="nuImportStatus" class="report-note '+(statusError?'bad':'')+'" role="status" aria-live="polite">'+esc(statusText)+'</p>'+(draft?'<div class="nu-file-meta">'+esc(draft.fileName)+' · '+bytesText(draft.fileSize)+'</div>'+reviewHtml():'')+'</section>';
+  mount.innerHTML='<section class="card nu-import-card"><h2>Importar extracto Nu</h2><p class="report-note">Selecciona un PDF de tu Cuenta Nu o tarjeta de crédito Nu. El archivo se lee en tu navegador y no se conserva.</p><div id="nuPdfDrop" class="nu-drop"><div><b>Arrastra aquí tu extracto</b><span>o selecciona un PDF de hasta 15 MB</span></div><input id="nuPdfInput" type="file" accept=".pdf,application/pdf" aria-label="Seleccionar extracto PDF de Nu" '+(working?'disabled':'')+'>'+(working?'<button class="g" type="button" data-nu-action="cancel">Cancelar lectura</button>':'<button class="g" type="button" data-nu-action="choose">Elegir PDF</button>')+'</div><p id="nuImportStatus" class="report-note nu-status nu-status-'+statusStage+'" data-stage="'+statusStage+'" role="status" aria-live="polite">'+esc(statusText)+'</p>'+(draft?'<div class="nu-file-meta">'+esc(draft.fileName)+' · '+bytesText(draft.fileSize)+' · '+draft.pageCount+' página(s) · '+draft.textLength+' caracteres de texto extraídos</div>'+reviewHtml():'')+'</section>';
 }
 function loadPdfJs(){
   if(!pdfjsPromise)pdfjsPromise=import(PDFJS_BASE+'build/pdf.mjs').then(lib=>{
@@ -39,35 +37,8 @@ function loadPdfJs(){
 }
 function cancellationError(){const e=new Error('cancelled');e.name='ImportCancelled';return e}
 async function readPdf(file){
-  if(!file)throw new Error('Selecciona un archivo PDF.');
-  if(file.size>MAX_PDF_BYTES)throw new Error('El PDF supera el límite de 15 MB.');
-  if(file.size<8)throw new Error('El archivo está vacío o incompleto.');
   const task={cancelled:false,loadingTask:null};currentTask=task;
-  const head=new Uint8Array(await file.slice(0,5).arrayBuffer());
-  if(task.cancelled)throw cancellationError();
-  if(String.fromCharCode(...head)!=='%PDF-')throw new Error('El contenido del archivo no tiene una cabecera PDF válida. Cambia la extensión no lo convierte en PDF.');
-  const buffer=await file.arrayBuffer();
-  if(task.cancelled)throw cancellationError();
-  const pdfjs=await loadPdfJs();
-  if(task.cancelled)throw cancellationError();
-  const loadingTask=pdfjs.getDocument({data:new Uint8Array(buffer),isEvalSupported:false,cMapUrl:PDFJS_BASE+'cmaps/',cMapPacked:true,standardFontDataUrl:PDFJS_BASE+'standard_fonts/'});
-  task.loadingTask=loadingTask;
-  loadingTask.onProgress=progress=>{if(!task.cancelled&&progress.total)setStatus('Cargando PDF… '+Math.round(progress.loaded/progress.total*100)+'%')};
-  const doc=await loadingTask.promise;
-  if(task.cancelled)throw cancellationError();
-  if(doc.numPages>MAX_PDF_PAGES){await doc.destroy();throw new Error('El extracto tiene más de 60 páginas. Divide el archivo y prueba con un periodo menor.')}
-  const lines=[];let textLength=0;
-  try{
-    for(let n=1;n<=doc.numPages;n++){
-      if(task.cancelled)throw cancellationError();
-      setStatus('Leyendo página '+n+' de '+doc.numPages+'…');
-      const page=await doc.getPage(n),content=await page.getTextContent({includeMarkedContent:false});
-      const pageLines=pdfItemsToLines(content.items||[]);lines.push(...pageLines);textLength+=(content.items||[]).reduce((sum,item)=>sum+String(item.str||'').length,0);page.cleanup();
-    }
-  }finally{try{await doc.destroy()}catch{}}
-  if(task.cancelled)throw cancellationError();
-  if(textLength<20)throw new Error('Este PDF parece escaneado o no contiene texto seleccionable. La app no tiene OCR local y no enviará el extracto a ningún servicio. Exporta un PDF con texto o cancela.');
-  return {lines,pageCount:doc.numPages,textLength};
+  return readPdfDocument(file,loadPdfJs,{isCancelled:()=>task.cancelled,onStatus:text=>setStatus(text,'processing'),onLoadingTask:loadingTask=>{task.loadingTask=loadingTask;loadingTask.onProgress=progress=>{if(!task.cancelled&&progress.total)setStatus('Descargando el PDF para lectura local… '+Math.round(progress.loaded/progress.total*100)+'%','processing')}},getDocumentOptions:{cMapUrl:PDFJS_BASE+'cmaps/',cMapPacked:true,standardFontDataUrl:PDFJS_BASE+'standard_fonts/'}});
 }
 function mapDuplicates(result){
   const existing=window.MCC_IMPORT?.getTransactions?.()||[];
@@ -78,20 +49,21 @@ function mapDuplicates(result){
 }
 async function processFile(file){
   if(working)return;
-  draft=null;working=true;statusError=false;setStatus('Validando el archivo…');renderPanel();
+  draft=null;working=true;setStatus('Archivo seleccionado: '+file.name+' ('+bytesText(file.size)+'). Preparando lectura…','selected');renderPanel();
   try{
     const parsed=await readPdf(file);
     if(currentTask?.cancelled)throw cancellationError();
+    setStatus('Texto extraído. Analizando formato Nu y movimientos…','processing');
     const result=parseNuStatementText(parsed.lines);
     if(!result.compatible)throw new Error(result.warnings.join(' '));
     if(result.product==='producto_nu_no_identificado')result.warnings.push('No se pudo identificar si es cuenta o tarjeta. Revisa cada tipo de movimiento.');
     mapDuplicates(result);
-    draft={...result,fileName:file.name,fileSize:file.size,pageCount:parsed.pageCount,movements:result.movements.map(x=>({...x}))};
-    statusText=result.movements.length?'Análisis listo. Verifica fechas, montos, clasificación y posibles duplicados.':'Se reconoció un extracto Nu sin movimientos legibles. No se guardó nada.';
-    statusError=!result.movements.length;
+    draft={...result,fileName:file.name,fileSize:file.size,pageCount:parsed.pageCount,textLength:parsed.textLength,movements:result.movements.map(x=>({...x}))};
+    if(result.movements.length)setStatus(result.movements.length+' movimiento(s) detectado(s). Revisión necesaria antes de guardar.','review');
+    else setStatus('El PDF se abrió y se extrajeron '+parsed.textLength+' caracteres, pero el analizador no encontró movimientos con fecha e importe. Revisa que sea un extracto Nu Colombia con texto seleccionable; no se guardó nada.','empty');
   }catch(error){
-    if(error?.name==='ImportCancelled'){statusText='Importación cancelada. No se guardaron cambios.';statusError=false}
-    else{statusText=error?.message?.startsWith('El archivo')||error?.message?.startsWith('El PDF')||error?.message?.startsWith('Este PDF')||error?.message?.startsWith('La app')||error?.message?.startsWith('La importación')||error?.message?.startsWith('No se pudo descargar')?error.message:pdfErrorMessage(error);statusError=true}
+    if(error?.name==='ImportCancelled')setStatus('Lectura cancelada. No se guardaron cambios.','idle');
+    else setStatus(error?.message?.startsWith('El archivo')||error?.message?.startsWith('El PDF')||error?.message?.startsWith('Este PDF')||error?.message?.startsWith('La app')||error?.message?.startsWith('La importación')||error?.message?.startsWith('No se pudo descargar')?error.message:pdfErrorMessage(error),'error');
   }finally{working=false;currentTask=null;renderPanel()}
 }
 function updateCandidate(input){
@@ -105,18 +77,18 @@ function canConfirm(rows){return rows.length>0&&rows.every(c=>c.selected&&c.date
 function confirmImport(){
   if(!draft||working)return;
   const selected=draft.movements.filter(c=>c.selected);
-  if(!canConfirm(selected)){setStatus('Revisa los movimientos marcados e incluye solo fechas, descripciones, montos y tipos válidos.',true);renderPanel();return}
-  working=true;renderPanel();const batch=uid(),product=draft.product,rows=selected.map(c=>({id:uid(),type:c.type,name:c.description.trim(),amount:Math.round(Number(c.amount)*100)/100,date:c.date,cat:(c.category||'Otros').trim()||'Otros',method:'Nu',status:c.status||((c.type==='gasto'||c.type==='pago_tarjeta')?'pagado':'recibido'),importedFrom:'nu-pdf',nuProduct:product,importBatchId:batch,bankReference:(c.bankReference||'').trim()||undefined}));
+  if(!canConfirm(selected)){setStatus('Revisión necesaria: corrige fechas, descripciones, montos y tipos de los movimientos seleccionados.','review');renderPanel();return}
+  working=true;setStatus('Guardando '+selected.length+' movimiento(s) en los datos de esta app…','processing');renderPanel();const batch=uid(),product=draft.product,rows=selected.map(c=>({id:uid(),type:c.type,name:c.description.trim(),amount:Math.round(Number(c.amount)*100)/100,date:c.date,cat:(c.category||'Otros').trim()||'Otros',method:'Nu',status:c.status||((c.type==='gasto'||c.type==='pago_tarjeta')?'pagado':'recibido'),importedFrom:'nu-pdf',nuProduct:product,importBatchId:batch,bankReference:(c.bankReference||'').trim()||undefined}));
   try{
     const result=window.MCC_IMPORT?.commit?.(rows);
     if(!result?.ok)throw new Error(result?.message||'No se pudieron guardar los movimientos. La copia local anterior permanece intacta.');
-    draft=null;statusText='Importación confirmada: '+rows.length+' movimientos incorporados. El PDF no se guardó.';statusError=false;
-  }catch(error){statusText=error.message||'No se pudieron guardar los movimientos.';statusError=true}
+    draft=null;setStatus('Importación exitosa: '+rows.length+' movimientos incorporados. El PDF no se guardó.','success');
+  }catch(error){setStatus(error.message||'Error: no se pudieron guardar los movimientos; tus datos anteriores permanecen intactos.','error')}
   finally{working=false;renderPanel()}
 }
 function cancelImport(){
-  if(currentTask){currentTask.cancelled=true;try{currentTask.loadingTask?.destroy()?.catch(()=>{})}catch{}statusText='Cancelando lectura…';statusError=false;renderPanel();return}
-  draft=null;working=false;statusText='Importación cancelada. No se guardaron cambios.';statusError=false;
+  if(currentTask){currentTask.cancelled=true;try{currentTask.loadingTask?.destroy()?.catch(()=>{})}catch{}setStatus('Cancelando lectura…','processing');renderPanel();return}
+  draft=null;working=false;setStatus('Importación cancelada. No se guardaron cambios.','idle');
   const input=document.getElementById('nuPdfInput');if(input)input.value='';
   renderPanel();
 }
