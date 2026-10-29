@@ -23,7 +23,7 @@ function duplicateLabel(c){if(!c.duplicates?.length)return'';const names=c.dupli
 function reviewHtml(){
   if(!draft)return'';
   const sums=totals(),rows=draft.movements.map((c,i)=>'<article class="nu-review-row '+(c.selected?'selected':'')+'"><div class="nu-review-select"><label><input type="checkbox" data-nu-field="selected" data-index="'+i+'" '+(c.selected?'checked':'')+'> Importar este movimiento</label><b>'+esc(Math.round(c.confidence*100))+'% confianza</b></div><label class="fl">Fecha<input type="date" data-nu-field="date" data-index="'+i+'" value="'+esc(c.date||'')+'" required></label><label class="fl nu-description">Descripción<input type="text" maxlength="120" data-nu-field="description" data-index="'+i+'" value="'+esc(c.description||'')+'" required></label><label class="fl">Valor (COP)<input type="number" min="0.01" step="0.01" inputmode="decimal" data-nu-field="amount" data-index="'+i+'" value="'+(Number.isFinite(Number(c.amount))&&c.amount!==null?esc(c.amount):'')+'" required></label><label class="fl">Tipo<select data-nu-field="type" data-index="'+i+'">'+typesOptions(c.type)+'</select></label><label class="fl">Categoría<input type="text" maxlength="60" list="nuImportCategories" data-nu-field="category" data-index="'+i+'" value="'+esc(c.category||'Otros')+'"></label><div class="nu-review-notes">'+(c.warnings||[]).map(w=>'<p class="warn">'+esc(w)+'</p>').join('')+duplicateLabel(c)+(c.bankReference?'<small>Referencia: '+esc(c.bankReference)+'</small>':'')+'</div></article>').join('');
-  const selectedValid=draft.movements.some(c=>c.selected&&c.date&&/^\\d{4}-\\d{2}-\\d{2}$/.test(c.date)&&c.description?.trim()&&Number(c.amount)>0&&c.type!=='por_revisar');
+  const selectedValid=draft.movements.some(c=>canConfirm([c]));
   return '<section class="nu-review"><h3>Revisa antes de guardar</h3><p class="report-note">'+draft.movements.length+' movimientos detectados. Ninguno se guarda hasta que confirmes.</p><div class="nu-import-meta"><span>Producto: '+esc(productLabel(draft.product))+'</span>'+(draft.period?'<span>Periodo: '+esc(draft.period.start||'')+(draft.period.end?' – '+esc(draft.period.end):'')+'</span>':'')+(draft.openingBalance!==null?'<span>Saldo inicial: '+fmt(draft.openingBalance)+'</span>':'')+(draft.closingBalance!==null?'<span>Saldo final: '+fmt(draft.closingBalance)+'</span>':'')+'</div><div class="nu-import-totals"><span>Incluidos: <b>'+sums.selected+'</b></span><span>Gastos: <b>'+fmt(sums.gasto)+'</b></span><span>Ingresos: <b>'+fmt(sums.ingreso)+'</b></span><span>Devoluciones: <b>'+fmt(sums.devolucion)+'</b></span><span>Movimientos neutrales: <b>'+sums.neutral+'</b></span></div><datalist id="nuImportCategories">'+[...CATEGORIES,...new Set(draft.movements.map(x=>x.category).filter(Boolean))].map(x=>'<option value="'+esc(x)+'">').join('')+'</datalist><div class="nu-review-list">'+(rows||'<div class="empty">El extracto no contiene movimientos detectables.</div>')+'</div><div class="nu-review-actions"><button class="b" type="button" data-nu-action="confirm" '+(selectedValid?'':'disabled')+'>Confirmar e importar seleccionados</button><button class="g" type="button" data-nu-action="cancel">Cancelar y descartar</button></div><p class="report-note">Las transferencias propias, pagos de tarjeta y operaciones anuladas no aumentan los ingresos ni los gastos consolidados. Las coincidencias quedan excluidas inicialmente para que las revises.</p></section>';
 }
 function productLabel(product){return product==='cuenta_nu'?'Cuenta Nu':product==='tarjeta_nu'?'Tarjeta de crédito Nu':'Producto Nu (por identificar)'}
@@ -34,7 +34,7 @@ function renderPanel(){
 function loadPdfJs(){
   if(!pdfjsPromise)pdfjsPromise=import(PDFJS_BASE+'build/pdf.mjs').then(lib=>{
     lib.GlobalWorkerOptions.workerSrc=PDFJS_BASE+'build/pdf.worker.mjs';return lib;
-  }).catch(error=>{pdfjsPromise=null;throw error});
+  }).catch(error=>{pdfjsPromise=null;const detail=location.protocol==='file:'?'La importación de PDF requiere abrir la aplicación desde una dirección HTTPS o localhost. Esta copia se abrió como archivo local y el navegador bloqueó el módulo lector por seguridad.':'No se pudo descargar el lector PDF. Comprueba tu conexión a internet e inténtalo de nuevo.';throw new Error(detail,{cause:error})});
   return pdfjsPromise;
 }
 function cancellationError(){const e=new Error('cancelled');e.name='ImportCancelled';return e}
@@ -91,7 +91,7 @@ async function processFile(file){
     statusError=!result.movements.length;
   }catch(error){
     if(error?.name==='ImportCancelled'){statusText='Importación cancelada. No se guardaron cambios.';statusError=false}
-    else{statusText=error?.message?.startsWith('El archivo')||error?.message?.startsWith('El PDF')||error?.message?.startsWith('Este PDF')||error?.message?.startsWith('La app')?error.message:pdfErrorMessage(error);statusError=true}
+    else{statusText=error?.message?.startsWith('El archivo')||error?.message?.startsWith('El PDF')||error?.message?.startsWith('Este PDF')||error?.message?.startsWith('La app')||error?.message?.startsWith('La importación')||error?.message?.startsWith('No se pudo descargar')?error.message:pdfErrorMessage(error);statusError=true}
   }finally{working=false;currentTask=null;renderPanel()}
 }
 function updateCandidate(input){
@@ -101,7 +101,7 @@ function updateCandidate(input){
   else c[field]=input.value;
   renderPanel();
 }
-function canConfirm(rows){return rows.length>0&&rows.every(c=>c.selected&&c.date&&/^\\d{4}-\\d{2}-\\d{2}$/.test(c.date)&&c.description?.trim()&&Number.isFinite(Number(c.amount))&&Number(c.amount)>0&&c.type!=='por_revisar'&&TYPES.some(([v])=>v===c.type))}
+function canConfirm(rows){return rows.length>0&&rows.every(c=>c.selected&&c.date&&/^\d{4}-\d{2}-\d{2}$/.test(c.date)&&c.description?.trim()&&Number.isFinite(Number(c.amount))&&Number(c.amount)>0&&c.type!=='por_revisar'&&TYPES.some(([v])=>v===c.type))}
 function confirmImport(){
   if(!draft||working)return;
   const selected=draft.movements.filter(c=>c.selected);

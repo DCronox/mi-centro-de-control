@@ -539,6 +539,9 @@ if ('serviceWorker' in navigator && location.protocol !== 'file:') {
   window.addEventListener('load', () => navigator.serviceWorker.register('./service-worker.js').catch(() => {}));
 }
 </script>
+<script>
+document.addEventListener('error',event=>{const script=event.target;if(script?.tagName!=='SCRIPT'||script.type!=='module'||!script.src.includes('nu-import-ui.mjs'))return;const mount=document.getElementById('nuImportMount');if(mount)mount.innerHTML='<section class="card nu-import-card"><h2>Importar extracto Nu</h2><p class="report-note bad">El navegador no pudo cargar el módulo del importador. Si abriste esta copia como archivo local (file://), ábrela desde una dirección HTTPS o localhost; los navegadores bloquean módulos y lectores PDF desde archivos locales.</p><p class="report-note">No se leyó ni guardó ningún dato del PDF. Recarga la aplicación después de abrirla desde una dirección web.</p></section>'},true);
+</script>
 <script type="module" src="./nu-import-ui.mjs"></script>
 </body>
 </html>
