@@ -1,0 +1,25 @@
+# Credenciales y configuración local
+.env
+.env.*
+!.env.example
+supabase/.env
+supabase/.temp/
+
+# Datos y exportaciones personales
+*.pdf
+*.csv
+*.jsonl
+*.bak
+*.backup
+*.log
+backup/
+backups/
+exports/
+
+# Dependencias y archivos temporales
+node_modules/
+vendor/
+work/
+*.tmp
+Thumbs.db
+Desktop.ini
