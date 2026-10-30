@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { classifyMovement, matchPossibleDuplicates, parseAmountToken, parseDateToken, parseNuStatementText, pdfItemsToLines } from '../nu-pdf-import.mjs';
+import { classifyMovement, matchPossibleDuplicates, parseAmountToken, parseDateToken, parseNuStatement, parseNuStatementText, pdfItemsToLines } from '../nu-pdf-import.mjs';
 
 test('interpreta fechas colombianas y meses escritos', () => {
   assert.equal(parseDateToken('31/10/2026'), '2026-10-31');
@@ -78,3 +78,23 @@ test('reconstruye filas PDF por posición vertical y horizontal', () => {
   assert.deepEqual(lines, ['01/10/2026 Compra D1 $ 25.000', 'Otra fila']);
 });
 
+test('parseNuStatement extrae movimientos de fechas y montos en líneas separadas', () => {
+  const result = parseNuStatement([
+    'Extracto Cuenta Nu Colombia',
+    'Periodo 01 sep 2026 - 30 sep 2026',
+    '01 sep',
+    'Compra Mercado D1',
+    '-$ 25.000',
+    '02 sep',
+    'Nomina Empresa ACME',
+    '+$ 1.500.000',
+  ]);
+
+  assert.equal(result.movements.length, 2);
+  assert.equal(result.movements[0].date, '2026-09-01');
+  assert.equal(result.movements[0].amount, -25000);
+  assert.equal(result.movements[0].type, 'gasto');
+  assert.equal(result.movements[1].date, '2026-09-02');
+  assert.equal(result.movements[1].amount, 1500000);
+  assert.equal(result.movements[1].type, 'ingreso');
+});

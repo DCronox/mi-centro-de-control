@@ -58,6 +58,15 @@ button.g:hover{color:var(--tx);background:var(--card2)}button.ic-b{width:36px;pa
 .row small{color:var(--mut);display:block;font-size:12.5px}
 .ti{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:var(--bg2);color:var(--mut);flex:none}
 .ti.in{color:var(--ok);background:color-mix(in srgb,var(--ok) 12%,transparent)}
+.sync-pill{position:fixed;top:calc(12px + env(safe-area-inset-top,0px));right:14px;z-index:25;display:inline-flex;align-items:center;gap:8px;padding:7px 13px;border-radius:999px;border:1px solid var(--line);background:color-mix(in srgb,var(--card) 92%,transparent);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);color:var(--tx);font:inherit;font-size:12.5px;font-weight:600;cursor:pointer;box-shadow:var(--sh);max-width:calc(100vw - 28px);white-space:nowrap}
+.sync-pill i{width:9px;height:9px;border-radius:50%;background:var(--mut);flex:none}
+.sync-pill[data-state=saved] i{background:var(--ok);box-shadow:0 0 0 3px color-mix(in srgb,var(--ok) 20%,transparent)}
+.sync-pill[data-state=pending] i,.sync-pill[data-state=saving] i,.sync-pill[data-state=syncing] i,.sync-pill[data-state=offline] i{background:var(--warn)}
+.sync-pill[data-state=saving] i,.sync-pill[data-state=syncing] i{animation:syncPulse 1s ease-in-out infinite}
+.sync-pill[data-state=error]{color:var(--bad);border-color:color-mix(in srgb,var(--bad) 40%,var(--line))}.sync-pill[data-state=error] i{background:var(--bad)}
+@keyframes syncPulse{50%{opacity:.3;transform:scale(.75)}}
+@media(max-width:820px){.sync-pill{top:auto;right:auto;left:12px;bottom:calc(76px + env(safe-area-inset-bottom,0px));z-index:19}}
+@media print{.sync-pill{display:none!important}}
 .amt{font-weight:600;white-space:nowrap}.nu-neutral{color:var(--mut)}
 .dh{font-size:12px;font-weight:600;color:var(--mut);padding:14px 0 2px;text-transform:capitalize}
 .done{opacity:.7}.done .t{text-decoration:line-through;color:var(--mut)}
@@ -130,7 +139,6 @@ button.g:hover{transform:translateY(-1px);border-color:color-mix(in srgb,var(--a
 .metric-card{text-align:left;color:var(--tx);font:inherit;cursor:pointer;width:100%;appearance:none;-webkit-appearance:none}.metric-card:focus-visible{outline:2px solid var(--metric);outline-offset:3px}.dashboard-chart .trend-svg{overflow:visible}.dashboard-chart .trend-svg polyline{stroke-dasharray:800;stroke-dashoffset:800;animation:trend-line-in 1.3s ease-out .25s forwards}.dashboard-chart .trend-svg circle{cursor:help;transition:r .2s ease,filter .2s ease}.dashboard-chart .trend-svg circle:hover{r:7;filter:drop-shadow(0 0 7px color-mix(in srgb,var(--ac) 70%,transparent))}@keyframes trend-line-in{to{stroke-dashoffset:0}}
 .metric-change{position:relative;z-index:1;display:flex;align-items:center;gap:4px;margin-top:7px;font-size:10px;font-weight:600}.metric-change .i{flex:none}.metric-change.favorable{color:var(--ok)}.metric-change.unfavorable{color:var(--bad)}.metric-change.neutral{color:var(--mut);font-weight:500}
 
-.nu-import-card{overflow:hidden}.nu-status{display:flex;align-items:flex-start;gap:8px;padding:10px 12px;border:1px solid var(--line);border-radius:12px}.nu-status::before{content:"";width:8px;height:8px;margin-top:5px;flex:none;border-radius:50%;background:var(--mut)}.nu-status-selected::before,.nu-status-processing::before{background:var(--ac);box-shadow:0 0 0 4px color-mix(in srgb,var(--ac) 14%,transparent)}.nu-status-review::before,.nu-status-empty::before{background:var(--warn)}.nu-status-success::before{background:var(--ok)}.nu-status-error::before{background:var(--bad)}.nu-status-error{border-color:color-mix(in srgb,var(--bad) 35%,var(--line));color:var(--bad)}.nu-status-success{border-color:color-mix(in srgb,var(--ok) 35%,var(--line))}.nu-status-empty,.nu-status-review{border-color:color-mix(in srgb,var(--warn) 35%,var(--line))}.nu-drop{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;padding:18px;border:1px dashed var(--line);border-radius:16px;background:var(--card2)}.nu-drop>div{display:grid;gap:3px}.nu-drop span,.nu-file-meta{color:var(--mut);font-size:12px}.nu-drop input{max-width:100%;font:inherit}.nu-drop.dragging{border-color:var(--ac);background:color-mix(in srgb,var(--ac) 9%,var(--card))}.nu-review{margin-top:16px;border-top:1px solid var(--line);padding-top:12px}.nu-import-meta,.nu-import-totals,.nu-review-select,.nu-review-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}.nu-import-meta span,.nu-import-totals span{padding:7px 10px;border-radius:10px;background:var(--card2);font-size:12px}.nu-review-list{display:grid;gap:10px;margin:12px 0}.nu-review-row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;padding:13px;border:1px solid var(--line);border-radius:14px}.nu-review-row.selected{border-color:color-mix(in srgb,var(--ac) 50%,var(--line))}.nu-review-select,.nu-review-notes,.nu-description{grid-column:1/-1}.nu-review-select{justify-content:space-between;font-size:12px}.nu-review-notes{font-size:12px;color:var(--mut)}.nu-review-notes p{margin:4px 0}.nu-duplicate,.nu-review-notes .warn{color:var(--warn)}.nu-review-actions{margin-top:12px}.nu-review-row input,.nu-review-row select{min-width:0;width:100%}.nu-drop button{flex:none}@media(max-width:600px){.nu-review-row{grid-template-columns:repeat(2,minmax(0,1fr));padding:10px}.nu-import-totals{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.nu-import-totals span{min-width:0}.nu-review-actions>*{width:100%}.nu-drop input{width:100%}}
 
 .insight-controls{display:flex;align-items:flex-end;justify-content:space-between;gap:14px;flex-wrap:wrap}.insight-controls h2{margin-bottom:2px}.insight-filters{display:flex;gap:10px;align-items:end;flex-wrap:wrap}.insight-filters input,.insight-filters select{min-width:145px}.insight-metrics{margin-bottom:16px;grid-template-columns:repeat(auto-fit,minmax(155px,1fr))}.insight-metrics>div{min-width:0}.insight-metrics b{overflow-wrap:anywhere}.insight-metrics small{display:block;color:var(--mut);font-size:11px;margin-top:4px}.insight-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;align-items:start}.insight-grid>.card{min-width:0;margin:0}.insight-svg{display:block;width:100%;height:auto;overflow:visible}.insight-svg circle,.insight-svg rect{cursor:help}.insight-svg polyline{stroke-dasharray:1200;stroke-dashoffset:1200;animation:trend-line-in 1.15s ease-out .15s forwards}.insight-legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:8px;color:var(--mut);font-size:11px}.insight-legend span{display:flex;align-items:center;gap:6px}.insight-legend i,.insight-category i{width:9px;height:9px;border-radius:50%;display:inline-block;flex:none}.income-dot{background:var(--ok)}.expense-dot{background:var(--bad)}.insight-donut-wrap{display:grid;grid-template-columns:minmax(130px,.8fr) minmax(170px,1.2fr);align-items:center;gap:12px}.insight-donut{display:block;width:min(100%,220px);margin:auto}.insight-donut text{font-family:inherit}.insight-category-list{display:grid;gap:3px;min-width:0}.insight-category{display:grid;grid-template-columns:10px minmax(60px,1fr) auto auto;align-items:center;gap:7px;border:0;border-radius:8px;background:transparent;color:var(--tx);padding:7px 5px;text-align:left;font:inherit;font-size:11px;cursor:pointer}.insight-category:hover{background:var(--card2)}.insight-category:focus-visible{outline:2px solid var(--ac)}.insight-category i{background:var(--cat-color)}.insight-category span{overflow:hidden;text-overflow:ellipsis}.insight-category b{font-size:11px;white-space:nowrap}.insight-category small{color:var(--mut);text-align:right}.insight-goals,.insight-budgets{display:grid;gap:12px}.insight-goal{padding:12px;border:1px solid var(--line);border-radius:12px}.insight-goal-head,.insight-goal-values,.insight-budget-head{display:flex;align-items:center;justify-content:space-between;gap:8px}.insight-goal-head span{color:var(--ac);font-weight:700}.insight-goal .bar,.insight-budget .bar{margin:8px 0}.insight-goal small,.insight-goal-values,.insight-budget small{color:var(--mut);font-size:11px}.insight-budget .bar i.near{background:var(--warn)}.insight-budget .bar i.over{background:var(--bad)}.insight-recommendations{display:grid;gap:9px}.insight-recommendation{padding:12px;border:1px solid var(--line);border-left:3px solid var(--ac);border-radius:12px;background:var(--card2)}.insight-recommendation.warn{border-left-color:var(--warn)}.insight-recommendation.bad{border-left-color:var(--bad)}.insight-recommendation p{margin:5px 0 0;color:var(--mut);font-size:12px}.insight-footnote p{color:var(--mut);font-size:12px;margin:7px 0 0}.insight-footnote b{font-size:13px}@media(max-width:740px){.insight-grid{grid-template-columns:minmax(0,1fr)}.insight-donut-wrap{grid-template-columns:minmax(120px,.7fr) minmax(160px,1.3fr)}}@media(max-width:430px){.insight-filters{width:100%}.insight-filters .fl{flex:1}.insight-filters input,.insight-filters select{min-width:0}.insight-donut-wrap{grid-template-columns:1fr}.insight-donut{width:190px}.insight-category-list{width:100%}.insight-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}}
 </style>
@@ -142,6 +150,7 @@ button.g:hover{transform:translateY(-1px);border-color:color-mix(in srgb,var(--a
 <link rel="apple-touch-icon" href="./apple-touch-icon.png">
 </head>
 <body>
+<button id="syncPill" class="sync-pill" type="button" data-state="local" role="status" aria-live="polite" aria-label="Estado del guardado"><i aria-hidden="true"></i><span>Solo en este dispositivo</span></button>
 <div class="shell"><aside><div class="brand"><span class="logo">◆</span><span>Mi Centro<br>de Control</span></div><nav id="nav"></nav>
 <div class="sf"><div id="fecha"></div><button id="th" class="g" type="button">◐ Tema</button></div></aside><main><section id="cloudPanel" class="card">
 <h2>Sincronización privada entre dispositivos</h2>
@@ -152,7 +161,6 @@ button.g:hover{transform:translateY(-1px);border-color:color-mix(in srgb,var(--a
 <label class="consent"><input type="checkbox" id="cloudConsent"><span>Para crear una cuenta, acepta la <a href="./privacidad.html" target="_blank" rel="noopener">Política de privacidad</a> y los <a href="./terminos.html" target="_blank" rel="noopener">Términos y condiciones</a>; autorizas el tratamiento de tus datos, incluido su almacenamiento fuera de Colombia, y confirmas que eres mayor de 18 años.</span></label><div class="cloud-actions"><button class="b" type="submit" id="cloudLogin">Iniciar sesión</button><button class="g" type="submit" id="cloudSignup">Crear cuenta</button><button class="g" type="button" id="cloudForgot">Olvidé mi contraseña</button></div>
 </form>
 <form id="cloudRecover" class="cloud-grid cloud-hidden"><label class="fl">Nueva contraseña<input id="cloudNewPassword" type="password" autocomplete="new-password" minlength="8" required></label><div class="cloud-actions"><button class="b" type="submit">Guardar nueva contraseña</button></div></form>
-<div id="cloudChoices" class="cloud-hidden"><div class="cloud-msg" id="cloudChoiceMessage">Elige qué versión conservar.</div><div class="cloud-actions"><button class="b" type="button" id="cloudLoad">Cargar datos de la nube</button><button class="g" type="button" id="cloudUpload">Subir los datos de este dispositivo</button><button class="g cloud-hidden" type="button" id="cloudStartFresh">Empezar sin datos</button></div></div>
 <div id="cloudLogged" class="cloud-hidden"><div class="cloud-msg" id="cloudAccount"></div><div class="cloud-actions"><button class="g" type="button" id="cloudSyncNow">Sincronizar ahora</button><button class="g" type="button" id="cloudLogout">Cerrar sesión</button><button class="g" type="button" id="cloudDelete">Eliminar mi cuenta y mis datos</button></div></div>
 <details id="backupTools"><summary>Copia de seguridad</summary><div class="cloud-msg">Descarga tus datos para guardarlos fuera del navegador. El archivo contiene información personal; guárdalo en un lugar seguro.</div><div class="cloud-actions"><button class="g" type="button" id="exportData">Descargar copia</button><label class="g" for="importData" style="cursor:pointer">Restaurar copia</label><input id="importData" type="file" accept="application/json,.json" aria-label="Seleccionar copia de seguridad"></div></details>
 </section><div id="app"></div><footer class="legal"><a href="./privacidad.html">Política de privacidad</a><a href="./terminos.html">Términos y condiciones</a><a href="./cookies.html">Política de cookies y almacenamiento</a></footer></main></div>
@@ -169,15 +177,108 @@ const uid=()=>Math.random().toString(36).slice(2,10);
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 let S={tx:[],goals:[],routines:[],inst:{},budgets:[],obligations:[],scheduledShifts:[],rate:13000,shifts:[]};
 try{const r=localStorage.getItem('mcc1');if(r){const d=JSON.parse(r);if(validData(d))S=Object.assign(S,d)}}catch(e){}
-let cloudUser=null,cloudReady=false,cloudPending=null,cloudClient=null,cloudExistingData=null,cloudUpdatedAt=null,cloudSaving=false,cloudLocalCandidate=null;
+let cloudUser=null,cloudReady=false,cloudPending=null,cloudClient=null,cloudExistingData=null,cloudUpdatedAt=null,cloudSaving=false,cloudLocalCandidate=null,cloudPulling=false;
 const CLOUD_URL='https://xruxsuobpctyekkyracr.supabase.co';
 const CLOUD_KEY='sb_publishable_-0Zepm3uTSMSM1wMKTvpmA_ZP3vyPaM';
 try{if(window.supabase?.createClient)cloudClient=window.supabase.createClient(CLOUD_URL,CLOUD_KEY)}catch(e){}
 const cloudStatus=(m)=>{const el=document.getElementById('cloudStatus'),panel=document.getElementById('cloudPanel');if(el)el.textContent=m;if(panel)panel.setAttribute('aria-busy',String(/…$/.test(m)))};
-const cloudSchedule=()=>{if(!cloudClient||!cloudUser||!cloudReady)return;clearTimeout(cloudPending);cloudPending=setTimeout(()=>cloudSave().catch(e=>cloudStatus('No se pudo sincronizar: '+(e.message||e))),900)};
-async function cloudSave(){if(!cloudClient||!cloudUser||!cloudReady||cloudSaving)return;cloudSaving=true;const revision=localRevision;try{const {data:remote,error:readError}=await cloudClient.from('mcc_data').select('updated_at').eq('user_id',cloudUser.id).maybeSingle();if(readError)throw readError;if(cloudUpdatedAt&&remote?.updated_at&&remote.updated_at!==cloudUpdatedAt){cloudReady=false;cloudStatus('Hay una versión más reciente en la nube (posiblemente de otro dispositivo). Tus cambios locales siguen guardados; usa “Sincronizar ahora” solo después de revisar qué versión quieres conservar.');return}const updatedAt=new Date().toISOString();let result;if(cloudUpdatedAt){result=await cloudClient.from('mcc_data').update({data:S,updated_at:updatedAt}).eq('user_id',cloudUser.id).eq('updated_at',cloudUpdatedAt).select('updated_at');if(!result.error&&!result.data?.length){cloudReady=false;cloudStatus('Otro dispositivo actualizó la nube al mismo tiempo. Tus datos locales siguen guardados; elige SUBIR o CARGAR en “Sincronizar ahora”.');return}}else{result=await cloudClient.from('mcc_data').upsert({user_id:cloudUser.id,data:S,updated_at:updatedAt},{onConflict:'user_id'}).select('updated_at').single()}if(result.error)throw result.error;cloudUpdatedAt=result.data?.updated_at||updatedAt;if(revision!==localRevision)cloudSchedule();else cloudStatus('Sincronizado · '+new Intl.DateTimeFormat('es-CO',{timeZone:TZ,hour:'2-digit',minute:'2-digit'}).format(new Date())+'.')}finally{cloudSaving=false}}
-let localRevision=0;
-let saveFailed=false;const save=()=>{saveFailed=false;localRevision++;try{const key=cloudUser?'mcc1-user-'+cloudUser.id:'mcc1';localStorage.setItem(key,JSON.stringify(S));if(cloudUser&&!cloudReady)cloudLocalCandidate=S}catch(e){saveFailed=true;cloudStatus('No se pudo guardar en este navegador. Descarga una copia de seguridad.')}cloudSchedule();return !saveFailed};
+let localRevision=0,saveFailed=false,lastLocalJson=null,cloudResave=false,cloudRetry=null,renderPending=false,syncState='local';
+const defaultData=()=>({tx:[],goals:[],routines:[],inst:{},budgets:[],obligations:[],scheduledShifts:[],rate:13000,shifts:[]});
+const dirtyKey=()=>'mcc1-dirty-'+(cloudUser?cloudUser.id:'');
+const isDirty=()=>{try{return !!cloudUser&&localStorage.getItem(dirtyKey())==='1'}catch(e){return false}};
+const setDirty=v=>{try{if(!cloudUser)return;if(v)localStorage.setItem(dirtyKey(),'1');else localStorage.removeItem(dirtyKey())}catch(e){}};
+const syncTime=()=>new Intl.DateTimeFormat('es-CO',{timeZone:TZ,hour:'2-digit',minute:'2-digit'}).format(new Date());
+/* Indicador de guardado: local · conectando · pendiente · guardando · guardado · sin conexión · error */
+function setSync(state){
+  syncState=state;
+  const t=syncTime(),M={
+    local:['Solo en este dispositivo','Tus cambios se guardan solo en este dispositivo. Inicia sesión para que también se guarden en la nube y aparezcan en tus otros dispositivos.'],
+    syncing:['Conectando…','Conectando con tu cuenta…'],
+    pending:['Cambios sin guardar…','Detecté un cambio. Se guardará en la nube en un instante.'],
+    saving:['Guardando…','Guardando en la nube…'],
+    saved:['Guardado ✓ · '+t,'Todo guardado en la nube a las '+t+'. Tus otros dispositivos lo reciben solos en unos segundos.'],
+    offline:['Sin conexión','Sin conexión: tus cambios están a salvo en este dispositivo y se subirán solos cuando vuelva internet.'],
+    error:['No se pudo guardar','No se pudo guardar en la nube. Tus cambios siguen a salvo en este dispositivo y se reintentará solo.']
+  }[state]||['',''];
+  const pill=document.getElementById('syncPill');
+  if(pill){pill.dataset.state=state;pill.querySelector('span').textContent=M[0];pill.setAttribute('aria-label',M[1]);pill.title=M[1]}
+  cloudStatus(M[1]);
+}
+const cloudSchedule=()=>{if(!cloudClient||!cloudUser||!cloudReady)return;setSync(navigator.onLine?'pending':'offline');clearTimeout(cloudPending);cloudPending=setTimeout(()=>{cloudPending=null;cloudSave()},600)};
+/* Une dos copias sin perder nada: por id (gana este dispositivo); tareas y obligaciones generadas se deduplican */
+function mergeData(remote,local){
+  const out=Object.assign(defaultData(),remote,local);
+  const pick=(a,b)=>(b.done&&!a.done)?b:(a.done&&!b.done)?a:b;
+  const union=(x,y,keyOf)=>{const m=new Map();(Array.isArray(x)?x:[]).forEach(v=>m.set(keyOf(v),v));(Array.isArray(y)?y:[]).forEach(v=>{const k=keyOf(v);m.set(k,m.has(k)?pick(m.get(k),v):v)});return[...m.values()]};
+  const byId=v=>v&&typeof v==='object'&&v.id!=null?'id:'+v.id:'j:'+JSON.stringify(v);
+  const txKey=v=>v&&v.obligationId&&v.obligationMonth?'ob:'+v.obligationId+':'+v.obligationMonth:byId(v);
+  const instKey=v=>v&&v.rid?'rid:'+v.rid+':'+v.date:byId(v);
+  out.tx=union(remote.tx,local.tx,txKey);
+  ['goals','routines','budgets','obligations','scheduledShifts','shifts'].forEach(k=>{out[k]=union(remote[k],local[k],byId)});
+  const inst={};new Set([...Object.keys(remote.inst||{}),...Object.keys(local.inst||{})]).forEach(d=>{inst[d]=union((remote.inst||{})[d],(local.inst||{})[d],instKey)});
+  out.inst=inst;
+  return out;
+}
+function softRender(){const a=document.activeElement,app=document.getElementById('app');if(a&&app&&app.contains(a)&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)){renderPending=true;return}render()}
+document.addEventListener('focusout',()=>{if(!renderPending)return;setTimeout(()=>{const a=document.activeElement,app=document.getElementById('app');if(a&&app&&app.contains(a)&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName))return;renderPending=false;render()},60)});
+function adopt(d){S=Object.assign(defaultData(),d);try{lastLocalJson=JSON.stringify(S);if(cloudUser)localStorage.setItem('mcc1-user-'+cloudUser.id,lastLocalJson)}catch(e){}softRender()}
+function backupLocal(){try{localStorage.setItem('mcc1-backup-before-cloud',JSON.stringify(S))}catch(e){}}
+async function cloudPush(data){
+  const updatedAt=new Date().toISOString();
+  if(cloudUpdatedAt){
+    const r=await cloudClient.from('mcc_data').update({data,updated_at:updatedAt}).eq('user_id',cloudUser.id).eq('updated_at',cloudUpdatedAt).select('updated_at');
+    if(r.error)throw r.error;
+    if(!r.data||!r.data.length)return{ok:false};
+    return{ok:true,updatedAt:r.data[0].updated_at||updatedAt};
+  }
+  const r=await cloudClient.from('mcc_data').upsert({user_id:cloudUser.id,data,updated_at:updatedAt},{onConflict:'user_id'}).select('updated_at').single();
+  if(r.error)throw r.error;
+  return{ok:true,updatedAt:(r.data&&r.data.updated_at)||updatedAt};
+}
+async function cloudMergeRemote(){
+  const {data,error}=await cloudClient.from('mcc_data').select('data,updated_at').eq('user_id',cloudUser.id).maybeSingle();
+  if(error)throw error;
+  if(!data||!data.data){cloudUpdatedAt=null;return}
+  if(!validData(data.data))throw new Error('La copia de la nube no tiene el formato esperado.');
+  backupLocal();cloudUpdatedAt=data.updated_at||null;adopt(mergeData(data.data,S));
+}
+async function cloudSave(){
+  if(!cloudClient||!cloudUser||!cloudReady)return;
+  clearTimeout(cloudPending);cloudPending=null;
+  if(cloudSaving){cloudResave=true;return}
+  if(!navigator.onLine){setSync('offline');return}
+  cloudSaving=true;cloudResave=false;setSync('saving');
+  const revision=localRevision;
+  try{
+    for(let n=0;;n++){
+      const r=await cloudPush(S);
+      if(r.ok){cloudUpdatedAt=r.updatedAt;break}
+      if(n>=3)throw new Error('conflicto');
+      await cloudMergeRemote();
+    }
+    clearTimeout(cloudRetry);
+    if(revision===localRevision)setDirty(false);
+    if(revision!==localRevision||cloudResave)cloudSchedule();else setSync('saved');
+  }catch(e){
+    setSync(navigator.onLine?'error':'offline');
+    clearTimeout(cloudRetry);cloudRetry=setTimeout(()=>cloudSave(),8000);
+  }finally{cloudSaving=false}
+}
+async function cloudPull(){
+  if(!cloudClient||!cloudUser||!cloudReady||cloudSaving||cloudPulling||!navigator.onLine)return;
+  cloudPulling=true;
+  try{
+    const m=await cloudClient.from('mcc_data').select('updated_at').eq('user_id',cloudUser.id).maybeSingle();
+    if(m.error||!m.data||m.data.updated_at===cloudUpdatedAt)return;
+    const r=await cloudClient.from('mcc_data').select('data,updated_at').eq('user_id',cloudUser.id).maybeSingle();
+    if(r.error||!r.data||!r.data.data||!validData(r.data.data)||cloudSaving)return;
+    cloudUpdatedAt=r.data.updated_at||null;
+    if(isDirty()||cloudPending){backupLocal();adopt(mergeData(r.data.data,S));setDirty(true);cloudSchedule()}
+    else{adopt(r.data.data);setDirty(false);setSync('saved')}
+  }catch(e){}finally{cloudPulling=false}
+}
+async function flushCloud(){if(cloudPending||isDirty())await cloudSave()}
+const save=()=>{saveFailed=false;let json=null;try{json=JSON.stringify(S)}catch(e){}if(json!==null&&json===lastLocalJson)return true;lastLocalJson=json;localRevision++;try{const key=cloudUser?'mcc1-user-'+cloudUser.id:'mcc1';localStorage.setItem(key,json);if(cloudUser)setDirty(true)}catch(e){saveFailed=true;cloudStatus('No se pudo guardar en este navegador. Descarga una copia de seguridad.')}cloudSchedule();return !saveFailed};
 function validData(d){return d&&typeof d==='object'&&Array.isArray(d.tx)&&Array.isArray(d.goals)&&Array.isArray(d.routines)&&d.inst&&typeof d.inst==='object'&&Array.isArray(d.shifts)&&(d.budgets===undefined||Array.isArray(d.budgets))&&(d.obligations===undefined||Array.isArray(d.obligations))&&(d.scheduledShifts===undefined||Array.isArray(d.scheduledShifts))}
 function exportBackup(){const payload={app:'Mi Centro de Control',version:1,exportedAt:new Date().toISOString(),data:S};const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='mi-centro-de-control-'+hoy()+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);toast('Copia descargada')}
 document.getElementById('exportData').addEventListener('click',exportBackup);
@@ -275,7 +376,6 @@ function render(){
   const T=TABS.find(x=>x[0]===tab);a.innerHTML=`<div class="ph"><h1 tabindex="-1">${T[2]}</h1><p>${fechaLarga(hoy())}</p></div>`+{dash:vDash,mov:vMov,dia:vDia,metas:vMetas,turnos:vTurnos,inf:vReports,ins:vInsights}[tab]();document.dispatchEvent(new Event("mcc:rendered"));
 }
 
-window.MCC_IMPORT={getTransactions:()=>S.tx,commit(rows){if(!Array.isArray(rows)||!rows.length)return{ok:false,message:'No hay movimientos seleccionados.'};const previous=S.tx;S.tx=[...previous,...rows];if(!save()){S.tx=previous;if(cloudUser&&!cloudReady)cloudLocalCandidate=S;render();return{ok:false,message:'No se pudo guardar localmente. Tus datos anteriores siguen intactos.'}}render();return{ok:true}}};
 function monthlyCategorySpend(category,month){const key=String(category||'Otros').trim().toLocaleLowerCase('es-CO'),rows=S.tx.filter(t=>mes(t.date)===month&&String(t.cat||'Otros').trim().toLocaleLowerCase('es-CO')===key);return Math.max(0,rows.filter(t=>t.type==='gasto'&&t.status==='pagado').reduce((sum,t)=>sum+(+t.amount||0),0)-rows.filter(t=>t.type==='devolucion'&&(t.status==='recibido'||t.status==='pagado')).reduce((sum,t)=>sum+(+t.amount||0),0))}
 
 function budgetThresholdMessage(category,before,after,month){const key=String(category||'Otros').trim().toLocaleLowerCase('es-CO'),budget=(S.budgets||[]).find(b=>b&&String(b.cat||'').trim().toLocaleLowerCase('es-CO')===key),limit=Number(budget?.amount)||0;if(!limit)return'';if(before<limit&&after>=limit)return'Presupuesto de '+category+': llegaste al 100%';if(before<limit*.8&&after>=limit*.8)return'Presupuesto de '+category+': llegaste al 80%';return''}
@@ -374,7 +474,7 @@ function filteredTransactions(){
 function movementResultsHtml(){const l=filteredTransactions();let last='',out='';l.forEach(t=>{if(t.date!==last){last=t.date;out+=`<div class="dh">${dlabel(t.date)}</div>`}out+=txRow(t,true)});return '<div id="movementResults"><p class="k" role="status" aria-live="polite">'+l.length+' movimientos encontrados</p>'+(l.length?out:'<div class="empty">No hay movimientos que coincidan con estos filtros.</div>')+'</div>'}
 function vMov(){
  const type=window._f||'todos',status=window._moveStatus||'todos',category=window._moveCategory||'todos',cats=[...new Set(S.tx.map(t=>t.cat||'Otros'))].sort((a,b)=>a.localeCompare(b,'es-CO'));
- return obligationSettingsHtml()+`<div id="nuImportMount"></div><div class="card"><h2>Nuevo movimiento</h2><form id="fTx">
+ return obligationSettingsHtml()+`<div class="card"><h2>Nuevo movimiento</h2><form id="fTx">
   <div class="seg" style="grid-column:1/-1;justify-self:start"><label><input type="radio" name="type" value="gasto" checked><span>Gasto</span></label><label><input type="radio" name="type" value="ingreso"><span>Ingreso</span></label></div>
   <label class="fl">Valor (COP)<input name="amount" type="number" inputmode="numeric" min="1" placeholder="0" required></label>
   <label class="fl">Concepto<input name="name" placeholder="Ej. Almuerzo" required></label>
@@ -507,9 +607,9 @@ document.getElementById('th').innerHTML=ico('moon',15)+' Tema';
 document.getElementById('th').onclick=()=>{const r=document.documentElement,n=r.dataset.theme==='light'?'dark':'light';r.dataset.theme=n;syncBrowserThemeColor();try{localStorage.setItem('mcc-theme',n)}catch(e){}};
 render();
 
-/* ---- Supabase: autenticación y sincronización ---- */
+/* ---- Supabase: autenticación y guardado automático ---- */
 (function setupCloud(){
- const $=id=>document.getElementById(id),authForm=$('cloudAuth'),choices=$('cloudChoices'),logged=$('cloudLogged');
+ const $=id=>document.getElementById(id),authForm=$('cloudAuth'),logged=$('cloudLogged');
  const defaults=()=>({tx:[],goals:[],routines:[],inst:{},budgets:[],obligations:[],scheduledShifts:[],rate:13000,shifts:[]}),accountKey=id=>'mcc1-user-'+id;
  const hasPersonalData=d=>!!(d&&(d.tx?.length||d.goals?.length||d.routines?.length||d.budgets?.length||d.obligations?.length||d.scheduledShifts?.length||d.shifts?.length||Object.keys(d.inst||{}).length));
  const setLocal=(d,key)=>{try{localStorage.setItem(key,JSON.stringify(d));return true}catch(e){return false}};
@@ -518,20 +618,51 @@ render();
  if(!cloudClient){cloudStatus('No se pudo cargar el servicio de conexión. Revisa tu conexión a internet y recarga la página.');return}
  function showRecover(){$('cloudRecover').classList.remove('cloud-hidden');authForm.classList.add('cloud-hidden');cloudStatus('Escribe tu nueva contraseña.');$('cloudNewPassword').focus()}
  if(/type=recovery/.test(location.hash+location.search))showRecover();
- function setChoiceMode(mode){const msg=$('cloudChoiceMessage'),load=$('cloudLoad'),upload=$('cloudUpload'),fresh=$('cloudStartFresh');if(mode==='remote'){msg.textContent='Ya hay datos en la nube para esta cuenta. Elige qué versión conservar. Si cargas la nube, primero se guardará una copia local de los datos de este dispositivo.';load.textContent='Cargar datos de la nube';upload.textContent='Subir los datos de este dispositivo';load.classList.remove('cloud-hidden');fresh.classList.add('cloud-hidden')}else{msg.textContent='Esta cuenta aún no tiene datos en la nube. Puedes guardar los datos de este dispositivo o empezar con una cuenta vacía.';load.classList.add('cloud-hidden');upload.textContent=hasPersonalData(cloudLocalCandidate)?'Guardar mis datos actuales':'Crear mi espacio de datos';fresh.classList.remove('cloud-hidden')}}
- function showSignedOut(){cloudUser=null;cloudReady=false;cloudUpdatedAt=null;cloudExistingData=null;cloudLocalCandidate=null;const local=getLocal('mcc1');S=Object.assign(defaults(),local||{});gen();render();authForm.classList.remove('cloud-hidden');choices.classList.add('cloud-hidden');logged.classList.add('cloud-hidden');cloudStatus('Sesión cerrada. Los datos locales de este dispositivo siguen disponibles aquí.')}
- function showSignedIn(){authForm.classList.add('cloud-hidden');logged.classList.remove('cloud-hidden');choices.classList.add('cloud-hidden');$('cloudAccount').textContent='Sesión iniciada: '+(cloudUser.email||'cuenta Supabase')+'.'}
- async function onSignedIn(user){if(!user?.id)return;cloudUser=user;cloudReady=false;cloudUpdatedAt=null;showSignedIn();cloudStatus('Buscando tus datos guardados en la nube…');const accountLocal=getLocal(accountKey(user.id));cloudLocalCandidate=accountLocal||getLocal('mcc1')||defaults();S=Object.assign(defaults(),cloudLocalCandidate);gen();render();const {data,error}=await cloudClient.from('mcc_data').select('data,updated_at').eq('user_id',user.id).maybeSingle();if(error){cloudStatus('No se pudieron leer tus datos. Revisa la conexión y las políticas RLS de mcc_data.');return}if(data&&data.data&&Object.keys(data.data).length){if(!validData(data.data)){cloudStatus('La copia de la nube no tiene el formato esperado. No se modificó ni se reemplazó. Descarga una copia local antes de continuar.');return}cloudExistingData=data.data;cloudUpdatedAt=data.updated_at||null;setChoiceMode('remote');choices.classList.remove('cloud-hidden');cloudStatus('Cuenta conectada. Elige qué versión quieres conservar antes de sincronizar.')}else{cloudExistingData=null;cloudUpdatedAt=null;setChoiceMode('empty');choices.classList.remove('cloud-hidden');cloudStatus('Cuenta conectada. Elige cómo iniciar la sincronización.')}}
- async function cloudSaveForce(){if(!cloudUser)throw new Error('Inicia sesión antes de sincronizar.');try{localStorage.setItem('mcc1-backup-before-cloud-'+Date.now(),JSON.stringify(S))}catch(_){}const updatedAt=new Date().toISOString();const {data,error}=await cloudClient.from('mcc_data').upsert({user_id:cloudUser.id,data:S,updated_at:updatedAt},{onConflict:'user_id'}).select('updated_at').single();if(error)throw error;cloudUpdatedAt=data?.updated_at||updatedAt;setLocal(S,accountKey(cloudUser.id))}
+ function showSignedOut(){cloudUser=null;cloudReady=false;cloudUpdatedAt=null;cloudExistingData=null;cloudLocalCandidate=null;clearTimeout(cloudPending);clearTimeout(cloudRetry);cloudPending=null;const local=getLocal('mcc1');S=Object.assign(defaults(),local||{});try{lastLocalJson=JSON.stringify(S)}catch(e){}gen();render();authForm.classList.remove('cloud-hidden');logged.classList.add('cloud-hidden');setSync('local');cloudStatus('Sesión cerrada. Los datos locales de este dispositivo siguen disponibles aquí.')}
+ function showSignedIn(){authForm.classList.add('cloud-hidden');logged.classList.remove('cloud-hidden');$('cloudAccount').textContent='Sesión iniciada: '+(cloudUser.email||'cuenta Supabase')+'.'}
+ let signingIn=false;
+ async function onSignedIn(user){
+  if(!user?.id||signingIn)return;
+  signingIn=true;
+  try{
+   cloudUser=user;cloudReady=false;cloudUpdatedAt=null;showSignedIn();setSync('syncing');
+   const accountLocal=getLocal(accountKey(user.id)),legacy=accountLocal?null:getLocal('mcc1'),local=accountLocal||legacy||null;
+   let firstTime=true;try{firstTime=!localStorage.getItem('mcc2-synced-'+user.id)}catch(e){}
+   const unsynced=isDirty()||firstTime||(!accountLocal&&hasPersonalData(legacy));
+   S=Object.assign(defaults(),local||{});try{lastLocalJson=JSON.stringify(S)}catch(e){}render();
+   const {data,error}=await cloudClient.from('mcc_data').select('data,updated_at').eq('user_id',user.id).maybeSingle();
+   if(error)throw error;
+   let mustPush=false;
+   if(data&&data.data&&Object.keys(data.data).length){
+    if(!validData(data.data)){setSync('error');cloudStatus('La copia de la nube no tiene el formato esperado. No se modificó ni se reemplazó. Descarga una copia local antes de continuar.');return}
+    cloudUpdatedAt=data.updated_at||null;
+    if(local&&(unsynced||isDirty())){backupLocal();adopt(mergeData(data.data,S));mustPush=true}
+    else{adopt(data.data);setDirty(false)}
+   }else{cloudUpdatedAt=null;mustPush=true}
+   if(mustPush)setDirty(true);
+   cloudReady=true;gen();softRender();
+   try{localStorage.setItem('mcc2-synced-'+user.id,'1')}catch(e){}
+   if(mustPush||isDirty())await cloudSave();else setSync('saved');
+  }catch(e){
+   setSync(navigator.onLine?'error':'offline');
+   if(navigator.onLine)cloudStatus('No se pudieron leer tus datos. Revisa la conexión y las políticas RLS de mcc_data. Se reintentará solo.');
+   clearTimeout(cloudRetry);cloudRetry=setTimeout(()=>{if(cloudUser&&!cloudReady)onSignedIn(cloudUser)},8000);
+  }finally{signingIn=false}
+ }
  authForm.addEventListener('submit',async ev=>{ev.preventDefault();if(authBusy||!authForm.reportValidity())return;const action=ev.submitter?.id||'cloudLogin',email=$('cloudEmail').value.trim(),password=$('cloudPassword').value;authBusy=true;$('cloudLogin').disabled=true;$('cloudSignup').disabled=true;try{if(action==='cloudSignup'){if(!$('cloudConsent').checked){cloudStatus('Para crear la cuenta debes aceptar la Política de privacidad y los Términos, y confirmar que eres mayor de 18 años.');$('cloudConsent').focus();return}$('cloudPassword').setAttribute('autocomplete','new-password');cloudStatus('Creando cuenta…');const {data,error}=await cloudClient.auth.signUp({email,password,options:{data:{legal_version:'2026-10-28',legal_accepted_at:new Date().toISOString()}}});if(error)throw error;if(data.session&&data.user)await onSignedIn(data.user);else cloudStatus('Solicitud de cuenta enviada. Revisa tu correo para confirmarla y luego inicia sesión aquí.')}else{$('cloudPassword').setAttribute('autocomplete','current-password');cloudStatus('Iniciando sesión…');const {data,error}=await cloudClient.auth.signInWithPassword({email,password});if(error)throw error;await onSignedIn(data.user)}}catch(err){cloudStatus('No se pudo completar la solicitud. Verifica el correo, la contraseña y la conexión, e inténtalo de nuevo.')}finally{authBusy=false;$('cloudLogin').disabled=false;$('cloudSignup').disabled=false}});
- $('cloudLoad').addEventListener('click',()=>{if(!cloudExistingData||!cloudUser)return;try{localStorage.setItem('mcc1-backup-before-cloud-'+Date.now(),JSON.stringify(S))}catch(e){}S=Object.assign(defaults(),cloudExistingData);cloudReady=false;gen();setLocal(S,accountKey(cloudUser.id));render();cloudReady=true;showSignedIn();cloudStatus('Datos de la nube cargados. La copia local anterior quedó respaldada en este navegador.')});
- $('cloudUpload').addEventListener('click',async()=>{if(!cloudUser)return;if(cloudExistingData&&!confirm('Esto reemplazará la copia de la nube con los datos de este dispositivo. ¿Continuar?'))return;if(!cloudExistingData&&hasPersonalData(cloudLocalCandidate)&&!confirm('Se guardarán en esta cuenta los datos actuales de este dispositivo. ¿Continuar?'))return;S=Object.assign(defaults(),cloudLocalCandidate||S);gen();render();cloudStatus('Guardando los datos seleccionados…');try{await cloudSaveForce();cloudReady=true;cloudExistingData=null;showSignedIn();cloudStatus('Datos guardados de forma segura en tu cuenta.')}catch(e){cloudStatus('No se pudo guardar. Revisa tu conexión y las políticas RLS de mcc_data.')}});
- $('cloudStartFresh').addEventListener('click',async()=>{if(!cloudUser)return;if(hasPersonalData(cloudLocalCandidate)&&!confirm('Se creará una copia local de respaldo y se iniciará esta cuenta sin los datos actuales. ¿Continuar?'))return;try{localStorage.setItem('mcc1-backup-before-empty-'+Date.now(),JSON.stringify(cloudLocalCandidate||S))}catch(_){}S=defaults();gen();render();cloudStatus('Creando un espacio vacío…');try{await cloudSaveForce();cloudReady=true;cloudExistingData=null;showSignedIn();cloudStatus('Cuenta lista. Tus datos se guardarán en esta cuenta.')}catch(e){cloudStatus('No se pudo crear el espacio. Revisa tu conexión y las políticas RLS de mcc_data.')}});
- $('cloudSyncNow').addEventListener('click',async()=>{if(!cloudUser)return;const choose=prompt('Para evitar perder cambios, escribe SUBIR para reemplazar la nube con este dispositivo, o escribe CARGAR para usar la copia de la nube.');if(choose==='SUBIR'){cloudStatus('Guardando copia local y subiendo…');try{await cloudSaveForce();cloudReady=true;showSignedIn();cloudStatus('Versión de este dispositivo guardada en la nube.')}catch(e){cloudStatus('No se pudo sincronizar. Revisa tu conexión y las políticas RLS.')}}else if(choose==='CARGAR'){const {data,error}=await cloudClient.from('mcc_data').select('data,updated_at').eq('user_id',cloudUser.id).maybeSingle();if(error){cloudStatus('No se pudo cargar la nube. Revisa tu conexión y las políticas RLS.');return}if(data?.data){try{localStorage.setItem('mcc1-backup-before-cloud-'+Date.now(),JSON.stringify(S))}catch(_){}S=Object.assign(defaults(),data.data);cloudUpdatedAt=data.updated_at||null;cloudReady=false;gen();setLocal(S,accountKey(cloudUser.id));render();cloudReady=true;cloudStatus('Copia de la nube cargada. La versión local anterior quedó respaldada.')}}});
- $('cloudLogout').addEventListener('click',async()=>{cloudReady=false;const {error}=await cloudClient.auth.signOut();if(error){cloudStatus('No se pudo cerrar sesión. Inténtalo de nuevo.');return}showSignedOut()}); $('cloudForgot').addEventListener('click',async()=>{const email=$('cloudEmail').value.trim();if(!email||!$('cloudEmail').checkValidity()){cloudStatus('Escribe tu correo arriba y vuelve a pulsar «Olvidé mi contraseña».');$('cloudEmail').focus();return}cloudStatus('Enviando enlace…');try{const {error}=await cloudClient.auth.resetPasswordForEmail(email,{redirectTo:location.origin+location.pathname});if(error)throw error;cloudStatus('Si ese correo tiene una cuenta, recibirás un enlace para crear una nueva contraseña.')}catch(e){cloudStatus('No se pudo enviar el enlace. Inténtalo de nuevo.')}});
+ async function syncNow(){if(!cloudUser)return;if(!cloudReady){await onSignedIn(cloudUser);return}setSync('saving');await cloudPull();if(isDirty()||cloudPending)await cloudSave();else setSync('saved')}
+ $('cloudSyncNow').addEventListener('click',syncNow);
+ $('syncPill').addEventListener('click',()=>{if(cloudUser)syncNow();else document.getElementById('cloudPanel').scrollIntoView({behavior:'smooth',block:'start'})});
+ $('cloudLogout').addEventListener('click',async()=>{try{await flushCloud()}catch(_){}const was=cloudReady;cloudReady=false;const {error}=await cloudClient.auth.signOut();if(error){cloudReady=was;cloudStatus('No se pudo cerrar sesión. Inténtalo de nuevo.');return}showSignedOut()}); $('cloudForgot').addEventListener('click',async()=>{const email=$('cloudEmail').value.trim();if(!email||!$('cloudEmail').checkValidity()){cloudStatus('Escribe tu correo arriba y vuelve a pulsar «Olvidé mi contraseña».');$('cloudEmail').focus();return}cloudStatus('Enviando enlace…');try{const {error}=await cloudClient.auth.resetPasswordForEmail(email,{redirectTo:location.origin+location.pathname});if(error)throw error;cloudStatus('Si ese correo tiene una cuenta, recibirás un enlace para crear una nueva contraseña.')}catch(e){cloudStatus('No se pudo enviar el enlace. Inténtalo de nuevo.')}});
  $('cloudRecover').addEventListener('submit',async ev=>{ev.preventDefault();try{const {error}=await cloudClient.auth.updateUser({password:$('cloudNewPassword').value});if(error)throw error;$('cloudNewPassword').value='';$('cloudRecover').classList.add('cloud-hidden');history.replaceState(null,'',location.pathname);cloudStatus('Contraseña actualizada.')}catch(e){cloudStatus('No se pudo actualizar la contraseña. Solicita un enlace nuevo si el anterior caducó.')}});
- $('cloudDelete').addEventListener('click',async()=>{if(!cloudUser)return;if(!confirm('Se eliminarán permanentemente tu cuenta y los datos guardados en la nube. Los datos de este navegador se conservan. Descarga una copia antes de continuar. ¿Continuar?'))return;if(prompt('Escribe ELIMINAR para confirmar.')!=='ELIMINAR')return;cloudReady=false;cloudStatus('Eliminando tu cuenta…');try{const {error}=await cloudClient.rpc('delete_my_account');if(error)throw error;try{localStorage.removeItem(accountKey(cloudUser.id))}catch(_){}try{await cloudClient.auth.signOut()}catch(_){}showSignedOut();cloudStatus('Tu cuenta y tus datos en la nube fueron eliminados.')}catch(e){cloudReady=true;cloudStatus('No se pudo eliminar la cuenta. Revisa la conexión y la configuración de Supabase.')}});
+ $('cloudDelete').addEventListener('click',async()=>{if(!cloudUser)return;if(!confirm('Se eliminarán permanentemente tu cuenta y los datos guardados en la nube. Los datos de este navegador se conservan. Descarga una copia antes de continuar. ¿Continuar?'))return;if(prompt('Escribe ELIMINAR para confirmar.')!=='ELIMINAR')return;cloudReady=false;cloudStatus('Eliminando tu cuenta…');try{const {error}=await cloudClient.rpc('delete_my_account');if(error)throw error;try{localStorage.removeItem(accountKey(cloudUser.id));localStorage.removeItem('mcc1-dirty-'+cloudUser.id);localStorage.removeItem('mcc2-synced-'+cloudUser.id)}catch(_){}try{await cloudClient.auth.signOut()}catch(_){}showSignedOut();cloudStatus('Tu cuenta y tus datos en la nube fueron eliminados.')}catch(e){cloudReady=true;cloudStatus('No se pudo eliminar la cuenta. Revisa la conexión y la configuración de Supabase.')}});
  cloudClient.auth.getSession().then(async({data,error})=>{if(error){cloudStatus('No se pudo comprobar la sesión. Recarga la página e inténtalo de nuevo.');return}if(data.session)await onSignedIn(data.session.user);else showSignedOut()});
+ setInterval(()=>{if(!document.hidden)cloudPull()},10000);
+ document.addEventListener('visibilitychange',()=>{if(document.hidden){if(cloudPending||isDirty())cloudSave()}else cloudPull()});
+ window.addEventListener('focus',()=>cloudPull());
+ window.addEventListener('online',()=>{if(!cloudUser)return;if(!cloudReady)onSignedIn(cloudUser);else if(isDirty())cloudSave();else cloudPull()});
+ window.addEventListener('offline',()=>{if(cloudUser)setSync('offline')});
+ window.addEventListener('pagehide',()=>{if(cloudPending||isDirty())cloudSave()});
 })();
 </script>
 <script>
@@ -539,11 +670,5 @@ if ('serviceWorker' in navigator && location.protocol !== 'file:') {
   window.addEventListener('load', () => navigator.serviceWorker.register('./service-worker.js').catch(() => {}));
 }
 </script>
-<script>
-function showNuImportModuleError(){if(!window.__mccNuImportUnavailable)return;const mount=document.getElementById('nuImportMount');if(mount)mount.innerHTML='<section class="card nu-import-card"><h2>Importar extracto Nu</h2><p class="report-note bad">El navegador no pudo cargar el módulo del importador. Si abriste esta copia como archivo local (file://), ábrela desde una dirección HTTPS o localhost; los navegadores bloquean módulos y lectores PDF desde archivos locales.</p><p class="report-note">No se leyó ni guardó ningún dato del PDF. Recarga la aplicación después de abrirla desde una dirección web.</p></section>'}
-document.addEventListener('error',event=>{const script=event.target;if(script?.tagName!=='SCRIPT'||script.type!=='module'||!script.src.includes('nu-import-ui.mjs'))return;window.__mccNuImportUnavailable=true;showNuImportModuleError()},true);
-document.addEventListener('mcc:rendered',showNuImportModuleError);
-</script>
-<script type="module" src="./nu-import-ui.mjs"></script>
 </body>
 </html>
