@@ -72,3 +72,22 @@ test('datos antiguos sin lápidas ni marcas siguen uniéndose igual que antes',(
   const m=ctx.mergeData({tx:[{id:'a'}],goals:[],routines:[],inst:{},shifts:[]},{tx:[{id:'b'}],goals:[],routines:[],inst:{},shifts:[]});
   assert.equal(m.tx.length,2);assert.deepEqual({...m.deleted},{});
 });
+test('un aporte borrado en un dispositivo no vuelve al unir la meta',()=>{
+  const base=ctx.normalizeData(D({goals:[{id:'g',name:'Moto',target:1000,aportes:[{id:'a1',amount:100,date:'2026-10-01'},{id:'a2',amount:50,date:'2026-10-02'}]}]}));
+  const A=clone(base);let s=ctx.syncSnapshot(A);A.goals[0].aportes=A.goals[0].aportes.filter(a=>a.id!=='a2');ctx.trackChanges(A,s,3000);
+  assert.ok(A.deleted['goal.aportes|g|id:a2']);
+  const B=clone(base);s=ctx.syncSnapshot(B);B.goals[0].aportes.push({id:'a3',amount:20,date:'2026-10-03'});ctx.trackChanges(B,s,3100);
+  assert.deepEqual([...ctx.mergeData(A,B).goals[0].aportes.map(a=>a.id)],['a1','a3']);
+  assert.deepEqual([...ctx.mergeData(B,A).goals[0].aportes.map(a=>a.id)],['a1','a3']);
+});
+test('los avances de una meta personal se unen igual que los aportes',()=>{
+  const base=D({goals:[{id:'p',kind:'personal',name:'Leer',target:12,aportes:[],progress:[]}]});
+  const A=clone(base);let s=ctx.syncSnapshot(A);A.goals[0].progress.push({id:'x',amount:1,date:'2026-10-01'});ctx.trackChanges(A,s,1000);
+  const B=clone(base);s=ctx.syncSnapshot(B);B.goals[0].progress.push({id:'y',amount:2,date:'2026-10-02'});ctx.trackChanges(B,s,1001);
+  assert.equal(ctx.mergeData(A,B).goals[0].progress.length,2);
+});
+test('el turno en curso más reciente prevalece al unir',()=>{
+  const A=D({activeShift:{on:false,u:500}}),B=D({activeShift:{on:true,in:'17:00',u:400}});
+  assert.equal(ctx.mergeData(A,B).activeShift.on,false);
+  assert.equal(ctx.mergeData(B,A).activeShift.on,false);
+});

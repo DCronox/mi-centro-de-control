@@ -39,6 +39,13 @@ async function askAmount(message,{title='Importe',value='',confirmLabel='Guardar
   if(!p){const v=prompt(message,value);return v===null?null:+String(v).replace(/\D/g,'')}
   const r=await p;if(r.value!=='yes')return null;const n=Math.round(Number(r.input));return Number.isFinite(n)&&n>=0?n:null;
 }
+/* Pedir un número cualquiera (p. ej. minutos): devuelve el número o null si se cancela. */
+async function askNumber(message,{title='Dato',label='Valor',value='',confirmLabel='Guardar',min=0}={}){
+  const field=`<label class="fl">${esc(label)}<input id="uiInput" type="number" inputmode="numeric" min="${esc(min)}" step="1" value="${esc(value)}" required></label>`;
+  const p=uiOpen({title,message,field,actions:[{label:'Cancelar',value:'no'},{label:confirmLabel,value:'yes',primary:true,submit:true}]});
+  if(!p){const v=prompt(message,value);return v===null?null:Math.max(min,Math.round(+v)||0)}
+  const r=await p;if(r.value!=='yes')return null;const n=Math.round(Number(r.input));return Number.isFinite(n)&&n>=min?n:null;
+}
 /* Confirmación escrita (acciones irreversibles): devuelve true solo si se escribe la palabra exacta. */
 async function askTyped(message,word,{title='Confirmación',confirmLabel='Confirmar'}={}){
   const field=`<label class="fl">Escribe ${esc(word)} para confirmar<input id="uiInput" autocomplete="off" autocapitalize="characters" required></label>`;

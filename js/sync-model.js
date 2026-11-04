@@ -31,8 +31,12 @@ function syncEntries(d){
   const out=[];
   SYNC_COLLECTIONS.forEach(col=>(Array.isArray(d[col])?d[col]:[]).forEach(v=>out.push([col+'|'+syncKey(col,v),v])));
   Object.entries(d.inst&&typeof d.inst==='object'?d.inst:{}).forEach(([day,list])=>(Array.isArray(list)?list:[]).forEach(v=>out.push(['inst|'+day+'|'+syncKey('inst',v),v])));
+  /* Registros dentro de cada meta (aportes de dinero y avances de metas personales). */
+  (Array.isArray(d.goals)?d.goals:[]).forEach(g=>{if(!g||typeof g!=='object')return;GOAL_LOGS.forEach(f=>(Array.isArray(g[f])?g[f]:[]).forEach(x=>out.push([goalLogKey(f,g.id,x),x])))});
   return out;
 }
+const GOAL_LOGS=['aportes','progress'];
+const goalLogKey=(field,goalId,x)=>'goal.'+field+'|'+goalId+'|'+syncById(x);
 function syncSnapshot(d){return new Map(syncEntries(d).map(([k,v])=>[k,JSON.stringify(v)]))}
 function pruneTombstones(deleted,now){Object.keys(deleted).forEach(k=>{if(!(now-(Number(deleted[k])||0)<TOMBSTONE_TTL))delete deleted[k]});return deleted}
 /* Compara con la instantánea anterior: marca `u` en lo nuevo o modificado y deja
@@ -59,11 +63,20 @@ function mergeData(remote,local){
     (Array.isArray(y)?y:[]).forEach(v=>{const k=syncKey(col,v);m.set(k,m.has(k)?resolve(m.get(k),v):v)});
     return[...m.entries()].filter(([k,v])=>{const t=deleted[prefix+k];return !t||ts(v)>t}).map(([,v])=>v);
   };
+  /* Una meta presente en ambas copias: campos de la versión más reciente y unión de sus registros
+     (aportes y avances), respetando los registros borrados. */
   const mergeGoal=(a,b)=>{
-    const w=pick(a,b),ap=new Map();
-    [a,b].forEach(g=>(Array.isArray(g.aportes)?g.aportes:[]).forEach(x=>{const k=x&&x.id!=null?'id:'+x.id:'j:'+JSON.stringify(x);if(!ap.has(k))ap.set(k,x)}));
-    return Object.assign({},w,{aportes:[...ap.values()].sort((p,q)=>String(p.date).localeCompare(String(q.date)))});
+    const w=pick(a,b),extra={};
+    GOAL_LOGS.forEach(f=>{
+      if(!Array.isArray(a[f])&&!Array.isArray(b[f]))return;
+      const m=new Map();
+      [a,b].forEach(g=>(Array.isArray(g[f])?g[f]:[]).forEach(x=>{const k=syncById(x);m.set(k,m.has(k)?pick(m.get(k),x):x)}));
+      extra[f]=[...m.entries()].filter(([k,x])=>{const t=deleted['goal.'+f+'|'+w.id+'|'+k];return !t||ts(x)>t}).map(([,x])=>x).sort((p,q)=>String(p.date).localeCompare(String(q.date)));
+    });
+    return Object.assign({},w,extra);
   };
+  /* Valores únicos (no listas) que llevan su propia marca `u`: gana el más reciente. */
+  ['activeShift'].forEach(k=>{const r=remote[k],l=local[k];if(r||l)out[k]=ts(r)>ts(l)?r:l});
   SYNC_COLLECTIONS.forEach(col=>{out[col]=union(col,remote[col],local[col],col+'|',col==='goals'?mergeGoal:pick)});
   const inst={},ri=remote.inst||{},li=local.inst||{};
   new Set([...Object.keys(ri),...Object.keys(li)]).forEach(day=>{inst[day]=union('inst',ri[day],li[day],'inst|'+day+'|')});

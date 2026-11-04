@@ -2,7 +2,6 @@
    1. Disponible y cómo se reparte el mes.  2. Alertas (solo si hay).  3. Hoy y los próximos 7 días.
    4. Metas, gastos por categoría y la semana. Todo se calcula con los datos registrados. */
 const sumAmount=list=>list.reduce((s,t)=>s+(+t.amount||0),0);
-function goalSaved(g){return (g.aportes||[]).reduce((s,a)=>s+(+a.amount||0),0)}
 function dashAlerts(){
   const h=hoy(),soon=addDays(h,3),m=mes(h),items=[];
   const pend=S.tx.filter(t=>t.type==='gasto'&&t.status==='pendiente');
@@ -11,7 +10,11 @@ function dashAlerts(){
   const due=pend.filter(t=>t.date>=h&&t.date<=soon).sort((a,b)=>a.date.localeCompare(b.date));
   if(due.length)items.push({tone:'warn',title:due.length===1?due[0].name+' vence '+(due[0].date===h?'hoy':dlabel(due[0].date).toLowerCase()):due.length+' pagos vencen en los próximos 3 días',detail:fmt(sumAmount(due)),go:'mov'});
   (S.budgets||[]).filter(b=>b&&Number(b.amount)>0).forEach(b=>{const used=monthlyCategorySpend(b.cat,m),pct=used/Number(b.amount)*100;if(pct>=80)items.push({tone:pct>=100?'bad':'warn',title:(pct>=100?'Superaste el presupuesto de ':'Vas en el '+Math.round(pct)+'% del presupuesto de ')+b.cat,detail:fmt(used)+' de '+fmt(b.amount),go:'mov'})});
-  const shiftToday=(S.scheduledShifts||[]).filter(x=>x&&x.date===h).sort((a,b)=>String(a.in).localeCompare(String(b.in)))[0];
+  const nt=nextTaskToday();
+  if(nt&&nt.remind!==undefined&&nt.remind!==''){const left=mins(nt.time)-nowMinutes();if(left<=Math.max(+nt.remind,0))items.unshift({tone:'info',title:(left<=0?'Ahora: ':'En '+left+' min: ')+nt.name,detail:'Empieza a las '+nt.time,go:'dia'})}
+  const live=activeShift();
+  if(live){const el=shiftElapsedHours(live);items.push({tone:el>14?'warn':'info',title:el>14?'¿Olvidaste marcar la salida? Turno abierto desde las '+live.in:'Estás en turno desde las '+live.in,detail:el.toFixed(1)+' h · '+fmt(el*(+live.rate||S.rate))+' estimados',go:'turnos'})}
+  const shiftToday=live?null:(S.scheduledShifts||[]).filter(x=>x&&x.date===h).sort((a,b)=>String(a.in).localeCompare(String(b.in)))[0];
   if(shiftToday)items.push({tone:'info',title:'Hoy tienes turno de '+shiftToday.in+' a '+shiftToday.out,detail:shiftToday.name||'Turno de trabajo',go:'turnos'});
   const pastScheduled=(S.scheduledShifts||[]).filter(x=>x&&x.date<h);
   if(pastScheduled.length)items.push({tone:'warn',title:pastScheduled.length===1?'Un turno programado ya pasó':pastScheduled.length+' turnos programados ya pasaron',detail:'Regístralos como realizados o cancélalos',go:'turnos'});
@@ -65,8 +68,8 @@ function dashToday(){
 function dashGoals(){
   const m=mes(hoy()),goals=S.goals.filter(g=>g&&+g.target>0);
   if(!goals.length)return `<section class="card"><h2>Metas<button class="lk" type="button" data-a="go" data-id="metas">Crear meta</button></h2><div class="empty">Crea una meta para ver cuánto te falta y cuándo la alcanzarías.</div></section>`;
-  const monthly=goals.reduce((x,g)=>x+(+g.monthly||0),0),done=goals.reduce((x,g)=>x+(g.aportes||[]).filter(a=>mes(a.date)===m).reduce((y,a)=>y+(+a.amount||0),0),0);
-  const rows=goals.map(g=>({g,saved:goalSaved(g)})).sort((a,b)=>(b.saved/b.g.target)-(a.saved/a.g.target)).slice(0,3).map(({g,saved})=>{const p=Math.min(100,saved/g.target*100);return `<div class="goal-mini"><div class="goal-mini-head"><b>${esc(g.name)}</b><span>${Math.round(p)}%</span></div><div class="bar"><i style="width:${p.toFixed(1)}%"></i></div><small class="k">${fmt(saved)} de ${fmt(g.target)}</small></div>`}).join('');
+  const money=goals.filter(g=>!isPersonalGoal(g)),monthly=money.reduce((x,g)=>x+(+g.monthly||0),0),done=money.reduce((x,g)=>x+(g.aportes||[]).filter(a=>mes(a.date)===m).reduce((y,a)=>y+(+a.amount||0),0),0);
+  const rows=goals.map(g=>({g,p:goalModel(g).pct})).filter(x=>x.p<100).sort((a,b)=>b.p-a.p).slice(0,3).map(x=>goalHtml(x.g)).join('')||'<p class="k">Cumpliste todas tus metas.</p>';
   return `<section class="card"><h2>Metas<button class="lk" type="button" data-a="go" data-id="metas">Ver metas</button></h2>${monthly?`<p class="k">Aportado este mes: ${fmt(done)} de ${fmt(monthly)} planeados</p>`:''}${rows}</section>`;
 }
 function dashCategories(){

@@ -15,7 +15,7 @@ function gen(){
       if(!r.days.includes(dow(d)))continue;
       const L=S.inst[d]=S.inst[d]||[];
       if(L.some(i=>i.rid===r.id))continue;
-      L.push({id:uid(),rid:r.id,date:d,name:r.name,time:r.time,end:r.end,cat:r.cat,note:r.notes||''});
+      L.push({id:uid(),rid:r.id,date:d,name:r.name,time:r.time,end:r.end,cat:r.cat,note:r.notes||'',remind:r.remind||''});
     }
     if(!r.genTo||r.genTo<h)r.genTo=h;
   });
@@ -32,11 +32,14 @@ function migrate(){
   Object.entries(S.log||{}).forEach(([d,m])=>Object.entries(m).forEach(([k,e])=>{const i=(S.inst[d]||[]).find(x=>x.id===k||x.rid===k);if(i)Object.assign(i,e)}));
   delete S.tasks;delete S.log;save();
 }
+/* Un recordatorio solo tiene sentido si la tarea tiene hora de inicio. */
+function base0Time(time,remind){return time?remind:''}
 async function saveTask(v){
   const isR=(E&&E.t==='r')||(!E&&v.rec==='1');
   const days=DN.map((_,i)=>i).filter(i=>v['d'+i]);
   if(isR&&!days.length){await notify('Marca al menos un día de la semana para que la rutina se repita.',{title:'Faltan los días'});return false}
-  const base={name:v.name,time:v.time||'',end:v.end||'',cat:v.cat||'Personal'},notes=v.notes||'';
+  const remind=['','0','10','30','60','120'].includes(String(v.remind||''))?String(v.remind||''):'';
+  const base={name:String(v.name||'').trim().slice(0,120),time:v.time||'',end:v.end||'',cat:v.cat||'Personal',remind:base0Time(v.time,remind)},notes=v.notes||'';
   if(E&&E.t==='i'){
     const i=getI(E.d,E.id);
     if(i){
@@ -52,7 +55,7 @@ async function saveTask(v){
   }else if(isR){
     S.routines.push({id:uid(),...base,notes,days,from:v.date||hoy(),to:v.to||'',active:true});gen();
   }else{
-    const d=v.date||hoy();(S.inst[d]=S.inst[d]||[]).push({id:uid(),rid:null,date:d,...base,note:notes});
+    const d=/^d{4}-d{2}-d{2}$/.test(v.date||'')?v.date:hoy(),item={id:uid(),rid:null,date:d,...base,note:notes};if(v.doneNow==='1'){item.done=true;item.real=d===hoy()?hora():(v.time||'')}(S.inst[d]=S.inst[d]||[]).push(item);
   }
   E=null;
 }

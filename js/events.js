@@ -12,12 +12,13 @@ app.addEventListener('submit',async e=>{
   e.preventDefault();const f=e.target,v=Object.fromEntries(new FormData(f));let budgetAlert='';
   if(f.id==='fTx'){budgetAlert=addTransaction(v)}
   else if(f.id==='fTask'){if(await saveTask(v)===false)return}
-  else if(f.id==='fGoal'){S.goals.push({id:uid(),name:v.name,target:+v.target,monthly:+v.monthly||0,aportes:[]})}
+  else if(f.id==='fGoal'){const personal=v.kind==='personal',g={id:uid(),name:String(v.name).trim().slice(0,80),target:+v.target,monthly:Math.max(0,+v.monthly||0),aportes:[]};if(!(g.target>0))return;if(/^\d{4}-\d{2}-\d{2}$/.test(v.targetDate||''))g.targetDate=v.targetDate;if(personal){g.kind='personal';g.unit=String(v.unit||'').trim().slice(0,20);g.progress=[]}S.goals.push(g)}
+  else if(f.classList.contains('fGoalEdit')){const g=S.goals.find(x=>x.id===f.dataset.id);if(!g||!(+v.target>0))return;g.name=String(v.name).trim().slice(0,80)||g.name;g.target=+v.target;g.monthly=Math.max(0,+v.monthly||0);if(/^\d{4}-\d{2}-\d{2}$/.test(v.targetDate||''))g.targetDate=v.targetDate;else delete g.targetDate;if(isPersonalGoal(g))g.unit=String(v.unit||'').trim().slice(0,20);window._editGoal=null}
   else if(f.id==='fBudget'){const cat=v.cat.trim(),amount=+v.amount,existing=S.budgets.find(b=>b&&String(b.cat||'').trim().toLocaleLowerCase('es-CO')===cat.toLocaleLowerCase('es-CO'));if(existing)existing.amount=amount;else S.budgets.push({id:uid(),cat,amount})}
-  else if(f.classList.contains('fAp')){const g=S.goals.find(x=>x.id===f.dataset.id);g.aportes.push({id:uid(),amount:+v.amount,date:hoy()})}
+  else if(f.classList.contains('fAp')){const g=S.goals.find(x=>x.id===f.dataset.id),n=+v.amount;if(!g||!(n>0))return;if(isPersonalGoal(g)){g.progress=Array.isArray(g.progress)?g.progress:[];g.progress.push({id:uid(),amount:n,date:hoy(),note:String(v.note||'').trim().slice(0,80)})}else{g.aportes.push({id:uid(),amount:Math.round(n),date:hoy()})}}
   else if(f.id==='fObligation'){S.obligations.push({id:uid(),name:v.name.trim(),amount:+v.amount,cat:v.cat.trim()||'Otros',day:Math.min(31,Math.max(1,+v.day||1)),active:true,generatedMonths:[]});generateMonthlyObligations()}
   else if(f.id==='fSchedule'){S.scheduledShifts.push({id:uid(),name:(v.name||'').trim(),date:v.date,in:v.in,out:v.out,brk:+v.brk||0,rate:S.rate})}
-  else if(f.id==='fShift'){const r=+v.rate||S.rate;S.rate=r;S.shifts.push({id:uid(),date:v.date,in:v.in,out:v.out,brk:+v.brk||0,rate:r,paid:false})}
+  else if(f.id==='fShift'){const r=+v.rate||S.rate;S.rate=r;S.shifts.push({id:uid(),date:v.date,in:v.in,out:v.out,brk:+v.brk||0,rate:r,paid:false,source:'manual'})}
   else return;
   save();render();toast(budgetAlert||'Cambios guardados');
 });
@@ -34,15 +35,24 @@ app.addEventListener('click',async e=>{
   else if(a==='toggleObligation'){const o=S.obligations.find(x=>x.id===id);if(o)o.active=!o.active}
   else if(a==='delObligation'){if(!await ask('Los gastos que ya generó se conservan.',{title:'¿Eliminar esta obligación?',confirmLabel:'Eliminar',danger:true}))return;S.obligations=S.obligations.filter(x=>x.id!==id)}
   else if(a==='delScheduled'){if(!await ask('El turno se quitará de tu programación.',{title:'¿Cancelar este turno?',confirmLabel:'Cancelar turno',cancelLabel:'Mantener',danger:true}))return;S.scheduledShifts=S.scheduledShifts.filter(x=>x.id!==id)}
-  else if(a==='recordScheduled'){const x=S.scheduledShifts.find(y=>y.id===id);if(!x)return;if(x.date>hoy()){toast('Aún no llega la fecha del turno.');return}S.shifts.push({id:uid(),date:x.date,in:x.in,out:x.out,brk:+x.brk||0,rate:+x.rate||S.rate,paid:false});S.scheduledShifts=S.scheduledShifts.filter(y=>y.id!==id);budgetAlert='Turno agregado al historial.'}
+  else if(a==='recordScheduled'){const x=S.scheduledShifts.find(y=>y.id===id);if(!x)return;if(x.date>hoy()){toast('Aún no llega la fecha del turno.');return}S.shifts.push({id:uid(),date:x.date,in:x.in,out:x.out,brk:+x.brk||0,rate:+x.rate||S.rate,paid:false,source:'programado'});S.scheduledShifts=S.scheduledShifts.filter(y=>y.id!==id);budgetAlert='Turno agregado al historial.'}
+  else if(a==='clockIn'){if(activeShift()){toast('Ya hay un turno en curso.');return}const now=Date.now();S.activeShift={on:true,date:hoy(),in:hora(),startedAt:now,rate:S.rate,u:now};if(id)S.activeShift.scheduledId=id;budgetAlert='Entrada marcada a las '+S.activeShift.in}
+  else if(a==='clockOut'){const cur=activeShift();if(!cur)return;const out=hora();if(out===cur.in&&shiftElapsedHours(cur)<1/60){if(await ask('El turno duró menos de un minuto, así que no se guardará.',{title:'¿Descartar este turno?',confirmLabel:'Descartar',danger:true})){S.activeShift={on:false,u:Date.now()};save();render()}return}const brk=await askNumber('Se restan de las horas trabajadas. Escribe 0 si no tuviste descanso.',{title:'Salida a las '+out+' · ¿descanso no pago?',label:'Minutos de descanso',value:0,confirmLabel:'Guardar turno'});if(brk===null)return;S.shifts.push({id:uid(),date:cur.date,in:cur.in,out,brk,rate:+cur.rate||S.rate,paid:false,source:'reloj'});if(cur.scheduledId)S.scheduledShifts=S.scheduledShifts.filter(y=>y.id!==cur.scheduledId);S.activeShift={on:false,u:Date.now()};budgetAlert='Turno guardado: '+cur.in+'–'+out}
+  else if(a==='clockCancel'){if(!await ask('No se guardará nada de este turno.',{title:'¿Descartar el turno en curso?',confirmLabel:'Descartar',danger:true}))return;S.activeShift={on:false,u:Date.now()}}
   else if(a==='delT'){if(!await ask('Solo se quita de este día. Para dejar de repetirla, edita o elimina la rutina.',{title:'¿Eliminar esta tarea?',confirmLabel:'Eliminar',danger:true}))return;S.inst[viewDay]=(S.inst[viewDay]||[]).filter(x=>x.id!==id)}
   else if(a==='go'){goTab(id);return}
-  else if(a==='edI'){E={t:'i',d:viewDay,id};render();scrollTo(0,0);return}
-  else if(a==='edR'){E={t:'r',id};render();scrollTo(0,0);return}
+  else if(a==='dayShift'){viewDay=addDays(viewDay,+id||0);render();return}
+  else if(a==='dayToday'){viewDay=hoy();render();return}
+  else if(a==='edI'){E={t:'i',d:viewDay,id};render();document.getElementById('taskFormCard')?.scrollIntoView({block:'start'});return}
+  else if(a==='edR'){E={t:'r',id};render();document.getElementById('taskFormCard')?.scrollIntoView({block:'start'});return}
   else if(a==='canE'){E=null;render();return}
   else if(a==='togR'){const r=S.routines.find(x=>x.id===id);r.active=!r.active;if(r.active)r.genTo=addDays(hoy(),-1);gen()}
   else if(a==='delR'){if(!await ask('El historial se conserva; solo se quita la tarea pendiente de hoy.',{title:'¿Eliminar la rutina?',confirmLabel:'Eliminar',danger:true}))return;S.routines=S.routines.filter(x=>x.id!==id);S.inst[hoy()]=(S.inst[hoy()]||[]).filter(i=>!(i.rid===id&&!i.done))}
-  else if(a==='delG'){if(!await ask('Sus aportes volverán a tu disponible.',{title:'¿Eliminar la meta?',confirmLabel:'Eliminar',danger:true}))return;S.goals=S.goals.filter(x=>x.id!==id)}
+  else if(a==='delG'){const g=S.goals.find(x=>x.id===id);if(!g)return;if(!await ask(isPersonalGoal(g)?'Se borrarán la meta y sus avances.':'Sus aportes volverán a tu disponible.',{title:'¿Eliminar la meta?',confirmLabel:'Eliminar',danger:true}))return;S.goals=S.goals.filter(x=>x.id!==id)}
+  else if(a==='editG'){window._editGoal=id;render();return}
+  else if(a==='canEG'){window._editGoal=null;render();return}
+  else if(a==='withdrawG'){const g=S.goals.find(x=>x.id===id),input=actionButton.closest('form')?.querySelector('[name=amount]'),n=Math.round(+(input?.value||0)),saved=goalModel(g).done;if(!(n>0)){toast('Escribe el valor que quieres retirar.');input?.focus();return}if(n>saved){await notify('En esta meta tienes '+fmt(saved)+'. No puedes retirar más que eso.',{title:'Retiro mayor al ahorrado'});return}if(!await ask(fmt(n)+' volverán a tu disponible.',{title:'¿Retirar de «'+g.name+'»?',confirmLabel:'Retirar'}))return;g.aportes.push({id:uid(),amount:-n,date:hoy()})}
+  else if(a==='delAp'){const g=S.goals.find(x=>x.id===id),entry=actionButton.dataset.entry;if(!g)return;if(!await ask(isPersonalGoal(g)?'El avance se quitará del progreso de la meta.':'El valor se quitará de la meta y volverá a tu disponible.',{title:'¿Eliminar este registro?',confirmLabel:'Eliminar',danger:true}))return;if(isPersonalGoal(g))g.progress=(g.progress||[]).filter(x=>x.id!==entry);else g.aportes=g.aportes.filter(x=>x.id!==entry)}
   else if(a==='delSh'){if(!await ask('Se quitará del historial y de las horas del mes.',{title:'¿Eliminar este turno?',confirmLabel:'Eliminar',danger:true}))return;S.shifts=S.shifts.filter(x=>x.id!==id)}
   else if(a==='paySh'){const s=S.shifts.find(x=>x.id===id);if(!s)return;const n=await askAmount('Se registrará como ingreso recibido hoy, en la categoría Trabajo.',{title:'¿Cuánto recibiste por este turno?',value:Math.round(horas(s)*s.rate),confirmLabel:'Registrar pago'});if(n===null)return;s.paid=true;s.received=n;S.tx.push({id:uid(),type:'ingreso',name:'Pago de turno '+s.date,amount:n,date:hoy(),cat:'Trabajo',status:'recibido'})}
   else return;
