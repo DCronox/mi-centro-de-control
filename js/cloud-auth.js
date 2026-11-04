@@ -8,7 +8,7 @@
  if(!cloudClient){cloudStatus('No se pudo cargar el servicio de conexión. Revisa tu conexión a internet y recarga la página.');return}
  function showRecover(){$('cloudRecover').classList.remove('cloud-hidden');authForm.classList.add('cloud-hidden');cloudStatus('Escribe tu nueva contraseña.');$('cloudNewPassword').focus()}
  if(/type=recovery/.test(location.hash+location.search))showRecover();
- function showSignedOut(){cloudUser=null;cloudReady=false;cloudUpdatedAt=null;cloudExistingData=null;cloudLocalCandidate=null;clearTimeout(cloudPending);clearTimeout(cloudRetry);cloudPending=null;const local=getLocal('mcc1');S=Object.assign(defaults(),local||{});try{lastLocalJson=JSON.stringify(S)}catch(e){}gen();render();authForm.classList.remove('cloud-hidden');logged.classList.add('cloud-hidden');setSync('local');cloudStatus('Sesión cerrada. Los datos locales de este dispositivo siguen disponibles aquí.')}
+ function showSignedOut(){cloudUser=null;cloudReady=false;cloudUpdatedAt=null;cloudExistingData=null;cloudLocalCandidate=null;clearTimeout(cloudPending);clearTimeout(cloudRetry);cloudPending=null;const local=getLocal('mcc1');S=Object.assign(defaults(),local||{});resetSyncBaseline();try{lastLocalJson=JSON.stringify(S)}catch(e){}gen();render();authForm.classList.remove('cloud-hidden');logged.classList.add('cloud-hidden');setSync('local');cloudStatus('Sesión cerrada. Los datos locales de este dispositivo siguen disponibles aquí.')}
  function showSignedIn(){authForm.classList.add('cloud-hidden');logged.classList.remove('cloud-hidden');$('cloudAccount').textContent='Sesión iniciada: '+(cloudUser.email||'cuenta Supabase')+'.'}
  let signingIn=false;
  async function onSignedIn(user){
@@ -19,7 +19,7 @@
    const accountLocal=getLocal(accountKey(user.id)),legacy=accountLocal?null:getLocal('mcc1'),local=accountLocal||legacy||null;
    let firstTime=true;try{firstTime=!localStorage.getItem('mcc2-synced-'+user.id)}catch(e){}
    const unsynced=isDirty()||firstTime||(!accountLocal&&hasPersonalData(legacy));
-   S=Object.assign(defaults(),local||{});try{lastLocalJson=JSON.stringify(S)}catch(e){}render();
+   S=Object.assign(defaults(),local||{});resetSyncBaseline();try{lastLocalJson=JSON.stringify(S)}catch(e){}render();
    const {data,error}=await cloudClient.from('mcc_data').select('data,updated_at').eq('user_id',user.id).maybeSingle();
    if(error)throw error;
    let mustPush=false;

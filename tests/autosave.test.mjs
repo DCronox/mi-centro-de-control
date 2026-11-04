@@ -2,12 +2,15 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
-import { appSource } from './helpers/app-source.mjs';
-const src=appSource();
-const a=src.indexOf('function mergeData('),b=src.indexOf('function softRender');
-const ctx={defaultData:()=>({tx:[],goals:[],routines:[],inst:{},budgets:[],obligations:[],scheduledShifts:[],rate:13000,shifts:[]})};
-vm.createContext(ctx);vm.runInContext(src.slice(a,b)+';this.mergeData=mergeData',ctx);
+
+// Carga el modelo de sincronización tal como lo usa la app.
+const model=fs.readFileSync(new URL('../js/sync-model.js',import.meta.url),'utf8');
+const ctx={};
+vm.createContext(ctx);
+vm.runInContext(model+';this.mergeData=mergeData;this.trackChanges=trackChanges;this.syncSnapshot=syncSnapshot;this.defaultData=defaultData;this.normalizeData=normalizeData',ctx);
 const D=o=>Object.assign(ctx.defaultData(),o);
+const clone=o=>JSON.parse(JSON.stringify(o));
+
 test('une movimientos de dos dispositivos sin perder ninguno',()=>{
   const m=ctx.mergeData(D({tx:[{id:'a'},{id:'b'}]}),D({tx:[{id:'b'},{id:'c'}]}));
   assert.equal(m.tx.map(t=>t.id).sort().join(),'a,b,c');
@@ -21,3 +24,51 @@ test('obligación mensual no genera dos gastos',()=>{
   assert.equal(m.tx.length,1);
 });
 test('la tarifa de este dispositivo prevalece',()=>{assert.equal(ctx.mergeData(D({rate:10000}),D({rate:15000})).rate,15000)});
+
+test('un borrado en un dispositivo no reaparece al unir con otro que aún tenía el elemento',()=>{
+  const base=D({tx:[{id:'a',name:'Café'},{id:'b',name:'Bus'}]});
+  // Dispositivo A borra «a»
+  const A=clone(base);let snap=ctx.syncSnapshot(A);A.tx=A.tx.filter(t=>t.id!=='a');ctx.trackChanges(A,snap,1000);
+  assert.ok(A.deleted['tx|id:a'],'queda una lápida');
+  // Dispositivo B sigue con la copia vieja y agrega «c»
+  const B=clone(base);snap=ctx.syncSnapshot(B);B.tx.push({id:'c',name:'Pan'});ctx.trackChanges(B,snap,1100);
+  const m=ctx.mergeData(A,B);
+  assert.deepEqual([...m.tx.map(t=>t.id).sort()],['b','c']);
+  assert.deepEqual([...ctx.mergeData(B,A).tx.map(t=>t.id).sort()],['b','c'],'el orden de la unión no importa');
+});
+test('gana la edición más reciente del mismo elemento',()=>{
+  const base=D({tx:[{id:'a',status:'pendiente'}]});
+  const A=clone(base);let s=ctx.syncSnapshot(A);A.tx[0].status='pagado';ctx.trackChanges(A,s,2000);
+  const B=clone(base);s=ctx.syncSnapshot(B);B.tx[0].name='Arriendo';ctx.trackChanges(B,s,1000);
+  assert.equal(ctx.mergeData(A,B).tx[0].status,'pagado');
+  assert.equal(ctx.mergeData(B,A).tx[0].status,'pagado');
+});
+test('los aportes a una meta hechos en dos dispositivos se conservan todos',()=>{
+  const base=ctx.normalizeData(D({goals:[{id:'g',name:'Moto',target:1000,monthly:0,aportes:[{amount:100,date:'2026-10-01'}]}]}));
+  const A=clone(base);let s=ctx.syncSnapshot(A);A.goals[0].aportes.push({id:'x1',amount:50,date:'2026-10-05'});ctx.trackChanges(A,s,1000);
+  const B=clone(base);s=ctx.syncSnapshot(B);B.goals[0].aportes.push({id:'y1',amount:70,date:'2026-10-06'});ctx.trackChanges(B,s,1100);
+  const m=ctx.mergeData(A,B);
+  assert.equal(m.goals.length,1);
+  assert.deepEqual([...m.goals[0].aportes.map(a=>a.amount)],[100,50,70]);
+});
+test('los aportes antiguos sin id reciben el mismo id en todos los dispositivos',()=>{
+  const raw={goals:[{id:'g',aportes:[{amount:10,date:'2026-01-01'},{amount:10,date:'2026-01-01'}]}]};
+  const a=ctx.normalizeData(D(clone(raw))),b=ctx.normalizeData(D(clone(raw)));
+  assert.deepEqual([...a.goals[0].aportes.map(x=>x.id)],[...b.goals[0].aportes.map(x=>x.id)]);
+  assert.notEqual(a.goals[0].aportes[0].id,a.goals[0].aportes[1].id);
+  assert.equal(ctx.mergeData(a,b).goals[0].aportes.length,2,'no se duplican');
+});
+test('un elemento restaurado después de borrarlo sobrevive a la lápida',()=>{
+  const A=D({tx:[],deleted:{'tx|id:a':1000}});
+  const B=D({tx:[{id:'a',u:2000}]});
+  assert.equal(ctx.mergeData(A,B).tx.length,1);
+});
+test('borrar una tarea del día deja lápida y no vuelve',()=>{
+  const base=D({inst:{'2026-10-30':[{id:'t1',date:'2026-10-30',name:'Leer'}]}});
+  const A=clone(base);const s=ctx.syncSnapshot(A);A.inst['2026-10-30']=[];ctx.trackChanges(A,s,5000);
+  assert.equal(ctx.mergeData(base,A).inst['2026-10-30'].length,0);
+});
+test('datos antiguos sin lápidas ni marcas siguen uniéndose igual que antes',()=>{
+  const m=ctx.mergeData({tx:[{id:'a'}],goals:[],routines:[],inst:{},shifts:[]},{tx:[{id:'b'}],goals:[],routines:[],inst:{},shifts:[]});
+  assert.equal(m.tx.length,2);assert.deepEqual({...m.deleted},{});
+});

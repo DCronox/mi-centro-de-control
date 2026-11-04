@@ -1,5 +1,13 @@
-const CACHE = 'mi-centro-control-v8';
-const CORE = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png', './privacidad.html', './terminos.html', './cookies.html'];
+const CACHE = 'mi-centro-control-v9';
+const CORE = [
+  './', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png',
+  './privacidad.html', './terminos.html', './cookies.html',
+  './css/app.css', './lib/supabase-2.118.0.js',
+  './js/theme-boot.js', './js/util.js', './js/sync-model.js', './js/store.js', './js/domain.js', './js/finance.js',
+  './js/charts.js', './js/shell.js', './js/views/dashboard.js', './js/views/money.js', './js/views/day.js',
+  './js/views/goals.js', './js/views/shifts.js', './js/views/reports.js', './js/views/insights.js',
+  './js/events.js', './js/cloud-auth.js', './js/sw-register.js'
+];
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(CORE)));
   self.skipWaiting();
@@ -23,8 +31,16 @@ self.addEventListener('fetch', event => {
     }).catch(() => caches.match(request).then(hit => hit || caches.match('./index.html'))));
     return;
   }
+  // Código de la app (CSS/JS): red primero para recibir correcciones; caché si no hay conexión.
+  if (/\/(js|css)\//.test(url.pathname)) {
+    event.respondWith(fetch(request).then(response => {
+      if (response.ok) { const copy = response.clone(); caches.open(CACHE).then(cache => cache.put(request, copy)); }
+      return response;
+    }).catch(() => caches.match(request)));
+    return;
+  }
   event.respondWith(caches.match(request).then(cached => cached || fetch(request).then(response => {
-    if (response.ok) caches.open(CACHE).then(cache => cache.put(request, response.clone()));
+    if (response.ok) { const copy = response.clone(); caches.open(CACHE).then(cache => cache.put(request, copy)); }
     return response;
   })));
 });

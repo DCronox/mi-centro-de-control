@@ -3,8 +3,9 @@ const CATS=['Alimentación','Transporte','Universidad','Gimnasio','Hogar','Entre
 const fmt=n=>'$'+Math.round(n).toLocaleString('es-CO')+' COP';
 const hoy=()=>new Intl.DateTimeFormat('en-CA',{timeZone:TZ}).format(new Date());
 const hora=()=>new Intl.DateTimeFormat('en-GB',{timeZone:TZ,hour:'2-digit',minute:'2-digit'}).format(new Date());
-const uid=()=>Math.random().toString(36).slice(2,10);
-const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+/* Identificador único: UUID del navegador; si no existe, 128 bits aleatorios criptográficos. */
+const uid=()=>{const c=globalThis.crypto;if(c?.randomUUID)return c.randomUUID();if(c?.getRandomValues){const b=c.getRandomValues(new Uint8Array(16));return [...b].map(x=>x.toString(16).padStart(2,'0')).join('')}return Date.now().toString(36)+Math.random().toString(36).slice(2,12)};
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function fechaLarga(d){return new Intl.DateTimeFormat('es-CO',{timeZone:TZ,weekday:'long',day:'numeric',month:'long',year:'numeric'}).format(new Date(d+'T12:00:00-05:00'))}
 function dow(d){return new Date(d+'T12:00:00-05:00').getUTCDay()}
 const addDays=(d,n)=>{const x=new Date(d+'T12:00:00Z');x.setUTCDate(x.getUTCDate()+n);return x.toISOString().slice(0,10)};

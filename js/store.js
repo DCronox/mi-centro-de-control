@@ -1,12 +1,15 @@
-let S={tx:[],goals:[],routines:[],inst:{},budgets:[],obligations:[],scheduledShifts:[],rate:13000,shifts:[]};
+let S=defaultData();
 try{const r=localStorage.getItem('mcc1');if(r){const d=JSON.parse(r);if(validData(d))S=Object.assign(S,d)}}catch(e){}
+/* Instantánea de los elementos tal como se guardaron por última vez; sirve para detectar cambios y borrados. */
+let syncBaseline=new Map();
+function resetSyncBaseline(){normalizeData(S);syncBaseline=syncSnapshot(S)}
+resetSyncBaseline();
 let cloudUser=null,cloudReady=false,cloudPending=null,cloudClient=null,cloudExistingData=null,cloudUpdatedAt=null,cloudSaving=false,cloudLocalCandidate=null,cloudPulling=false;
 const CLOUD_URL='https://xruxsuobpctyekkyracr.supabase.co';
 const CLOUD_KEY='sb_publishable_-0Zepm3uTSMSM1wMKTvpmA_ZP3vyPaM';
 try{if(window.supabase?.createClient)cloudClient=window.supabase.createClient(CLOUD_URL,CLOUD_KEY)}catch(e){}
 const cloudStatus=(m)=>{const el=document.getElementById('cloudStatus'),panel=document.getElementById('cloudPanel');if(el)el.textContent=m;if(panel)panel.setAttribute('aria-busy',String(/…$/.test(m)))};
 let localRevision=0,saveFailed=false,lastLocalJson=null,cloudResave=false,cloudRetry=null,renderPending=false,syncState='local';
-const defaultData=()=>({tx:[],goals:[],routines:[],inst:{},budgets:[],obligations:[],scheduledShifts:[],rate:13000,shifts:[]});
 const dirtyKey=()=>'mcc1-dirty-'+(cloudUser?cloudUser.id:'');
 const isDirty=()=>{try{return !!cloudUser&&localStorage.getItem(dirtyKey())==='1'}catch(e){return false}};
 const setDirty=v=>{try{if(!cloudUser)return;if(v)localStorage.setItem(dirtyKey(),'1');else localStorage.removeItem(dirtyKey())}catch(e){}};
@@ -28,23 +31,9 @@ function setSync(state){
   cloudStatus(M[1]);
 }
 const cloudSchedule=()=>{if(!cloudClient||!cloudUser||!cloudReady)return;setSync(navigator.onLine?'pending':'offline');clearTimeout(cloudPending);cloudPending=setTimeout(()=>{cloudPending=null;cloudSave()},600)};
-/* Une dos copias sin perder nada: por id (gana este dispositivo); tareas y obligaciones generadas se deduplican */
-function mergeData(remote,local){
-  const out=Object.assign(defaultData(),remote,local);
-  const pick=(a,b)=>(b.done&&!a.done)?b:(a.done&&!b.done)?a:b;
-  const union=(x,y,keyOf)=>{const m=new Map();(Array.isArray(x)?x:[]).forEach(v=>m.set(keyOf(v),v));(Array.isArray(y)?y:[]).forEach(v=>{const k=keyOf(v);m.set(k,m.has(k)?pick(m.get(k),v):v)});return[...m.values()]};
-  const byId=v=>v&&typeof v==='object'&&v.id!=null?'id:'+v.id:'j:'+JSON.stringify(v);
-  const txKey=v=>v&&v.obligationId&&v.obligationMonth?'ob:'+v.obligationId+':'+v.obligationMonth:byId(v);
-  const instKey=v=>v&&v.rid?'rid:'+v.rid+':'+v.date:byId(v);
-  out.tx=union(remote.tx,local.tx,txKey);
-  ['goals','routines','budgets','obligations','scheduledShifts','shifts'].forEach(k=>{out[k]=union(remote[k],local[k],byId)});
-  const inst={};new Set([...Object.keys(remote.inst||{}),...Object.keys(local.inst||{})]).forEach(d=>{inst[d]=union((remote.inst||{})[d],(local.inst||{})[d],instKey)});
-  out.inst=inst;
-  return out;
-}
 function softRender(){const a=document.activeElement,app=document.getElementById('app');if(a&&app&&app.contains(a)&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)){renderPending=true;return}render()}
 document.addEventListener('focusout',()=>{if(!renderPending)return;setTimeout(()=>{const a=document.activeElement,app=document.getElementById('app');if(a&&app&&app.contains(a)&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName))return;renderPending=false;render()},60)});
-function adopt(d){S=Object.assign(defaultData(),d);try{lastLocalJson=JSON.stringify(S);if(cloudUser)localStorage.setItem('mcc1-user-'+cloudUser.id,lastLocalJson)}catch(e){}softRender()}
+function adopt(d){S=Object.assign(defaultData(),d);resetSyncBaseline();try{lastLocalJson=JSON.stringify(S);if(cloudUser)localStorage.setItem('mcc1-user-'+cloudUser.id,lastLocalJson)}catch(e){}softRender()}
 function backupLocal(){try{localStorage.setItem('mcc1-backup-before-cloud',JSON.stringify(S))}catch(e){}}
 async function cloudPush(data){
   const updatedAt=new Date().toISOString();
@@ -101,8 +90,8 @@ async function cloudPull(){
   }catch(e){}finally{cloudPulling=false}
 }
 async function flushCloud(){if(cloudPending||isDirty())await cloudSave()}
-const save=()=>{saveFailed=false;let json=null;try{json=JSON.stringify(S)}catch(e){}if(json!==null&&json===lastLocalJson)return true;lastLocalJson=json;localRevision++;try{const key=cloudUser?'mcc1-user-'+cloudUser.id:'mcc1';localStorage.setItem(key,json);if(cloudUser)setDirty(true)}catch(e){saveFailed=true;cloudStatus('No se pudo guardar en este navegador. Descarga una copia de seguridad.')}cloudSchedule();return !saveFailed};
-function validData(d){return d&&typeof d==='object'&&Array.isArray(d.tx)&&Array.isArray(d.goals)&&Array.isArray(d.routines)&&d.inst&&typeof d.inst==='object'&&Array.isArray(d.shifts)&&(d.budgets===undefined||Array.isArray(d.budgets))&&(d.obligations===undefined||Array.isArray(d.obligations))&&(d.scheduledShifts===undefined||Array.isArray(d.scheduledShifts))}
+const save=()=>{saveFailed=false;let json=null;try{json=JSON.stringify(S)}catch(e){}if(json!==null&&json===lastLocalJson)return true;try{syncBaseline=trackChanges(S,syncBaseline,Date.now());json=JSON.stringify(S)}catch(e){}lastLocalJson=json;localRevision++;try{const key=cloudUser?'mcc1-user-'+cloudUser.id:'mcc1';localStorage.setItem(key,json);if(cloudUser)setDirty(true)}catch(e){saveFailed=true;cloudStatus('No se pudo guardar en este navegador. Descarga una copia de seguridad.')}cloudSchedule();return !saveFailed};
+function validData(d){return !!d&&typeof d==='object'&&!Array.isArray(d)&&Array.isArray(d.tx)&&Array.isArray(d.goals)&&Array.isArray(d.routines)&&d.inst&&typeof d.inst==='object'&&Array.isArray(d.shifts)&&(d.budgets===undefined||Array.isArray(d.budgets))&&(d.obligations===undefined||Array.isArray(d.obligations))&&(d.scheduledShifts===undefined||Array.isArray(d.scheduledShifts))}
 function exportBackup(){const payload={app:'Mi Centro de Control',version:1,exportedAt:new Date().toISOString(),data:S};const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='mi-centro-de-control-'+hoy()+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);toast('Copia descargada')}
 document.getElementById('exportData').addEventListener('click',exportBackup);
-document.getElementById('importData').addEventListener('change',async e=>{const f=e.target.files?.[0];if(!f)return;try{const parsed=JSON.parse(await f.text()),d=parsed?.data||parsed;if(!validData(d))throw new Error('La copia no tiene el formato esperado.');if(!confirm('Restaurar esta copia reemplazará los datos actuales de este dispositivo. Se guardará una copia local de respaldo. ¿Continuar?'))return;try{localStorage.setItem('mcc1-backup-before-import-'+Date.now(),JSON.stringify(S))}catch(_){}S=Object.assign({tx:[],goals:[],routines:[],inst:{},budgets:[],obligations:[],scheduledShifts:[],rate:13000,shifts:[]},d);gen();save();render();toast('Copia restaurada')}catch(err){alert('No se pudo restaurar la copia: '+(err.message||err))}finally{e.target.value=''}});
+document.getElementById('importData').addEventListener('change',async e=>{const f=e.target.files?.[0];if(!f)return;try{const parsed=JSON.parse(await f.text()),d=parsed?.data||parsed;if(!validData(d))throw new Error('La copia no tiene el formato esperado.');if(!confirm('Restaurar esta copia reemplazará los datos actuales de este dispositivo. Se guardará una copia local de respaldo. ¿Continuar?'))return;try{localStorage.setItem('mcc1-backup-before-import-'+Date.now(),JSON.stringify(S))}catch(_){}const prevDeleted=S.deleted||{};S=Object.assign(defaultData(),d);normalizeData(S);S.deleted=Object.assign({},prevDeleted,S.deleted);gen();save();render();toast('Copia restaurada')}catch(err){alert('No se pudo restaurar la copia: '+(err.message||err))}finally{e.target.value=''}});

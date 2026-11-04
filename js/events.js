@@ -5,7 +5,7 @@ app.addEventListener('submit',e=>{
   else if(f.id==='fTask'){if(saveTask(v)===false)return}
   else if(f.id==='fGoal'){S.goals.push({id:uid(),name:v.name,target:+v.target,monthly:+v.monthly||0,aportes:[]})}
   else if(f.id==='fBudget'){const cat=v.cat.trim(),amount=+v.amount,existing=S.budgets.find(b=>b&&String(b.cat||'').trim().toLocaleLowerCase('es-CO')===cat.toLocaleLowerCase('es-CO'));if(existing)existing.amount=amount;else S.budgets.push({id:uid(),cat,amount})}
-  else if(f.classList.contains('fAp')){const g=S.goals.find(x=>x.id===f.dataset.id);g.aportes.push({amount:+v.amount,date:hoy()})}
+  else if(f.classList.contains('fAp')){const g=S.goals.find(x=>x.id===f.dataset.id);g.aportes.push({id:uid(),amount:+v.amount,date:hoy()})}
   else if(f.id==='fObligation'){S.obligations.push({id:uid(),name:v.name.trim(),amount:+v.amount,cat:v.cat.trim()||'Otros',day:Math.min(31,Math.max(1,+v.day||1)),active:true,generatedMonths:[]});generateMonthlyObligations()}
   else if(f.id==='fSchedule'){S.scheduledShifts.push({id:uid(),name:(v.name||'').trim(),date:v.date,in:v.in,out:v.out,brk:+v.brk||0,rate:S.rate})}
   else if(f.id==='fShift'){const r=+v.rate||S.rate;S.rate=r;S.shifts.push({id:uid(),date:v.date,in:v.in,out:v.out,brk:+v.brk||0,rate:r,paid:false})}
@@ -42,10 +42,14 @@ app.addEventListener('change',e=>{
   if(e.target.id==='reportMonth'){window._reportMonth=e.target.value;render();return}
   if(e.target.id==='insightsMonth'){window._insightsMonth=e.target.value;render();return}
   if(e.target.id==='insightsRange'){window._insightsRange=Number(e.target.value);render();return}
+  if(e.target.dataset.filter){window[e.target.dataset.filter]=e.target.value;render2();return}
   const a=e.target.dataset.a,id=e.target.dataset.id;
+  if(a==='viewDay'){viewDay=/^\d{4}-\d{2}-\d{2}$/.test(e.target.value)?e.target.value:hoy();render();return}
   if(a==='tgl'){const i=getI(e.target.dataset.d||viewDay,id);if(i){i.done=e.target.checked;i.real=i.done?hora():'';save();render()}}
   else if(a==='note'){const i=getI(viewDay,id);if(i){i.note=e.target.value;save()}}
 });
+/* Búsqueda de movimientos: actualiza solo los resultados mientras se escribe. */
+app.addEventListener('input',e=>{if(e.target.dataset.filter==='_q'){window._q=e.target.value;render2()}});
 
 /* ---- cambio de día automático ---- */
 function check(){gen();const h=hoy();if(h!==day){if(viewDay===day)viewDay=h;day=h}render()}

@@ -9,9 +9,8 @@ Los avisos locales ya están diligenciados con Estiben Caro, Medellín, Colombia
 3. Authentication > URL Configuration: pon como Site URL la dirección publicada y agrégala en Redirect URLs (sin esto no funciona «Olvidé mi contraseña»).
 4. Prueba con dos cuentas: cada una debe ver solo sus datos.
 
-## 3. Librería de Supabase sin CDN (recomendado; aún pendiente)
-La app carga `@supabase/supabase-js@2` desde jsDelivr con versión flotante y sin verificación de integridad. Desde mi entorno no tengo internet para descargarla y calcular el hash, así que queda pendiente:
-descarga esa librería, guárdala como `vendor/supabase.js`, cambia el `src` del `<script>` en `index.html` a `./vendor/supabase.js`, agrega la ruta a `CORE` en `service-worker.js` y quita `https://cdn.jsdelivr.net` de la política CSP y de la política de privacidad.
+## 3. Librería de Supabase sin CDN (hecho en la evolución v2)
+Supabase JS 2.118.0 se sirve desde `lib/supabase-2.118.0.js`, obtenido del paquete oficial de npm y verificado con su hash de integridad. Ya no se usa jsDelivr ni Google Fonts, y `index.html` declara una política CSP.
 
 ## 4. Funcionalidad ya incluida
 - Insights usa la fuente financiera existente y no requiere una migración de esquema.
