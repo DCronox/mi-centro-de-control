@@ -1,0 +1,31 @@
+/* Cliente Supabase SIMULADO para probar gym.html en el navegador sin red ni datos reales.
+   Uso (consola o herramienta de pruebas): pegar este archivo y luego `await gymMockBoot()`.
+   Guarda la «base de datos» simulada en sessionStorage para sobrevivir a una recarga. */
+(function(){
+  const KEY='gym-mock-db';
+  const seed=()=>({gym_routines:[],gym_sessions:[{id:'ses-anterior',routine_id:null,name:'Entreno anterior',started_at:'2026-10-28T11:00:00Z',ended_at:'2026-10-28T12:00:00Z',notes:''}],
+    gym_sets:[{id:'set-anterior',session_id:'ses-anterior',exercise_id:'ex-banca',set_index:1,weight_kg:60,reps:10,rpe:null}],
+    gym_exercises:[{id:'ex-banca',name:'Press de banca',muscle:'Pecho',notes:'',archived:false,catalog_key:null,muscles:{}}],body_metrics:[]});
+  const load=()=>{try{return JSON.parse(sessionStorage.getItem(KEY))||seed()}catch(e){return seed()}};
+  const persist=db=>sessionStorage.setItem(KEY,JSON.stringify(db));
+  window.gymMockCalls=[];
+  function from(table){
+    const st={op:'select',body:null,filters:[],single:false};
+    const api={select(){return api},insert(b){st.op='insert';st.body=b;return api},update(b){st.op='update';st.body=b;return api},upsert(b){st.op='upsert';st.body=b;return api},delete(){st.op='delete';return api},
+      eq(k,v){st.filters.push([k,v]);return api},in(){return api},gte(){return api},order(){return api},limit(){return api},single(){st.single=true;return api},maybeSingle(){st.single=true;return api},
+      then(res,rej){
+        const db=load(),rows=db[table],match=r=>st.filters.every(([k,v])=>r[k]===v);let data=null;
+        gymMockCalls.push(st.op+' '+table);
+        if(st.op==='select')data=st.filters.length?rows.filter(match):rows;
+        else if(st.op==='insert'){const list=[].concat(st.body).map(b=>({id:crypto.randomUUID(),archived:false,position:0,notes:'',catalog_key:null,muscles:{},...b}));rows.push(...list);data=st.single?list[0]:list}
+        else if(st.op==='update'){rows.filter(match).forEach(r=>Object.assign(r,st.body));data=st.single?rows.find(match):null}
+        else if(st.op==='upsert'){[].concat(st.body).forEach(b=>{const i=rows.findIndex(r=>r.id===b.id);if(i>=0)rows[i]={...rows[i],...b};else rows.push({...b})})}
+        else if(st.op==='delete'){db[table]=rows.filter(r=>!match(r));if(table==='gym_routines')db.gym_sessions.forEach(s=>{if(!db.gym_routines.some(r=>r.id===s.routine_id))s.routine_id=null})}
+        persist(db);return Promise.resolve({data,error:null}).then(res,rej);
+      }};
+    return api;
+  }
+  window.gymMockDb=()=>load();
+  window.gymMockReset=()=>sessionStorage.removeItem(KEY);
+  window.gymMockBoot=async()=>{gymClient={from,auth:{getSession:async()=>({data:{session:{user:{id:'u-prueba',email:'prueba@local'}}},error:null})}};await gymBoot()};
+})();

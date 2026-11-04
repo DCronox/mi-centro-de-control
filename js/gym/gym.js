@@ -19,9 +19,8 @@ const GI={
 const gico=(n,z=18)=>`<svg class="i" width="${z}" height="${z}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${GI[n]||''}</svg>`;
 const GYM_TABS=[['resumen','Resumen','Gym','home'],['rutinas','Rutinas','Rutinas','list'],['entrenar','Entrenar','Entrenamiento','dumbbell'],['progreso','Progreso','Progreso','chart'],['fisico','Físico','Seguimiento físico','body'],['nutricion','Nutrición','Nutrición','apple']];
 const GYM_MORE=['fisico','nutricion'];
-const GYM_STARTERS=[['Press de banca','Pecho'],['Press inclinado con mancuernas','Pecho'],['Aperturas en polea','Pecho'],['Fondos','Tríceps'],['Dominadas','Espalda'],['Jalón al pecho','Espalda'],['Remo con barra','Espalda'],['Remo en polea baja','Espalda'],['Press militar','Hombros'],['Elevaciones laterales','Hombros'],['Face pull','Hombros'],['Curl con barra','Bíceps'],['Curl martillo','Bíceps'],['Extensión de tríceps en polea','Tríceps'],['Sentadilla','Cuádriceps'],['Prensa de piernas','Cuádriceps'],['Extensión de cuádriceps','Cuádriceps'],['Peso muerto rumano','Femoral'],['Curl femoral','Femoral'],['Hip thrust','Glúteos'],['Zancadas','Glúteos'],['Elevación de talones','Pantorrillas'],['Plancha','Abdomen'],['Crunch en polea','Abdomen']];
 const DAYN=['D','L','M','X','J','V','S'],DAYL=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
-let gtab='resumen',gData=null,gSummary=null,gAccount={state:'local',user:null},gEdit=null,gProgEx=null;
+let gtab='resumen',gData=null,gSummary=null,gAccount={state:'local',user:null},gEdit=null,gProgEx=null,gMapSel=null,gMapDays=7;
 
 const phase=(txt)=>`<span class="chip chip-muted phase-chip">${gico('lock',13)} ${gesc(txt)}</span>`;
 const fdate=d=>new Intl.DateTimeFormat('es-CO',{timeZone:GYM_TZ,weekday:'long',day:'numeric',month:'long'}).format(new Date(d+'T12:00:00-05:00'));
@@ -68,9 +67,14 @@ function needAccount(what){
   return '';
 }
 function syncBanner(){const n=gymPendingCount();return n?`<div class="sync-banner">${gico('cloud',16)}<span>${n} ${n===1?'entrenamiento pendiente':'entrenamientos pendientes'} de subir. Se enviará${n===1?'':'n'} al recuperar la conexión.</span><button class="lk" type="button" data-act="flush">Reintentar ahora</button></div>`:''}
-function exerciseOptions(){const mine=GS.exercises.filter(e=>!e.archived).map(e=>e.name),set=new Set(mine.map(n=>n.toLocaleLowerCase('es-CO')));return [...mine,...GYM_STARTERS.map(s=>s[0]).filter(n=>!set.has(n.toLocaleLowerCase('es-CO')))].map(n=>`<option value="${gesc(n)}">`).join('')}
-function muscleSelect(name,val='Otro'){return `<select name="${name}">${GYM_MUSCLES.map(m=>`<option ${m===val?'selected':''}>${m}</option>`).join('')}</select>`}
-const starterMuscle=n=>GYM_STARTERS.find(s=>s[0].toLocaleLowerCase('es-CO')===String(n).trim().toLocaleLowerCase('es-CO'))?.[1]||null;
+function exerciseOptions(){const mine=GS.exercises.filter(e=>!e.archived).map(e=>e.name),set=new Set(mine.map(gymNorm));return [...mine,...GYM_CATALOG.map(c=>c.name).filter(n=>!set.has(gymNorm(n)))].map(n=>`<option value="${gesc(n)}">`).join('')}
+/* Selector de músculo (los 20 del mapa), agrupados. */
+function muscleOptions(blank){const groups={};GYM_MUSCLE_LIST.forEach(([id,name,group])=>{(groups[group]=groups[group]||[]).push([id,name])});return (blank?`<option value="">${blank}</option>`:'')+Object.entries(groups).map(([g,ms])=>`<optgroup label="${g}">${ms.map(([id,n])=>`<option value="${id}">${n}</option>`).join('')}</optgroup>`).join('')}
+/* Formulario para añadir un ejercicio: si está en el catálogo se clasifica solo. */
+function addExerciseForm(id,listId,btn){return `<form id="${id}" class="add-ex"><label class="fl">Ejercicio<input name="name" list="${listId}" maxlength="80" placeholder="Escribe o elige" required autocomplete="off"></label><datalist id="${listId}">${exerciseOptions()}</datalist>
+  <label class="fl">Músculo principal<select name="primary">${muscleOptions('Automático (catálogo)')}</select></label><label class="fl">Secundario<select name="secondary">${muscleOptions('Ninguno')}</select></label><button class="g" type="submit">${gico('plus',15)}<span>${btn}</span></button></form>
+  <p class="k add-ex-hint">Los ejercicios del catálogo traen su clasificación muscular. Si escribes uno nuevo, elige su músculo principal (y si quieres, uno secundario).</p>`}
+function exerciseMuscleTags(id){const ex=gymExercise(id),{map}=gymExerciseMuscles(ex);return Object.entries(map).sort((a,b)=>a[1]===b[1]?0:a[1]==='P'?-1:1).map(([m,r])=>`<span class="tag ${r==='P'?'tag-p':''}">${gesc(GYM_MUSCLES_BY_ID[m].name)}</span>`).join('')}
 
 /* ---- Resumen ---- */
 function vResumen(){
@@ -112,19 +116,18 @@ function vRutinas(){
   const today=new Date(gymToday()+'T12:00:00Z').getUTCDay();
   const list=GS.routines.length?GS.routines.map(r=>`<article class="card routine-card ${(r.days||[]).includes(today)?'is-today':''}"><div class="routine-head"><div><h2>${gesc(r.name)}${(r.days||[]).includes(today)?' <span class="chip chip-ok">Hoy</span>':''}</h2><p class="k">${gesc(routineDays(r))} · ${(r.items||[]).length} ${(r.items||[]).length===1?'ejercicio':'ejercicios'}</p></div><button class="b" type="button" data-act="startRoutine" data-id="${gesc(r.id)}">${gico('dumbbell',16)}<span>Entrenar</span></button></div>
     ${(r.items||[]).length?`<ol class="routine-items">${r.items.map(it=>`<li><b>${gesc(exName(it.exercise_id))}</b><span class="k">${it.sets} × ${it.reps_min}${it.reps_max!==it.reps_min?'–'+it.reps_max:''} · ${it.rest_s} s</span></li>`).join('')}</ol>`:'<p class="k">Sin ejercicios todavía.</p>'}
-    <div class="goal-tools"><button class="g" type="button" data-act="editRoutine" data-id="${gesc(r.id)}">${gico('edit',15)}<span>Editar</span></button><button class="g danger" type="button" data-act="archiveRoutine" data-id="${gesc(r.id)}">Archivar</button></div></article>`).join(''):`<div class="empty gym-empty"><b>Aún no tienes rutinas</b><span>Crea tu primera rutina con sus ejercicios, series y descansos.</span></div>`;
+    <div class="goal-tools"><button class="g" type="button" data-act="editRoutine" data-id="${gesc(r.id)}">${gico('edit',15)}<span>Editar</span></button><button class="g danger" type="button" data-act="deleteRoutine" data-id="${gesc(r.id)}">Eliminar</button></div></article>`).join(''):`<div class="empty gym-empty"><b>Aún no tienes rutinas</b><span>Crea tu primera rutina con sus ejercicios, series y descansos.</span></div>`;
   return syncBanner()+`<div class="section-actions"><button class="b" type="button" data-act="newRoutine">${gico('plus',16)}<span>Nueva rutina</span></button></div>${list}`;
 }
 function vRoutineEditor(){
   const e=gEdit;
-  const items=e.items.map((it,i)=>`<div class="ed-item" data-i="${i}"><div class="ed-item-head"><b>${gesc(exName(it.exercise_id))}</b><span class="tag">${gesc(gymExercise(it.exercise_id)?.muscle||'')}</span><span class="ed-move"><button class="g ic-b" type="button" data-act="itemUp" data-i="${i}" aria-label="Subir" ${i===0?'disabled':''}>${gico('up',15)}</button><button class="g ic-b" type="button" data-act="itemDown" data-i="${i}" aria-label="Bajar" ${i===e.items.length-1?'disabled':''}>${gico('down',15)}</button><button class="g ic-b" type="button" data-act="itemRemove" data-i="${i}" aria-label="Quitar ${gesc(exName(it.exercise_id))}">${gico('x',15)}</button></span></div>
+  const items=e.items.map((it,i)=>`<div class="ed-item" data-i="${i}"><div class="ed-item-head"><b>${gesc(exName(it.exercise_id))}</b><span class="ed-tags">${exerciseMuscleTags(it.exercise_id)}</span><span class="ed-move"><button class="g ic-b" type="button" data-act="itemUp" data-i="${i}" aria-label="Subir" ${i===0?'disabled':''}>${gico('up',15)}</button><button class="g ic-b" type="button" data-act="itemDown" data-i="${i}" aria-label="Bajar" ${i===e.items.length-1?'disabled':''}>${gico('down',15)}</button><button class="g ic-b" type="button" data-act="itemRemove" data-i="${i}" aria-label="Quitar ${gesc(exName(it.exercise_id))}">${gico('x',15)}</button></span></div>
     <div class="ed-fields"><label class="fl">Series<input type="number" min="1" max="20" inputmode="numeric" value="${it.sets}" data-item="${i}" data-k="sets"></label><label class="fl">Reps mín.<input type="number" min="1" max="100" inputmode="numeric" value="${it.reps_min}" data-item="${i}" data-k="reps_min"></label><label class="fl">Reps máx.<input type="number" min="1" max="100" inputmode="numeric" value="${it.reps_max}" data-item="${i}" data-k="reps_max"></label><label class="fl">Descanso (s)<input type="number" min="0" max="900" step="15" inputmode="numeric" value="${it.rest_s}" data-item="${i}" data-k="rest_s"></label></div></div>`).join('');
   return `<section class="card"><h2>${e.id?'Editar rutina':'Nueva rutina'}</h2>
     <label class="fl">Nombre<input id="edName" maxlength="60" placeholder="Ej. Empuje, Pierna, Torso" value="${gesc(e.name)}"></label>
     <fieldset class="days"><legend>Días de la semana</legend>${[1,2,3,4,5,6,0].map(d=>`<label><input type="checkbox" data-day="${d}" ${e.days.includes(d)?'checked':''}><span>${DAYL[d]}</span></label>`).join('')}</fieldset></section>
   <section class="card"><h2>Ejercicios</h2>${items||'<div class="empty">Agrega el primer ejercicio abajo.</div>'}
-    <form id="fAddEx" class="add-ex"><label class="fl">Ejercicio<input name="name" list="exList" maxlength="80" placeholder="Escribe o elige" required></label><datalist id="exList">${exerciseOptions()}</datalist><label class="fl">Grupo muscular${muscleSelect('muscle')}</label><button class="g" type="submit">${gico('plus',15)}<span>Agregar</span></button></form>
-    <p class="k">Si el ejercicio no existe en tu biblioteca, se crea al agregarlo.</p></section>
+    ${addExerciseForm('fAddEx','exList','Agregar')}</section>
   <div class="section-actions sticky-actions"><button class="b" type="button" data-act="saveRoutine">Guardar rutina</button><button class="g" type="button" data-act="cancelRoutine">Cancelar</button></div>`;
 }
 
@@ -147,13 +150,13 @@ function vEntrenar(){
   const doneSets=w.exercises.reduce((a,e)=>a+e.sets.filter(s=>s.done).length,0),totalSets=w.exercises.reduce((a,e)=>a+e.sets.length,0);
   const cards=w.exercises.map((ex,ei)=>{
     const last=gymLastPerformance(ex.exercise_id,GS.sessions,GS.sets),t=ex.target||{};
-    return `<section class="card ex-card"><div class="ex-head"><div><h2>${gesc(exName(ex.exercise_id))}</h2><p class="k">${t.sets?`Objetivo ${t.sets} × ${t.reps_min}${t.reps_max!==t.reps_min?'–'+t.reps_max:''} · descanso ${t.rest_s} s`:'Sin objetivo'}</p>${last?`<p class="last-time">${gico('trophy',13)} Última vez (${gesc(fshort(last.date))}): ${last.sets.map(s=>gesc((+s.weight_kg)+'×'+s.reps)).join(', ')}</p>`:'<p class="k">Primera vez con este ejercicio.</p>'}</div><button class="g ic-b" type="button" data-act="removeEx" data-ei="${ei}" aria-label="Quitar ejercicio">${gico('x',15)}</button></div>
-      <div class="set-table"><div class="set-head"><span>Serie</span><span>Peso (kg)</span><span>Reps</span><span>Hecha</span></div>
-      ${ex.sets.map((s,si)=>`<div class="set-row ${s.done?'is-done':''}"><span>${si+1}</span><input type="number" inputmode="decimal" step="0.5" min="0" max="1000" value="${gesc(s.weight_kg)}" placeholder="kg" aria-label="Peso serie ${si+1}" data-ei="${ei}" data-si="${si}" data-k="weight_kg"><input type="number" inputmode="numeric" min="0" max="500" value="${gesc(s.reps)}" placeholder="${t.reps_min||''}" aria-label="Repeticiones serie ${si+1}" data-ei="${ei}" data-si="${si}" data-k="reps"><input type="checkbox" ${s.done?'checked':''} aria-label="Serie ${si+1} hecha" data-ei="${ei}" data-si="${si}" data-k="done"></div>`).join('')}</div>
+    return `<section class="card ex-card"><div class="ex-head"><div><h2>${gesc(exName(ex.exercise_id))}</h2><div class="ex-tags">${exerciseMuscleTags(ex.exercise_id)}</div><p class="k">${t.sets?`Objetivo ${t.sets} × ${t.reps_min}${t.reps_max!==t.reps_min?'–'+t.reps_max:''} · descanso ${t.rest_s} s`:'Sin objetivo'}</p>${last?`<p class="last-time">${gico('trophy',13)} Última vez (${gesc(fshort(last.date))}): ${last.sets.map(s=>gesc((+s.weight_kg)+'×'+s.reps)).join(', ')}</p>`:'<p class="k">Primera vez con este ejercicio.</p>'}</div><button class="g ic-b" type="button" data-act="removeEx" data-ei="${ei}" aria-label="Quitar ejercicio">${gico('x',15)}</button></div>
+      <div class="set-table"><div class="set-head"><span>Serie</span><span>Peso (kg)</span><span>Reps</span><span title="Esfuerzo percibido de 1 a 10 (opcional)">RPE</span><span>Hecha</span></div>
+      ${ex.sets.map((s,si)=>`<div class="set-row ${s.done?'is-done':''}"><span>${si+1}</span><input type="number" inputmode="decimal" step="0.5" min="0" max="1000" value="${gesc(s.weight_kg)}" placeholder="kg" aria-label="Peso serie ${si+1}" data-ei="${ei}" data-si="${si}" data-k="weight_kg"><input type="number" inputmode="numeric" min="0" max="500" value="${gesc(s.reps)}" placeholder="${t.reps_min||''}" aria-label="Repeticiones serie ${si+1}" data-ei="${ei}" data-si="${si}" data-k="reps"><input type="number" inputmode="decimal" step="0.5" min="1" max="10" value="${gesc(s.rpe??'')}" placeholder="–" aria-label="RPE serie ${si+1} (opcional)" data-ei="${ei}" data-si="${si}" data-k="rpe"><input type="checkbox" ${s.done?'checked':''} aria-label="Serie ${si+1} hecha" data-ei="${ei}" data-si="${si}" data-k="done"></div>`).join('')}</div>
       <div class="ex-actions"><button class="lk" type="button" data-act="addSet" data-ei="${ei}">${gico('plus',14)} Añadir serie</button>${ex.sets.length>1?`<button class="lk" type="button" data-act="removeSet" data-ei="${ei}">Quitar última</button>`:''}</div></section>`}).join('');
   return `<section class="card live-shift on workout-head"><div class="live-head"><span class="live-dot" aria-hidden="true"></span><div><h2>${gesc(w.name)}</h2><p class="k">Empezaste a las ${gesc(ftime(w.started_at))} · ${doneSets} de ${totalSets} series hechas · se guarda en este dispositivo mientras entrenas</p></div></div>
     <div class="live-actions"><button class="b" type="button" data-act="finish">Terminar y guardar</button><button class="g" type="button" data-act="discard">Descartar</button></div></section>`+
-    timer+cards+`<section class="card"><h2>Añadir ejercicio</h2><form id="fAddLive" class="add-ex"><label class="fl">Ejercicio<input name="name" list="exList2" maxlength="80" placeholder="Escribe o elige" required></label><datalist id="exList2">${exerciseOptions()}</datalist><label class="fl">Grupo muscular${muscleSelect('muscle')}</label><button class="g" type="submit">${gico('plus',15)}<span>Añadir</span></button></form></section>`;
+    timer+cards+`<section class="card"><h2>Añadir ejercicio</h2>${addExerciseForm('fAddLive','exList2','Añadir')}</section>`;
 }
 
 /* ---- Progreso ---- */
@@ -173,14 +176,14 @@ function lineSvg(pts,{fmtV,label}){
 function vProgreso(){
   const gate=needAccount('tu progreso');if(gate)return gate;
   const st=gymStats(GS.sessions,GS.sets,GS.exercises,gymToday());
-  if(!st.hasData)return `<div class="empty gym-empty"><b>Aún no hay series registradas</b><span>Termina tu primer entrenamiento y aquí verás volumen, récords y evolución de fuerza.</span><button class="b" type="button" data-g="entrenar">Empezar a entrenar</button></div>`;
+  if(!st.hasData)return vMuscleMap()+`<div class="empty gym-empty"><b>Aún no hay series registradas</b><span>Termina tu primer entrenamiento y aquí verás volumen, récords y evolución de fuerza.</span><button class="b" type="button" data-g="entrenar">Empezar a entrenar</button></div>`;
   const volRows=st.weekly.map(w=>({v:w.volume,label:'Semana del '+fshort(w.week),short:fshort(w.week)}));
   const maxM=Math.max(1,...st.muscles.map(m=>m[1]));
   const exWithData=st.prs.filter(p=>p.bestE1rm!==null);if(!gProgEx||!exWithData.some(p=>p.exercise_id===gProgEx))gProgEx=exWithData[0]?.exercise_id||null;
   const sesById=new Map(GS.sessions.map(s=>[s.id,s]));
   const byDate=new Map();GS.sets.filter(s=>s.exercise_id===gProgEx&&sesById.has(s.session_id)).forEach(s=>{const d=gymDateOf(sesById.get(s.session_id).started_at),e=gymE1rm(s.weight_kg,s.reps);if(e!==null&&(!byDate.has(d)||e>byDate.get(d)))byDate.set(d,e)});
   const e1pts=[...byDate.entries()].sort((a,b)=>a[0].localeCompare(b[0])).map(([d,v])=>({v,label:fdate(d),short:fshort(d)}));
-  return `<div class="report-grid">
+  return vMuscleMap()+`<div class="report-grid">
     <section class="card"><h2>Volumen por semana</h2>${barsSvg(volRows,{fmtV:v=>Math.round(v/100)/10+' t',label:'Volumen semanal en toneladas'})}<p class="k">Suma de peso × repeticiones de las series hechas. Esta semana: ${vol(st.week.volume)} en ${st.week.sessions} ${st.week.sessions===1?'entrenamiento':'entrenamientos'}.</p></section>
     <section class="card"><h2>Series por grupo muscular · 30 días</h2>${st.muscles.length?st.muscles.map(([m,n])=>`<div class="cb"><span>${gesc(m)}</span><div class="bar"><i style="width:${(n/maxM*100).toFixed(1)}%"></i></div><span>${n} series</span></div>`).join(''):'<div class="empty">Sin series en los últimos 30 días.</div>'}</section>
     <section class="card"><h2>Fuerza estimada (1RM)</h2>${exWithData.length?`<label class="fl">Ejercicio<select id="progEx">${exWithData.map(p=>`<option value="${gesc(p.exercise_id)}" ${p.exercise_id===gProgEx?'selected':''}>${gesc(p.name)}</option>`).join('')}</select></label>${lineSvg(e1pts,{fmtV:v=>Math.round(v)+' kg',label:'Evolución del 1RM estimado'})}<p class="k">Estimación con la fórmula de Epley usando series de hasta 12 repeticiones. Es orientativa, no un máximo real.</p>`:'<div class="empty">Necesitas series de 1 a 12 repeticiones con peso para estimar tu fuerza.</div>'}</section>
@@ -188,6 +191,36 @@ function vProgreso(){
   </div>`;
 }
 
+/* ---- Mapa muscular ---- */
+function vMuscleMap(){
+  const today=gymToday(),days=gMapDays,st=gymMuscleStats(GS.sessions,GS.sets,GS.exercises,gymDaysAgo(today,days-1),today),scale=7/days;
+  const any=Object.values(st).some(m=>m.sets>0);
+  if(!gMapSel||!st[gMapSel]){const top=Object.values(st).sort((a,b)=>b.weightedSets-a.weightedSets)[0];gMapSel=top&&top.sets?top.id:null}
+  const sel=gMapSel?st[gMapSel]:null;
+  let panel='<div class="empty">Toca un músculo del mapa para ver su detalle.</div>';
+  if(sel){
+    const tr=gymMuscleTrend(GS.sessions,GS.sets,GS.exercises,today,sel.id),band=gymStimulusBand(sel.weightedSets*scale);
+    const assumed=sel.sets-sel.rpeKnown;
+    panel=`<div class="mm-head"><div><h3>${gesc(sel.name)}</h3><span class="k">${gesc(sel.group)} · últimos ${days} días</span></div><span class="chip mm-band b${band}">${GYM_BANDS[band].split(' (')[0]}</span></div>
+      ${sel.sets?`<div class="stats mm-stats">
+        <div><span class="k">Series</span><b>${sel.sets}</b><small>${sel.primarySets} como principal · ${sel.secondarySets} como secundario</small></div>
+        <div><span class="k">Estímulo estimado</span><b>${sel.weightedSets}</b><small>series ponderadas${days!==7?' · ≈ '+(Math.round(sel.weightedSets*scale*10)/10)+' por semana':''}</small></div>
+        <div><span class="k">Volumen de carga</span><b>${vol(sel.volume)}</b><small>peso × reps × participación</small></div>
+        <div><span class="k">Sesiones</span><b>${sel.sessions}</b><small>${sel.dates.length?'Última: '+gesc(fshort(sel.dates.at(-1))):''}</small></div></div>
+      <h4>Ejercicios que lo estimularon</h4>${sel.exercises.map(e=>`<div class="row"><div class="g1"><b>${gesc(e.name)}</b><small>${e.role==='P'?'Principal (cuenta 1 por serie)':'Secundario (cuenta 0,5 por serie)'} · ${vol(e.volume)}</small></div><span class="tag ${e.role==='P'?'tag-p':''}">${e.sets} series</span></div>`).join('')}
+      <h4>Historial</h4><p class="k">${sel.dates.map(d=>gesc(fshort(d))).join(' · ')}</p>
+      ${assumed?`<p class="k">${assumed} ${assumed===1?'serie no tiene':'series no tienen'} RPE: se contaron como esfuerzo suficiente.</p>`:''}`:'<div class="empty">No entrenaste este músculo en este periodo.</div>'}
+      <h4>Tendencia de entrenamiento (4 semanas vs. 4 anteriores)</h4><p class="mm-trend ${tr.tone}">${gesc(tr.label)}</p>
+      ${tr.strength.length?tr.strength.map(x=>`<div class="row"><div class="g1"><b>${gesc(x.name)}</b><small>1RM estimado ${kg(x.before)} → ${kg(x.now)}</small></div><span class="tag ${x.change>0?'tag-p':''}">${x.change>0?'+':''}${x.change}%</span></div>`).join(''):''}
+      <p class="k">Es un indicador de cuánto y con qué carga lo entrenas, <b>no una medición de crecimiento muscular</b>.</p>`;
+  }
+  const legend=GYM_BANDS.map((t,i)=>`<span><i class="bm-key bm-b${i}"></i>${gesc(t)}</span>`).join('');
+  return `<section class="card muscle-map"><div class="mm-top"><h2>Mapa muscular</h2><div class="seg" role="group" aria-label="Periodo">${[7,30].map(d=>`<label><input type="radio" name="mapDays" value="${d}" ${d===days?'checked':''}><span>${d} días</span></label>`).join('')}</div></div>
+    ${any?'':'<p class="k">Aún no hay series en este periodo: el mapa se colorea al terminar entrenamientos.</p>'}
+    <div class="mm-body"><div class="mm-figs">${gymBodyMapSvg('front',st,{scale,selected:gMapSel})}${gymBodyMapSvg('back',st,{scale,selected:gMapSel})}</div><div class="mm-panel" aria-live="polite">${panel}</div></div>
+    <div class="bm-legend">${legend}</div>
+    <p class="k">Color según series ponderadas por semana: 1 por serie si el músculo es principal y 0,5 si es secundario (conteo fraccional, Pelland et al. 2024); series con RPE menor de 7 cuentan la mitad.</p></section>`;
+}
 /* ---- Físico ---- */
 const METRIC_FIELDS=[['weight_kg','Peso','kg',0.1],['body_fat','% grasa','%',0.1],['waist_cm','Cintura','cm',0.5],['chest_cm','Pecho','cm',0.5],['arm_cm','Brazo','cm',0.5],['thigh_cm','Pierna','cm',0.5],['hip_cm','Cadera','cm',0.5]];
 function vFisico(){
@@ -253,22 +286,34 @@ document.addEventListener('click',async e=>{
   if(a==='cancelRoutine'){gEdit=null;gRender(false);return}
   if(a==='itemUp'||a==='itemDown'){const i=+b.dataset.i,j=a==='itemUp'?i-1:i+1;if(j<0||j>=gEdit.items.length)return;[gEdit.items[i],gEdit.items[j]]=[gEdit.items[j],gEdit.items[i]];gRender(false);return}
   if(a==='itemRemove'){gEdit.items.splice(+b.dataset.i,1);gRender(false);return}
-  if(a==='saveRoutine'){gEdit.name=document.getElementById('edName')?.value||gEdit.name;if(!gEdit.name.trim()){await notify('Ponle un nombre a la rutina.',{title:'Falta el nombre'});return}if(!gEdit.items.length){await notify('Agrega al menos un ejercicio.',{title:'Rutina vacía'});return}b.disabled=true;const r=await gTry(()=>gymSaveRoutine(gEdit),'Rutina guardada');b.disabled=false;if(r){sfx('success');gEdit=null;gRender(false)}return}
-  if(a==='archiveRoutine'){const r=GS.routines.find(x=>x.id===id);if(!r||!await ask('Dejará de aparecer en tus rutinas. Los entrenamientos que hiciste con ella se conservan.',{title:'¿Archivar «'+r.name+'»?',confirmLabel:'Archivar'}))return;await gTry(()=>gymArchiveRoutine(id),'Rutina archivada');gRender(false);return}
-  if(a==='startRoutine'||a==='startFree'){if(gymActive()&&!await ask('Ya tienes un entrenamiento en curso. Si empiezas otro, el actual se descarta.',{title:'¿Empezar otro entrenamiento?',confirmLabel:'Empezar otro',danger:true}))return;gymStartWorkout(a==='startRoutine'?GS.routines.find(x=>x.id===id):null);sfx('open');gGo('entrenar');return}
+  if(a==='saveRoutine'){gEdit.name=document.getElementById('edName')?.value||gEdit.name;if(!gEdit.name.trim()){await notify('Ponle un nombre a la rutina.',{title:'Falta el nombre'});return}if(!gEdit.items.length){await notify('Agrega al menos un ejercicio.',{title:'Rutina vacía'});return}if(GS.busy)return;b.disabled=true;const r=await gTry(()=>gymSaveRoutine(gEdit),'Rutina guardada');b.disabled=false;if(r){sfx('success');gEdit=null;gRender(false)}return}
+  if(a==='deleteRoutine'){const r=GS.routines.find(x=>x.id===id);if(!r)return;if(!await ask('Se borrará la rutina. Los entrenamientos que ya hiciste con ella se conservan en tu historial.',{title:'¿Eliminar «'+r.name+'»?',confirmLabel:'Eliminar',danger:true}))return;b.disabled=true;const ok=await gTry(()=>gymDeleteRoutine(id).then(()=>true),'Rutina eliminada');if(ok)sfx('delete');gRender(false);return}
+  if(a==='startRoutine'||a==='startFree'){if(!GS.ready){gToast('Tus datos aún se están cargando','error');return}if(gymActive()&&!await ask('Ya tienes un entrenamiento en curso. Si empiezas otro, el actual se descarta.',{title:'¿Empezar otro entrenamiento?',confirmLabel:'Empezar otro',danger:true}))return;gymStartWorkout(a==='startRoutine'?GS.routines.find(x=>x.id===id):null);sfx('open');gGo('entrenar');return}
   if(a==='addSet'){const w=gymActive(),ex=w.exercises[+b.dataset.ei],last=ex.sets.at(-1);ex.sets.push({id:gymUid(),weight_kg:last?.weight_kg??'',reps:'',done:false});gymSetActive(w);gRender(false);return}
   if(a==='removeSet'){const w=gymActive(),ex=w.exercises[+b.dataset.ei];if(ex.sets.length>1)ex.sets.pop();gymSetActive(w);gRender(false);return}
   if(a==='removeEx'){const w=gymActive(),ex=w.exercises[+b.dataset.ei];if(ex.sets.some(s=>s.done)&&!await ask('Las series hechas de este ejercicio no se guardarán.',{title:'¿Quitar «'+exName(ex.exercise_id)+'»?',confirmLabel:'Quitar',danger:true}))return;w.exercises.splice(+b.dataset.ei,1);gymSetActive(w);gRender(false);return}
-  if(a==='discard'){if(!await ask('No se guardará nada de este entrenamiento.',{title:'¿Descartar el entrenamiento?',confirmLabel:'Descartar',danger:true}))return;gymDiscardWorkout();gTimerStop();sfx('delete');gRender(false);return}
-  if(a==='finish'){const w=gymActive(),n=w.exercises.reduce((x,e)=>x+e.sets.filter(s=>s.done).length,0);if(!n&&!await ask('No marcaste ninguna serie como hecha: se guardará el entrenamiento sin series.',{title:'¿Terminar sin series?',confirmLabel:'Terminar'}))return;b.disabled=true;const r=await gymFinishWorkout();gRefreshSummary();gTimerStop();sfx(r.saved?'success':'tap');gToast(r.saved?`Entrenamiento guardado: ${r.sets} series`:'Sin conexión: se subirá automáticamente',r.saved?'':'error');gRender(false);return}
+  if(a==='discard'){if(!gymActive()){gRender(false);return}if(!await ask('Se perderán las series de este entrenamiento. Tus entrenamientos anteriores y tus rutinas no se tocan.',{title:'¿Descartar el entrenamiento en curso?',confirmLabel:'Descartar',cancelLabel:'Seguir entrenando',danger:true}))return;gymDiscardWorkout();gTimerStop();sfx('delete');gToast('Entrenamiento descartado');gRender(false);return}
+  if(a==='finish'){
+    const w=gymActive();if(!w){gToast('No hay un entrenamiento en curso','error');gRender(false);return}
+    const n=w.exercises.reduce((x,e)=>x+e.sets.filter(s=>s.done).length,0);
+    if(!n&&!await ask('No marcaste ninguna serie como hecha: se guardará el entrenamiento sin series.',{title:'¿Terminar sin series?',confirmLabel:'Terminar'}))return;
+    b.disabled=true;const r=await gymFinishWorkout();gRefreshSummary();gTimerStop();gRender(false);
+    if(r.saved){sfx('success');await notify(`${r.minutes} min · ${r.exercises} ${r.exercises===1?'ejercicio':'ejercicios'} · ${r.sets} series · ${vol(r.volume)} de volumen. Ya aparece en tu historial y en tu progreso.`,{title:'Entrenamiento guardado'})}
+    else if(r.queued){sfx('tap');await notify('No se pudo subir ahora ('+(GS.error||'sin conexión')+'). Quedó guardado en este dispositivo y se enviará automáticamente.',{title:'Pendiente de subir'})}
+    return}
   if(a==='deleteSession'){if(!await ask('Se borrarán el entrenamiento y sus series. Tus récords se recalculan.',{title:'¿Eliminar entrenamiento?',confirmLabel:'Eliminar',danger:true}))return;await gTry(()=>gymDeleteSession(id),'Entrenamiento eliminado');gRefreshSummary();sfx('delete');gRender(false);return}
   if(a==='deleteMetric'){if(!await ask('Se borrará esa medición.',{title:'¿Eliminar medición?',confirmLabel:'Eliminar',danger:true}))return;await gTry(()=>gymDeleteMetric(id),'Medición eliminada');gRender(false);return}
 });
+/* Solo los formularios propios de Gym. Los diálogos de confirmación (<form method="dialog">) deben
+   enviarse con normalidad: si se bloquean, el diálogo nunca se cierra y la acción que espera la
+   respuesta (eliminar, descartar, terminar…) se queda colgada. */
+const GYM_FORMS=['fAddEx','fAddLive','fMetric'];
 document.addEventListener('submit',async e=>{
-  e.preventDefault();const f=e.target,v=Object.fromEntries(new FormData(f));
+  const f=e.target;if(!GYM_FORMS.includes(f.id))return;
+  e.preventDefault();const v=Object.fromEntries(new FormData(f));
   if(f.id==='fAddEx'||f.id==='fAddLive'){
     const btn=f.querySelector('button');btn.disabled=true;
-    const ex=await gTry(()=>gymEnsureExercise(v.name,starterMuscle(v.name)&&v.muscle==='Otro'?starterMuscle(v.name):v.muscle));btn.disabled=false;if(!ex)return;
+    const ex=await gTry(()=>gymEnsureExercise(v.name,{primary:v.primary||null,secondary:v.secondary||null}));btn.disabled=false;if(!ex)return;
     if(f.id==='fAddEx'){gEdit.name=document.getElementById('edName')?.value||gEdit.name;gEdit.items.push({exercise_id:ex.id,sets:3,reps_min:8,reps_max:12,rest_s:90,notes:''})}else gymAddExerciseToActive(ex.id);
     sfx('check');gRender(false);(document.querySelector('#fAddEx input[name=name]')||document.querySelector('#fAddLive input[name=name]'))?.focus();return;
   }
@@ -285,6 +330,7 @@ document.addEventListener('change',e=>{
   if(t.name==='rest'){gTimerStop();gTimer.total=gTimer.left=+t.value;gTimerPaint();return}
   if(t.dataset.day!==undefined&&gEdit){const d=+t.dataset.day;gEdit.days=t.checked?[...new Set([...gEdit.days,d])]:gEdit.days.filter(x=>x!==d);return}
   if(t.id==='progEx'){gProgEx=t.value;gRender(false);return}
+  if(t.name==='mapDays'){gMapDays=+t.value;gRender(false);return}
   if(t.dataset.k==='done'){
     const w=gymActive();if(!w)return;const ex=w.exercises[+t.dataset.ei],s=ex.sets[+t.dataset.si];
     if(t.checked&&(s.reps===''||s.reps===null)){s.reps=String(ex.target?.reps_min||'')}

@@ -4,7 +4,7 @@
    - Al terminarlo pasa a una cola local y se sube; si falla, se reintenta al volver la conexión.
    - Los ids de entrenamientos y series se generan aquí, así que reintentar nunca duplica. */
 const gymUid=()=>globalThis.crypto?.randomUUID?globalThis.crypto.randomUUID():'xxxxxxxx-xxxx-4xxx-8xxx-xxxxxxxxxxxx'.replace(/x/g,()=>(Math.random()*16|0).toString(16));
-const GS={user:null,ready:false,error:'',exercises:[],routines:[],sessions:[],sets:[],metrics:[],syncing:false};
+const GS={user:null,ready:false,error:'',exercises:[],routines:[],sessions:[],sets:[],metrics:[],syncing:false,busy:false,schemaV2:false};
 const gKey=k=>'mcc-gym-'+k+'-'+(GS.user?.id||'anon');
 const gRead=(k,d)=>{try{const v=JSON.parse(localStorage.getItem(gKey(k)));return v??d}catch(e){return d}};
 const gWrite=(k,v)=>{try{if(v===null)localStorage.removeItem(gKey(k));else localStorage.setItem(gKey(k),JSON.stringify(v));return true}catch(e){return false}};
@@ -17,7 +17,7 @@ async function gymLoadAll(){
   const since=new Date(Date.now()-365*864e5).toISOString();
   try{
     const [ex,ro,ses,met]=await Promise.all([
-      gq(gymClient.from('gym_exercises').select('id,name,muscle,notes,archived').order('name')),
+      gq(gymClient.from('gym_exercises').select('*').order('name')),
       gq(gymClient.from('gym_routines').select('id,name,days,items,position,archived,updated_at').eq('archived',false).order('position').order('created_at')),
       gq(gymClient.from('gym_sessions').select('id,routine_id,name,started_at,ended_at,notes').gte('started_at',since).order('started_at',{ascending:false})),
       gq(gymClient.from('body_metrics').select('id,date,weight_kg,body_fat,waist_cm,chest_cm,arm_cm,thigh_cm,hip_cm,notes').order('date',{ascending:false}).limit(400))
@@ -26,55 +26,84 @@ async function gymLoadAll(){
     const ids=ses.map(s=>s.id);
     for(let i=0;i<ids.length;i+=150){sets=sets.concat(await gq(gymClient.from('gym_sets').select('id,session_id,exercise_id,set_index,weight_kg,reps,rpe').in('session_id',ids.slice(i,i+150))))}
     Object.assign(GS,{exercises:ex,routines:ro,sessions:ses,sets,metrics:met,ready:true,error:''});
+    await gymDetectSchema();await gymLinkCatalog();
     return true;
   }catch(e){GS.error=gymErr(e);GS.ready=false;return false}
 }
 const gymExercise=id=>GS.exercises.find(e=>e.id===id)||null;
+/* ¿Existen las columnas catalog_key y muscles (migración 20261105_gym_catalogo)? Sin ellas Gym sigue
+   funcionando y clasifica por nombre del catálogo o por grupo. */
+async function gymDetectSchema(){const r=await gymClient.from('gym_exercises').select('catalog_key,muscles').limit(1);GS.schemaV2=!r.error;return GS.schemaV2}
+/* Enlaza al catálogo los ejercicios antiguos cuyo nombre coincide exactamente (una sola vez). */
+async function gymLinkCatalog(){
+  if(!GS.schemaV2)return;
+  for(const e of GS.exercises){if(e.catalog_key)continue;const c=gymCatalogByName(e.name);if(!c)continue;
+    const r=await gymClient.from('gym_exercises').update({catalog_key:c.key}).eq('id',e.id);if(!r.error)e.catalog_key=c.key}
+}
 
 /* Ejercicios: crea uno (o reutiliza el que ya tenga ese nombre). */
-async function gymEnsureExercise(name,muscle){
+/* Crea un ejercicio o reutiliza el existente. Si el nombre está en el catálogo se enlaza por su clave
+   (clasificación muscular estructurada); si no, se guarda la clasificación elegida (principal/secundario). */
+async function gymEnsureExercise(name,{primary=null,secondary=null}={}){
   name=String(name||'').trim().slice(0,80);if(!name)throw new Error('Escribe el nombre del ejercicio.');
-  const found=GS.exercises.find(e=>e.name.trim().toLocaleLowerCase('es-CO')===name.toLocaleLowerCase('es-CO'));
+  const cat=gymCatalogByName(name);if(cat)name=cat.name;
+  const found=GS.exercises.find(e=>gymNorm(e.name)===gymNorm(name)||(cat&&e.catalog_key===cat.key));
   if(found){if(found.archived){await gq(gymClient.from('gym_exercises').update({archived:false}).eq('id',found.id));found.archived=false}return found}
-  const row=await gq(gymClient.from('gym_exercises').insert({name,muscle:GYM_MUSCLES.includes(muscle)?muscle:'Otro'}).select('id,name,muscle,notes,archived').single());
+  if(!cat&&!primary)throw new Error('Elige el músculo principal: «'+name+'» no está en el catálogo.');
+  const muscles=cat?{}:Object.fromEntries([[primary,'P'],...(secondary&&secondary!==primary?[[secondary,'S']]:[])]);
+  /* Grupo antiguo (columna muscle) solo como referencia; la clasificación real va en catalog_key/muscles. */
+  const group=cat?cat.group:(Object.entries(GYM_GROUP_PRIMARY).find(([,m])=>m===primary)?.[0]||({deltoide_anterior:'Hombros',deltoide_posterior:'Hombros',trapecio:'Espalda',romboides:'Espalda',erectores:'Espalda',braquial:'Bíceps',oblicuos:'Abdomen',aductores:'Cuádriceps',soleo:'Pantorrillas'})[primary]||'Otro');
+  const body={name,muscle:GYM_MUSCLES.includes(group)?group:'Otro'};
+  if(GS.schemaV2){if(cat)body.catalog_key=cat.key;else body.muscles=muscles}
+  else if(!cat)body.notes=('Músculos: '+Object.entries(muscles).map(([m,r])=>m+':'+r).join(',')).slice(0,300);
+  const row=await gq(gymClient.from('gym_exercises').insert(body).select('*').single());
   GS.exercises.push(row);GS.exercises.sort((a,b)=>a.name.localeCompare(b.name,'es-CO'));return row;
 }
-async function gymUpdateExercise(id,patch){const row=await gq(gymClient.from('gym_exercises').update(patch).eq('id',id).select('id,name,muscle,notes,archived').single());Object.assign(gymExercise(id),row);return row}
+async function gymUpdateExercise(id,patch){const row=await gq(gymClient.from('gym_exercises').update(patch).eq('id',id).select('*').single());Object.assign(gymExercise(id),row);return row}
 
 /* Rutinas. items: [{exercise_id,sets,reps_min,reps_max,rest_s,notes}] */
 function gymCleanItems(items){return(items||[]).filter(i=>i&&i.exercise_id).slice(0,40).map(i=>({exercise_id:i.exercise_id,sets:Math.min(20,Math.max(1,Math.round(+i.sets||3))),reps_min:Math.min(100,Math.max(1,Math.round(+i.reps_min||8))),reps_max:Math.min(100,Math.max(1,Math.round(+i.reps_max||+i.reps_min||12))),rest_s:Math.min(900,Math.max(0,Math.round(+i.rest_s||90))),notes:String(i.notes||'').slice(0,120)}))}
+/* Guardar con bloqueo: un doble clic no crea dos rutinas. */
 async function gymSaveRoutine(r){
+  if(GS.busy)return null;GS.busy=true;
+  try{return await gymSaveRoutineInner(r)}finally{GS.busy=false}
+}
+async function gymSaveRoutineInner(r){
   const body={name:String(r.name||'').trim().slice(0,60)||'Rutina',days:[...new Set((r.days||[]).map(Number).filter(d=>d>=0&&d<=6))].sort(),items:gymCleanItems(r.items),position:Number.isFinite(+r.position)?+r.position:GS.routines.length};
   if(r.id){const row=await gq(gymClient.from('gym_routines').update(body).eq('id',r.id).select('id,name,days,items,position,archived,updated_at').single());GS.routines=GS.routines.map(x=>x.id===row.id?row:x);return row}
   const row=await gq(gymClient.from('gym_routines').insert(body).select('id,name,days,items,position,archived,updated_at').single());GS.routines.push(row);return row;
 }
-/* Se archiva en vez de borrar: los entrenamientos pasados conservan su referencia. */
-async function gymArchiveRoutine(id){await gq(gymClient.from('gym_routines').update({archived:true}).eq('id',id));GS.routines=GS.routines.filter(r=>r.id!==id)}
+/* Eliminar rutina: borra solo la rutina. Los entrenamientos hechos con ella se conservan
+   (gym_sessions.routine_id pasa a null por «on delete set null») y mantienen su nombre. */
+async function gymDeleteRoutine(id){await gq(gymClient.from('gym_routines').delete().eq('id',id));GS.routines=GS.routines.filter(r=>r.id!==id);GS.sessions.forEach(s=>{if(s.routine_id===id)s.routine_id=null})}
 
 /* ---- Entrenamiento en curso (local) ---- */
 const gymActive=()=>gRead('active',null);
 function gymSetActive(w){gWrite('active',w)}
 function gymStartWorkout(routine){
+  if(!GS.user)throw new Error('Inicia sesión para entrenar.');
   const items=routine?gymCleanItems(routine.items):[];
   const w={id:gymUid(),routine_id:routine?.id||null,name:routine?.name||'Entrenamiento libre',started_at:new Date().toISOString(),
     exercises:items.map(it=>{const last=gymLastPerformance(it.exercise_id,GS.sessions,GS.sets);return{exercise_id:it.exercise_id,target:it,sets:Array.from({length:it.sets},(_,i)=>({id:gymUid(),weight_kg:last?.sets[i]?.weight_kg??last?.sets.at(-1)?.weight_kg??'',reps:'',done:false}))}})};
   gymSetActive(w);return w;
 }
-function gymAddExerciseToActive(exerciseId){const w=gymActive();if(!w)return;const last=gymLastPerformance(exerciseId,GS.sessions,GS.sets);w.exercises.push({exercise_id:exerciseId,target:{sets:3,reps_min:8,reps_max:12,rest_s:90},sets:Array.from({length:3},(_,i)=>({id:gymUid(),weight_kg:last?.sets[i]?.weight_kg??'',reps:'',done:false}))});gymSetActive(w)}
+function gymAddExerciseToActive(exerciseId){const w=gymActive();if(!w)return;const last=gymLastPerformance(exerciseId,GS.sessions,GS.sets);w.exercises.push({exercise_id:exerciseId,target:{sets:3,reps_min:8,reps_max:12,rest_s:90},sets:Array.from({length:3},(_,i)=>({id:gymUid(),weight_kg:last?.sets[i]?.weight_kg??last?.sets.at(-1)?.weight_kg??'',reps:'',done:false}))});gymSetActive(w)}
 
 /* Termina: pasa a la cola y la sube. Devuelve {saved, queued, sets}. */
 async function gymFinishWorkout(){
   const w=gymActive();if(!w)return{saved:false,queued:false,sets:0};
-  const sets=[];w.exercises.forEach(ex=>{let n=0;ex.sets.forEach(s=>{if(!s.done)return;const reps=Math.round(+s.reps),kg=Math.round((+s.weight_kg||0)*100)/100;if(!(reps>=0&&reps<=500)||!(kg>=0&&kg<=1000))return;sets.push({id:s.id,session_id:w.id,exercise_id:ex.exercise_id,set_index:++n,weight_kg:kg,reps})})});
+  const sets=[];w.exercises.forEach(ex=>{let n=0;ex.sets.forEach(s=>{if(!s.done)return;const reps=Math.round(+s.reps),kg=Math.round((+s.weight_kg||0)*100)/100;if(!(reps>=0&&reps<=500)||!(kg>=0&&kg<=1000))return;const rpe=s.rpe===''||s.rpe===null||s.rpe===undefined?null:Math.min(10,Math.max(1,Math.round(+s.rpe*2)/2));sets.push({id:s.id,session_id:w.id,exercise_id:ex.exercise_id,set_index:++n,weight_kg:kg,reps,rpe:Number.isFinite(rpe)?rpe:null})})});
   const payload={session:{id:w.id,routine_id:w.routine_id,name:String(w.name||'').slice(0,60),started_at:w.started_at,ended_at:new Date().toISOString(),notes:String(w.notes||'').slice(0,500)},sets};
   const q=gRead('queue',[]);q.push(payload);gWrite('queue',q);gymSetActive(null);
   const ok=await gymFlushQueue();
-  return{saved:ok&&!gRead('queue',[]).some(p=>p.session.id===w.id),queued:true,sets:sets.length};
+  const volume=sets.reduce((a,x)=>a+x.weight_kg*x.reps,0),minutes=Math.max(1,Math.round((Date.parse(payload.session.ended_at)-Date.parse(w.started_at))/60000));
+  return{saved:ok&&!gRead('queue',[]).some(p=>p.session.id===w.id),queued:true,sets:sets.length,volume:Math.round(volume),minutes,exercises:new Set(sets.map(x=>x.exercise_id)).size};
 }
 function gymDiscardWorkout(){gymSetActive(null)}
 /* Sube lo pendiente. upsert por id: si un intento anterior quedó a medias, no se duplica nada. */
 async function gymFlushQueue(){
-  if(!gymClient||!GS.user||GS.syncing)return false;
+  if(!gymClient||!GS.user)return false;
+  if(GS.syncing){await new Promise(r=>setTimeout(r,300));if(GS.syncing)return false}
   let q=gRead('queue',[]);if(!q.length)return true;
   GS.syncing=true;
   try{

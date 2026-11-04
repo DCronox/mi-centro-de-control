@@ -1,4 +1,4 @@
-const CACHE = 'mi-centro-control-v15';
+const CACHE = 'mi-centro-control-v16';
 const CORE = [
   './', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png',
   './privacidad.html', './terminos.html', './cookies.html',
@@ -7,7 +7,7 @@ const CORE = [
   './js/charts.js', './js/cloud-config.js', './js/push-config.js', './js/reminders-core.mjs', './js/notifications.js', './js/views/notifications.js', './js/sound.js', './js/motion.js', './js/ui.js', './js/shell.js', './js/views/dashboard.js', './js/views/money.js', './js/views/day.js',
   './js/views/goals.js', './js/views/shifts.js', './js/views/reports.js', './js/views/insights.js',
   './js/events.js', './js/cloud-auth.js', './js/sw-register.js',
-  './gym.html', './css/gym.css', './js/gym/gym-data.js', './js/gym/gym-calc.js', './js/gym/gym-store.js', './js/gym/gym.js'
+  './gym.html', './css/gym.css', './js/gym/gym-data.js', './js/gym/gym-calc.js', './js/gym/gym-muscles.js', './js/gym/gym-map.js', './js/gym/gym-store.js', './js/gym/gym.js'
 ];
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(CORE)));
