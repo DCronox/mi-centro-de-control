@@ -30,7 +30,7 @@ function dashHero(){
   return `<section class="hero" aria-label="Resumen del mes">
     <div class="hero-main">
       <span class="hero-label">Disponible</span>
-      <div class="hero-amount ${c.bal<0?'neg':''}">${fmt(c.bal)}</div>
+      <div class="hero-amount ${c.bal<0?'neg':''}" data-count="${Math.round(c.bal)}">${fmt(c.bal)}</div>
       <p class="hero-note">Ingresos recibidos menos gastos pagados y aportes a metas, desde tu primer registro.</p>
     </div>
     <div class="hero-month">

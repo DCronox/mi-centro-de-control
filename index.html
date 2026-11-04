@@ -22,7 +22,7 @@
 <aside class="side" aria-label="Menú">
   <div class="brand"><span class="logo" aria-hidden="true"></span><span>Mi Centro<br>de Control</span></div>
   <button id="quickOpen" class="b quick-btn" type="button">Registrar movimiento</button>
-  <nav id="nav" aria-label="Secciones"></nav>
+  <div class="nav-wrap"><span class="nav-ind" aria-hidden="true"></span><nav id="nav" aria-label="Secciones"></nav></div>
   <div class="side-foot"><button id="th" class="g" type="button">Tema</button></div>
 </aside>
 <main>
@@ -48,11 +48,15 @@
       <div class="cloud-msg">Descarga tus datos para guardarlos fuera del navegador. El archivo contiene información personal; guárdalo en un lugar seguro.</div>
       <div class="cloud-actions"><button class="g" type="button" id="exportData">Descargar copia</button><label class="g file-btn" for="importData">Restaurar copia</label><input id="importData" class="visually-hidden" type="file" accept="application/json,.json"></div>
     </div>
+    <div class="prefs">
+      <h3>Preferencias de este dispositivo</h3>
+      <label class="switch-line"><span><b>Sonidos de la interfaz</b><small>Clics suaves al navegar, guardar, completar y eliminar.</small></span><input type="checkbox" id="prefSound" class="switch" role="switch"></label>
+    </div>
   </section>
   <footer class="legal"><a href="./privacidad.html">Política de privacidad</a><a href="./terminos.html">Términos y condiciones</a><a href="./cookies.html">Política de cookies y almacenamiento</a></footer>
 </main>
 </div>
-<nav id="tabbar" class="tabbar" aria-label="Navegación principal"></nav>
+<nav id="tabbar" class="tabbar" aria-label="Navegación principal"><span class="tab-ind" aria-hidden="true"></span><div id="tabbarItems"></div></nav>
 <dialog id="quickAdd" class="sheet" aria-labelledby="quickTitle">
   <form id="fQuick" class="quick-form">
     <div class="sheet-head"><h2 id="quickTitle">Registrar movimiento</h2><button class="g ic-b" type="button" data-close aria-label="Cerrar"></button></div>
@@ -78,6 +82,8 @@
 <script src="./js/domain.js"></script>
 <script src="./js/finance.js"></script>
 <script src="./js/charts.js"></script>
+<script src="./js/sound.js"></script>
+<script src="./js/motion.js"></script>
 <script src="./js/ui.js"></script>
 <script src="./js/shell.js"></script>
 <script src="./js/views/dashboard.js"></script>

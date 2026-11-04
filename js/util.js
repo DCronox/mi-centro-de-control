@@ -1,6 +1,6 @@
 const TZ='America/Bogota';
 const CATS=['Alimentación','Transporte','Universidad','Gimnasio','Hogar','Entretenimiento','Salud','Compras personales','Suscripciones','Trabajo','Otros'];
-const fmt=n=>'$'+Math.round(n).toLocaleString('es-CO')+' COP';
+const fmt=n=>{const v=Math.round(Number(n)||0);return (v<0?'−':'')+'$'+Math.abs(v).toLocaleString('es-CO')+' COP'};
 const hoy=()=>new Intl.DateTimeFormat('en-CA',{timeZone:TZ}).format(new Date());
 const hora=()=>new Intl.DateTimeFormat('en-GB',{timeZone:TZ,hour:'2-digit',minute:'2-digit'}).format(new Date());
 /* Identificador único: UUID del navegador; si no existe, 128 bits aleatorios criptográficos. */

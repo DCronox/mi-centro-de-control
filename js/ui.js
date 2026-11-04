@@ -10,7 +10,7 @@ function uiOpen({title,message='',field='',actions}){
   document.getElementById('uiActions').innerHTML=actions.map(a=>`<button class="${a.primary?(a.danger?'b danger':'b'):'g'}" value="${esc(a.value)}" ${a.submit?'':'formnovalidate'}>${esc(a.label)}</button>`).join('');
   return new Promise(resolve=>{
     const done=()=>{dlg.removeEventListener('close',done);const input=dlg.querySelector('#uiInput');resolve({value:dlg.returnValue,input:input?input.value:null})};
-    dlg.returnValue='';dlg.addEventListener('close',done);dlg.showModal();
+    dlg.returnValue='';dlg.addEventListener('close',done);sfx('open');dlg.showModal();
     const focus=dlg.querySelector('#uiInput')||dlg.querySelector('.dialog-actions .b');if(focus)focus.focus();
   });
 }

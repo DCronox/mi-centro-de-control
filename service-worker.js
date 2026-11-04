@@ -1,10 +1,10 @@
-const CACHE = 'mi-centro-control-v11';
+const CACHE = 'mi-centro-control-v12';
 const CORE = [
   './', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png',
   './privacidad.html', './terminos.html', './cookies.html',
   './css/app.css', './lib/supabase-2.118.0.js', './fonts/manrope-latin-wght-normal.woff2', './fonts/manrope-latin-ext-wght-normal.woff2',
   './js/theme-boot.js', './js/util.js', './js/sync-model.js', './js/store.js', './js/domain.js', './js/finance.js',
-  './js/charts.js', './js/ui.js', './js/shell.js', './js/views/dashboard.js', './js/views/money.js', './js/views/day.js',
+  './js/charts.js', './js/sound.js', './js/motion.js', './js/ui.js', './js/shell.js', './js/views/dashboard.js', './js/views/money.js', './js/views/day.js',
   './js/views/goals.js', './js/views/shifts.js', './js/views/reports.js', './js/views/insights.js',
   './js/events.js', './js/cloud-auth.js', './js/sw-register.js'
 ];
