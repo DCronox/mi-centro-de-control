@@ -43,8 +43,10 @@ function gymCheckins(data){
   return{done,planned,routines};
 }
 /* Resumen honesto: solo cuenta lo registrado. */
-function gymSummary(data){
+function gymSummary(data,extraDates=[]){
   const today=gymToday(),{done,planned,routines}=gymCheckins(data);
+  /* Entrenamientos registrados en Gym (fechas de Bogotá) también cuentan como días entrenados. */
+  extraDates.forEach(d=>{if(/^\d{4}-\d{2}-\d{2}$/.test(d))done.set(d,(done.get(d)||0)+1)});
   const dow=(gymDow(today)+6)%7,weekStart=gymAddDays(today,-dow);
   const week=Array.from({length:7},(_,i)=>{const d=gymAddDays(weekStart,i);return{date:d,done:done.has(d),planned:planned.has(d)||routines.some(r=>Array.isArray(r.days)&&r.days.includes(gymDow(d))&&(!r.from||d>=r.from)&&(!r.to||d<=r.to)),future:d>today,today:d===today}});
   const last30=[...done.keys()].filter(d=>d>gymAddDays(today,-30)&&d<=today).length;

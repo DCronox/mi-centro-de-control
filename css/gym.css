@@ -100,3 +100,56 @@ body.gym{background:radial-gradient(1200px 500px at 85% -10%,color-mix(in srgb,v
   .tabbar .tab-add.on{color:var(--accent-ink);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 35%,transparent)}
 }
 @media (max-width:430px){.quick{min-height:96px;padding:14px}.set-head,.set-row{grid-template-columns:44px 1fr 1fr 44px}}
+
+/* ---- Fase 2: rutinas, entrenamiento, medidas ---- */
+.section-actions{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:var(--gap)}
+.sticky-actions{position:sticky;bottom:12px;z-index:5;padding:10px;border:1px solid var(--line);border-radius:var(--r-lg);background:color-mix(in srgb,var(--surface) 92%,transparent);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+.sync-banner{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 14px;margin-bottom:var(--gap);border:1px solid var(--warn);border-radius:var(--r-md);background:var(--warn-soft);font-size:var(--fs-sm)}
+.sync-banner .i{color:var(--warn)}
+.sync-banner span{flex:1}
+.gym-signin{display:flex;gap:14px;align-items:flex-start}
+.gym-signin>.i{flex:none;color:var(--accent);margin-top:2px}
+.gym-signin h2{margin-bottom:4px}
+.gym-signin .b{text-decoration:none;margin-top:10px}
+.quick-live{border-color:color-mix(in srgb,var(--accent) 45%,var(--line));background:color-mix(in srgb,var(--accent) 12%,var(--surface))}
+.routine-card.is-today{border-color:color-mix(in srgb,var(--accent) 45%,var(--line))}
+.routine-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.routine-head h2{margin:0 0 2px;display:block}
+.routine-head p{margin:0}
+.routine-items{margin:12px 0 0;padding-left:20px;display:grid;gap:6px}
+.routine-items li{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.ed-item{padding:12px 0;border-top:1px solid var(--line)}
+.ed-item:first-of-type{border-top:0}
+.ed-item-head{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.ed-item-head b{flex:0 1 auto}
+.ed-move{display:flex;gap:4px;margin-left:auto}
+.ed-move .ic-b{width:36px;min-height:36px}
+.ed-fields{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.ed-fields input{min-height:40px;padding:8px 10px}
+.add-ex{margin-top:14px;grid-template-columns:2fr 1fr auto}
+.pick-routine{display:flex;align-items:center;gap:10px;width:100%;min-height:56px;padding:10px 12px;margin-bottom:6px;border:1px solid var(--line);border-radius:var(--r-md);background:var(--surface-2);color:var(--ink);text-align:left;cursor:pointer}
+.pick-routine>span:first-child{flex:1;display:grid}
+.pick-routine:hover{border-color:var(--line-strong)}
+.workout-head{position:sticky;top:12px;z-index:6}
+.ex-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.ex-head h2{margin:0 0 2px;display:block}
+.ex-head p{margin:0}
+.last-time{display:flex;align-items:center;gap:6px;margin:4px 0 0;font-size:var(--fs-sm);color:var(--accent);font-weight:600}
+.set-table{margin-top:12px;border:1px solid var(--line);border-radius:var(--r-md);overflow:hidden}
+.set-table .set-row input[type=number]{min-height:40px;padding:6px 10px;text-align:center}
+.set-table .set-row input[type=checkbox]{justify-self:center;width:28px;height:28px}
+.set-row.is-done{background:color-mix(in srgb,var(--accent) 10%,transparent)}
+.set-row.is-done span{color:var(--accent)}
+.ex-actions{display:flex;gap:14px;margin-top:10px}
+.ex-actions .lk{margin:0;display:inline-flex;align-items:center;gap:4px}
+.metric-form{grid-template-columns:repeat(4,minmax(0,1fr))}
+.metric-form .wide{grid-column:span 3}
+@media (max-width:820px){
+  .workout-head{top:calc(64px + env(safe-area-inset-top,0px))}
+  .ed-fields{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .add-ex{grid-template-columns:1fr}
+  .metric-form{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .metric-form .wide{grid-column:1/-1}
+  .sticky-actions{bottom:calc(84px + env(safe-area-inset-bottom,0px))}
+  .routine-head{flex-direction:column}
+}

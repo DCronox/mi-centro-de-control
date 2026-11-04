@@ -39,11 +39,16 @@
   <div class="sheet-head"><h2 id="moreTitle">Más de Gym</h2><button class="g ic-b" type="button" data-close aria-label="Cerrar"></button></div>
   <div id="moreList" class="more-list"></div>
 </dialog>
+<dialog id="uiDialog" class="dialog" aria-labelledby="uiTitle"><form method="dialog" id="uiForm"><h2 id="uiTitle"></h2><p id="uiMsg"></p><div id="uiField"></div><div class="dialog-actions" id="uiActions"></div></form></dialog>
 <div id="toast" role="status" aria-live="polite"></div>
 <script src="./lib/supabase-2.118.0.js"></script>
 <script src="./js/cloud-config.js"></script>
+<script src="./js/util.js"></script>
 <script src="./js/sound.js"></script>
+<script src="./js/ui.js"></script>
 <script src="./js/gym/gym-data.js"></script>
+<script src="./js/gym/gym-calc.js"></script>
+<script src="./js/gym/gym-store.js"></script>
 <script src="./js/gym/gym.js"></script>
 <script src="./js/sw-register.js"></script>
 </body>
