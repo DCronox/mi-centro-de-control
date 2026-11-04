@@ -27,6 +27,16 @@ const json = (body: unknown, status = 200) => new Response(JSON.stringify(body),
 type Sub = { id: string; user_id: string; endpoint: string; p256dh: string; auth: string; fail_count: number };
 type Note = { id: number; dedupe_key: string; category: string; title: string; body: string; tab: string };
 
+/* Secreto del cron: se genera dentro de la base de datos (Vault) y la función lo lee con la clave
+   de servicio mediante public.notify_cron_secret(). Así nadie tiene que copiarlo a mano.
+   Si existe el secreto CRON_SECRET en la función, también se acepta. */
+let cronSecretCache = '';
+async function cronSecret() {
+  if (cronSecretCache) return cronSecretCache;
+  const { data } = await admin.rpc('notify_cron_secret');
+  cronSecretCache = typeof data === 'string' ? data : '';
+  return cronSecretCache;
+}
 /* Comparación en tiempo constante para el secreto del cron. */
 function safeEqual(a: string, b: string) {
   if (!a || !b || a.length !== b.length) return false;
@@ -112,7 +122,8 @@ Deno.serve(async (req) => {
   let body: { action?: string } = {};
   try { body = await req.json(); } catch { /* cuerpo vacío */ }
   if (body.action === 'run') {
-    if (!safeEqual(req.headers.get('x-cron-secret') ?? '', env('CRON_SECRET'))) return json({ ok: false, error: 'No autorizado' }, 401);
+    const given = req.headers.get('x-cron-secret') ?? '';
+    if (!safeEqual(given, await cronSecret()) && !safeEqual(given, env('CRON_SECRET'))) return json({ ok: false, error: 'No autorizado' }, 401);
     return await runAll();
   }
   if (body.action === 'test') return await sendTest(req);
