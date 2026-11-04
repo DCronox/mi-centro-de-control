@@ -5,30 +5,72 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' https://xruxsuobpctyekkyracr.supabase.co wss://xruxsuobpctyekkyracr.supabase.co; manifest-src 'self'; worker-src 'self'; base-uri 'self'; form-action 'self'; object-src 'none'">
 <title>Mi Centro de Control</title>
+<link rel="preload" href="./fonts/manrope-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="./css/app.css">
 <link rel="manifest" href="./manifest.webmanifest">
-<meta name="theme-color" content="#0b0d12">
+<meta name="theme-color" content="#f3f5f2">
+<meta name="color-scheme" content="light dark">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="apple-touch-icon" href="./apple-touch-icon.png">
 <script src="./js/theme-boot.js"></script>
 </head>
 <body>
-<button id="syncPill" class="sync-pill" type="button" data-state="local" role="status" aria-live="polite" aria-label="Estado del guardado"><i aria-hidden="true"></i><span>Solo en este dispositivo</span></button>
-<div class="shell"><aside><div class="brand"><span class="logo">◆</span><span>Mi Centro<br>de Control</span></div><nav id="nav"></nav>
-<div class="sf"><div id="fecha"></div><button id="th" class="g" type="button">◐ Tema</button></div></aside><main><section id="cloudPanel" class="card">
-<h2>Sincronización privada entre dispositivos</h2>
-<div id="cloudStatus" class="cloud-msg" role="status" aria-live="polite">Tus cambios siguen guardándose en este dispositivo. Inicia sesión para activar la nube.</div>
-<form id="cloudAuth" class="cloud-grid">
-<label class="fl">Correo electrónico<input id="cloudEmail" type="email" autocomplete="email" placeholder="tu correo" required></label>
-<label class="fl">Contraseña<input id="cloudPassword" type="password" autocomplete="current-password" minlength="8" placeholder="Mínimo 8 caracteres" required></label>
-<label class="consent"><input type="checkbox" id="cloudConsent"><span>Para crear una cuenta, acepta la <a href="./privacidad.html" target="_blank" rel="noopener">Política de privacidad</a> y los <a href="./terminos.html" target="_blank" rel="noopener">Términos y condiciones</a>; autorizas el tratamiento de tus datos, incluido su almacenamiento fuera de Colombia, y confirmas que eres mayor de 18 años.</span></label><div class="cloud-actions"><button class="b" type="submit" id="cloudLogin">Iniciar sesión</button><button class="g" type="submit" id="cloudSignup">Crear cuenta</button><button class="g" type="button" id="cloudForgot">Olvidé mi contraseña</button></div>
-</form>
-<form id="cloudRecover" class="cloud-grid cloud-hidden"><label class="fl">Nueva contraseña<input id="cloudNewPassword" type="password" autocomplete="new-password" minlength="8" required></label><div class="cloud-actions"><button class="b" type="submit">Guardar nueva contraseña</button></div></form>
-<div id="cloudLogged" class="cloud-hidden"><div class="cloud-msg" id="cloudAccount"></div><div class="cloud-actions"><button class="g" type="button" id="cloudSyncNow">Sincronizar ahora</button><button class="g" type="button" id="cloudLogout">Cerrar sesión</button><button class="g" type="button" id="cloudDelete">Eliminar mi cuenta y mis datos</button></div></div>
-<details id="backupTools"><summary>Copia de seguridad</summary><div class="cloud-msg">Descarga tus datos para guardarlos fuera del navegador. El archivo contiene información personal; guárdalo en un lugar seguro.</div><div class="cloud-actions"><button class="g" type="button" id="exportData">Descargar copia</button><label class="g" for="importData" style="cursor:pointer">Restaurar copia</label><input id="importData" type="file" accept="application/json,.json" aria-label="Seleccionar copia de seguridad"></div></details>
-</section><div id="app"></div><footer class="legal"><a href="./privacidad.html">Política de privacidad</a><a href="./terminos.html">Términos y condiciones</a><a href="./cookies.html">Política de cookies y almacenamiento</a></footer></main></div>
+<a class="skip" href="#app">Saltar al contenido</a>
+<div class="shell">
+<aside class="side" aria-label="Menú">
+  <div class="brand"><span class="logo" aria-hidden="true"></span><span>Mi Centro<br>de Control</span></div>
+  <button id="quickOpen" class="b quick-btn" type="button">Registrar movimiento</button>
+  <nav id="nav" aria-label="Secciones"></nav>
+  <div class="side-foot"><button id="th" class="g" type="button">Tema</button></div>
+</aside>
+<main>
+  <header class="topbar">
+    <span class="topbar-brand" aria-hidden="true"><span class="logo"></span>Mi Centro</span>
+    <span id="fecha" class="topbar-date"></span>
+    <button id="syncPill" class="sync-pill" type="button" data-state="local" aria-live="polite" aria-label="Estado del guardado"><i aria-hidden="true"></i><span>Solo en este dispositivo</span></button>
+  </header>
+  <div id="app"></div>
+  <section id="cloudPanel" class="card" hidden aria-labelledby="cloudTitle">
+    <h2 id="cloudTitle">Sincronización entre dispositivos</h2>
+    <div id="cloudStatus" class="cloud-msg" role="status" aria-live="polite">Tus cambios se guardan en este dispositivo. Inicia sesión para guardarlos también en la nube.</div>
+    <form id="cloudAuth" class="cloud-grid">
+      <label class="fl">Correo electrónico<input id="cloudEmail" type="email" autocomplete="email" placeholder="tu correo" required></label>
+      <label class="fl">Contraseña<input id="cloudPassword" type="password" autocomplete="current-password" minlength="8" placeholder="Mínimo 8 caracteres" required></label>
+      <label class="consent"><input type="checkbox" id="cloudConsent"><span>Para crear una cuenta, acepta la <a href="./privacidad.html" target="_blank" rel="noopener">Política de privacidad</a> y los <a href="./terminos.html" target="_blank" rel="noopener">Términos y condiciones</a>; autorizas el tratamiento de tus datos, incluido su almacenamiento fuera de Colombia, y confirmas que eres mayor de 18 años.</span></label>
+      <div class="cloud-actions"><button class="b" type="submit" id="cloudLogin">Iniciar sesión</button><button class="g" type="submit" id="cloudSignup">Crear cuenta</button><button class="g" type="button" id="cloudForgot">Olvidé mi contraseña</button></div>
+    </form>
+    <form id="cloudRecover" class="cloud-grid cloud-hidden"><label class="fl">Nueva contraseña<input id="cloudNewPassword" type="password" autocomplete="new-password" minlength="8" required></label><div class="cloud-actions"><button class="b" type="submit">Guardar nueva contraseña</button></div></form>
+    <div id="cloudLogged" class="cloud-hidden"><div class="cloud-msg" id="cloudAccount"></div><div class="cloud-actions"><button class="g" type="button" id="cloudSyncNow">Sincronizar ahora</button><button class="g" type="button" id="cloudLogout">Cerrar sesión</button><button class="g danger" type="button" id="cloudDelete">Eliminar mi cuenta y mis datos</button></div></div>
+    <div id="backupTools" class="backup">
+      <h3>Copia de seguridad</h3>
+      <div class="cloud-msg">Descarga tus datos para guardarlos fuera del navegador. El archivo contiene información personal; guárdalo en un lugar seguro.</div>
+      <div class="cloud-actions"><button class="g" type="button" id="exportData">Descargar copia</button><label class="g file-btn" for="importData">Restaurar copia</label><input id="importData" class="visually-hidden" type="file" accept="application/json,.json"></div>
+    </div>
+  </section>
+  <footer class="legal"><a href="./privacidad.html">Política de privacidad</a><a href="./terminos.html">Términos y condiciones</a><a href="./cookies.html">Política de cookies y almacenamiento</a></footer>
+</main>
+</div>
+<nav id="tabbar" class="tabbar" aria-label="Navegación principal"></nav>
+<dialog id="quickAdd" class="sheet" aria-labelledby="quickTitle">
+  <form id="fQuick" class="quick-form">
+    <div class="sheet-head"><h2 id="quickTitle">Registrar movimiento</h2><button class="g ic-b" type="button" data-close aria-label="Cerrar"></button></div>
+    <div class="seg seg-wide"><label><input type="radio" name="type" value="gasto" checked><span>Gasto</span></label><label><input type="radio" name="type" value="ingreso"><span>Ingreso</span></label></div>
+    <label class="fl">Valor (COP)<input name="amount" type="number" inputmode="numeric" min="1" step="1" placeholder="0" required></label>
+    <label class="fl">Concepto<input name="name" maxlength="120" placeholder="Ej. Gasolina" required></label>
+    <label class="fl">Categoría<input name="cat" list="quickCats" placeholder="Elige o escribe una" required></label><datalist id="quickCats"></datalist>
+    <label class="fl">Fecha<input name="date" type="date" required></label>
+    <div class="fl">Estado<div class="seg seg-wide"><label><input type="radio" name="status" value="hecho" checked><span>Ya ocurrió</span></label><label><input type="radio" name="status" value="pendiente"><span>Pendiente</span></label></div></div>
+    <button class="b" type="submit">Guardar movimiento</button>
+    <div class="quick-links"><button class="lk" type="button" data-go="dia">Nueva tarea en Mi día</button><button class="lk" type="button" data-go="turnos">Registrar un turno</button></div>
+  </form>
+</dialog>
+<dialog id="moreSheet" class="sheet" aria-labelledby="moreTitle">
+  <div class="sheet-head"><h2 id="moreTitle">Más secciones</h2><button class="g ic-b" type="button" data-close aria-label="Cerrar"></button></div>
+  <div id="moreList" class="more-list"></div>
+</dialog>
+<dialog id="uiDialog" class="dialog" aria-labelledby="uiTitle"><form method="dialog" id="uiForm"><h2 id="uiTitle"></h2><p id="uiMsg"></p><div id="uiField"></div><div class="dialog-actions" id="uiActions"></div></form></dialog>
 <script src="./lib/supabase-2.118.0.js"></script>
 <script src="./js/util.js"></script>
 <script src="./js/sync-model.js"></script>
@@ -36,6 +78,7 @@
 <script src="./js/domain.js"></script>
 <script src="./js/finance.js"></script>
 <script src="./js/charts.js"></script>
+<script src="./js/ui.js"></script>
 <script src="./js/shell.js"></script>
 <script src="./js/views/dashboard.js"></script>
 <script src="./js/views/money.js"></script>

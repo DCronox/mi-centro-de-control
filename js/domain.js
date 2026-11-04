@@ -32,16 +32,19 @@ function migrate(){
   Object.entries(S.log||{}).forEach(([d,m])=>Object.entries(m).forEach(([k,e])=>{const i=(S.inst[d]||[]).find(x=>x.id===k||x.rid===k);if(i)Object.assign(i,e)}));
   delete S.tasks;delete S.log;save();
 }
-function saveTask(v){
+async function saveTask(v){
   const isR=(E&&E.t==='r')||(!E&&v.rec==='1');
   const days=DN.map((_,i)=>i).filter(i=>v['d'+i]);
-  if(isR&&!days.length){alert('Elige al menos un día de la semana.');return false}
+  if(isR&&!days.length){await notify('Marca al menos un día de la semana para que la rutina se repita.',{title:'Faltan los días'});return false}
   const base={name:v.name,time:v.time||'',end:v.end||'',cat:v.cat||'Personal'},notes=v.notes||'';
   if(E&&E.t==='i'){
     const i=getI(E.d,E.id);
-    if(i){Object.assign(i,base,{note:notes});
+    if(i){
       const r=i.rid&&S.routines.find(x=>x.id===i.rid);
-      if(r&&confirm('¿Aplicar este cambio también a los días futuros de la rutina?\n\nAceptar = este día y los futuros\nCancelar = solo este día'))Object.assign(r,base,{notes});}
+      let scope='day';
+      if(r){scope=await choose('Esta tarea pertenece a una rutina.',[{label:'Solo este día',value:'day'},{label:'Este día y los futuros',value:'all'}],{title:'¿Dónde aplicar el cambio?'});if(scope===null)return false}
+      Object.assign(i,base,{note:notes});
+      if(r&&scope==='all')Object.assign(r,base,{notes});}
   }else if(E&&E.t==='r'){
     const r=S.routines.find(x=>x.id===E.id);
     if(r){Object.assign(r,base,{notes,days,from:v.date||r.from,to:v.to||''});
