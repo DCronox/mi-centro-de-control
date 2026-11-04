@@ -1,10 +1,10 @@
-const CACHE = 'mi-centro-control-v12';
+const CACHE = 'mi-centro-control-v13';
 const CORE = [
   './', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png',
   './privacidad.html', './terminos.html', './cookies.html',
   './css/app.css', './lib/supabase-2.118.0.js', './fonts/manrope-latin-wght-normal.woff2', './fonts/manrope-latin-ext-wght-normal.woff2',
   './js/theme-boot.js', './js/util.js', './js/sync-model.js', './js/store.js', './js/domain.js', './js/finance.js',
-  './js/charts.js', './js/sound.js', './js/motion.js', './js/ui.js', './js/shell.js', './js/views/dashboard.js', './js/views/money.js', './js/views/day.js',
+  './js/charts.js', './js/push-config.js', './js/reminders-core.mjs', './js/notifications.js', './js/views/notifications.js', './js/sound.js', './js/motion.js', './js/ui.js', './js/shell.js', './js/views/dashboard.js', './js/views/money.js', './js/views/day.js',
   './js/views/goals.js', './js/views/shifts.js', './js/views/reports.js', './js/views/insights.js',
   './js/events.js', './js/cloud-auth.js', './js/sw-register.js'
 ];
@@ -15,6 +15,39 @@ self.addEventListener('install', event => {
 self.addEventListener('activate', event => {
   event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(key => key !== CACHE).map(key => caches.delete(key)))));
   self.clients.claim();
+});
+/* ---- Notificaciones push ----
+   Llegan aunque la app esté cerrada (si el navegador y el sistema lo permiten). */
+self.addEventListener('push', event => {
+  let d = {};
+  try { d = event.data ? event.data.json() : {}; } catch (e) { d = { title: 'Mi Centro de Control', body: event.data ? event.data.text() : '' }; }
+  const title = d.title || 'Mi Centro de Control';
+  event.waitUntil(self.registration.showNotification(title, {
+    body: d.body || '',
+    icon: './icon-192.png',
+    badge: './icon-192.png',
+    tag: d.tag || undefined,
+    renotify: false,
+    data: { tab: d.tab || 'dash', id: d.id || null },
+    lang: 'es-CO'
+  }));
+});
+/* Al tocar la notificación: abre (o enfoca) la app en la sección relacionada. */
+self.addEventListener('notificationclick', event => {
+  event.notification.close();
+  const tab = (event.notification.data && event.notification.data.tab) || 'dash';
+  const id = event.notification.data && event.notification.data.id;
+  const url = new URL('./index.html#' + encodeURIComponent(tab) + (id ? '&n=' + encodeURIComponent(id) : ''), self.registration.scope).href;
+  event.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
+    for (const c of list) {
+      if (c.url.startsWith(self.registration.scope)) { c.postMessage({ type: 'open-tab', tab, id }); return c.focus(); }
+    }
+    return self.clients.openWindow(url);
+  }));
+});
+/* El navegador renovó la suscripción: se avisa a la app para que la guarde de nuevo. */
+self.addEventListener('pushsubscriptionchange', event => {
+  event.waitUntil(self.clients.matchAll({ type: 'window' }).then(list => list.forEach(c => c.postMessage({ type: 'push-resubscribe' }))));
 });
 self.addEventListener('fetch', event => {
   const request = event.request;

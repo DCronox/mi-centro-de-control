@@ -15,25 +15,28 @@ const IC={
   moon:'<path d="M20 14.5A8 8 0 1 1 9.5 4 6.5 6.5 0 0 0 20 14.5z"/>',
   up:'<path d="M12 19V5m0 0-6 6m6-6 6 6"/>',
   down:'<path d="M12 5v14m0 0-6-6m6 6 6-6"/>',
-  right:'<path d="m9 6 6 6-6 6"/>'
+  right:'<path d="m9 6 6 6-6 6"/>',
+  bell:'<path d="M6 16V11a6 6 0 1 1 12 0v5l1.5 2h-15z"/><path d="M10 20a2 2 0 0 0 4 0"/>',
+  phone:'<rect x="7" y="3" width="10" height="18" rx="2"/><path d="M11 18h2"/>'
 };
 const ico=(n,z=18)=>`<svg class="i" width="${z}" height="${z}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${IC[n]}</svg>`;
 let _tt;function toast(m,kind='success'){if(saveFailed){m='No se guardaron los cambios. Descarga una copia e inténtalo de nuevo.';saveFailed=false;kind='error'}sfx(kind);let t=document.getElementById('toast');if(!t){t=document.createElement('div');t.id='toast';t.setAttribute('role','status');t.setAttribute('aria-live','polite');document.body.appendChild(t)}t.textContent=m;t.dataset.kind=kind;t.className='';void t.offsetWidth;t.className='show';clearTimeout(_tt);_tt=setTimeout(()=>t.className='',3000)}
 const txRow=(t,act)=>{const inc=t.type==='ingreso',refund=t.type==='devolucion',neutral=['transferencia','pago_tarjeta','anulada'].includes(t.type),p=t.status==='pendiente',label={ingreso:'Ingreso',gasto:'Gasto',devolucion:'Devolución',transferencia:'Transferencia propia',pago_tarjeta:'Pago de tarjeta',anulada:'Anulada o reversada'}[t.type]||'Movimiento',sign=inc||refund?'+':neutral?'↔':'−',icon=inc||refund?'up':neutral?'check':'down';return '<div class="row"><span class="ti '+(inc||refund?'in':neutral?'nu-neutral':'')+'">'+ico(icon,16)+'</span><div class="g1"><b class="t">'+esc(t.name)+'</b><small>'+(act?'':esc(t.date)+' · ')+esc(label)+' · '+esc(t.cat||'Otros')+(t.method?' · '+esc(t.method):'')+(t.nuProduct?' · '+esc(t.nuProduct==='cuenta_nu'?'Cuenta Nu':'Tarjeta Nu'):'')+(t.importedFrom?' · Importado de extracto':'')+(p?' · <span class="warn">Pendiente</span>':'')+'</small></div><b class="amt '+(inc||refund?'ok':neutral?'nu-neutral':'')+'">'+(neutral?'':sign)+fmt(t.amount)+'</b>'+(act?(!neutral&&t.type!=='anulada'&&p?'<button class="g" data-a="pay" data-id="'+esc(t.id)+'">'+(inc?'Recibido':'Pagado')+'</button>':'')+'<button class="g ic-b" type="button" data-a="delTx" data-id="'+esc(t.id)+'" aria-label="Eliminar movimiento: '+esc(t.name)+'">'+ico('x',15)+'</button>':'')+'</div>'};
 /* [clave, nombre en el menú, título de la página, icono]. «ins» se conserva como alias de Informes › Tendencias. */
-const TABS=[['dash','Inicio','Hoy en tu centro','home'],['mov','Dinero','Dinero','wallet'],['dia','Mi día','Mi día','check'],['metas','Metas','Metas','target'],['turnos','Turnos','Turnos','clock'],['inf','Informes','Informes','chart'],['cuenta','Cuenta','Cuenta y copias','user']];
-const MOBILE_MAIN=['dash','mov','dia'],MOBILE_MORE=['turnos','metas','inf','cuenta'];
-function navButton([k,n,,i]){return `<button type="button" class="${tab===k?'on':''}" data-t="${k}" ${tab===k?'aria-current="page"':''}>${ico(i,19)}<span>${n}</span></button>`}
+const TABS=[['dash','Inicio','Hoy en tu centro','home'],['mov','Dinero','Dinero','wallet'],['dia','Mi día','Mi día','check'],['metas','Metas','Metas','target'],['turnos','Turnos','Turnos','clock'],['inf','Informes','Informes','chart'],['notif','Notificaciones','Notificaciones','bell'],['cuenta','Cuenta','Cuenta y copias','user']];
+const MOBILE_MAIN=['dash','mov','dia'],MOBILE_MORE=['turnos','metas','inf','notif','cuenta'];
+function navBadge(k){if(k!=='notif'||typeof unreadCount!=='function')return '';const n=unreadCount();return n?`<em class="badge" aria-label="${n} sin leer">${n>9?'9+':n}</em>`:''}
+function navButton([k,n,,i]){return `<button type="button" class="${tab===k?'on':''}" data-t="${k}" ${tab===k?'aria-current="page"':''}>${ico(i,19)}<span>${n}</span>${navBadge(k)}</button>`}
 function nav(){
   document.getElementById('nav').innerHTML=TABS.map(navButton).join('');
   const T=k=>TABS.find(x=>x[0]===k),moreOn=MOBILE_MORE.includes(tab);
   document.getElementById('tabbarItems').innerHTML=navButton(T('dash'))+navButton(T('mov'))+
     `<button type="button" class="tab-add" data-quick aria-label="Registrar movimiento">${ico('plus',24)}</button>`+navButton(T('dia'))+
     `<button type="button" class="${moreOn?'on':''}" data-more ${moreOn?'aria-current="page"':''} aria-haspopup="dialog">${ico('more',19)}<span>${moreOn?esc(T(tab)[1]):'Más'}</span></button>`;
-  document.getElementById('moreList').innerHTML=MOBILE_MORE.map(k=>{const [,n,,i]=T(k);return `<button type="button" class="more-item ${tab===k?'on':''}" data-t="${k}">${ico(i,20)}<span>${n}</span>${ico('right',16)}</button>`}).join('')+
+  document.getElementById('moreList').innerHTML=MOBILE_MORE.map(k=>{const [,n,,i]=T(k);return `<button type="button" class="more-item ${tab===k?'on':''}" data-t="${k}">${ico(i,20)}<span>${n}</span>${navBadge(k)}${ico('right',16)}</button>`}).join('')+
     `<button type="button" class="more-item" data-theme-toggle>${ico('moon',20)}<span>Cambiar tema</span></button>`;
 }
-function goTab(k){if(k==='ins'){k='inf';window._reportView='tendencias'}if(!TABS.some(x=>x[0]===k))k='dash';tab=k;E=null;render();scrollTo(0,0);document.querySelector('#app h1')?.focus({preventScroll:true})}
+function goTab(k){if(k==='notif')notif.loaded=false;if(k==='ins'){k='inf';window._reportView='tendencias'}if(!TABS.some(x=>x[0]===k))k='dash';tab=k;E=null;render();scrollTo(0,0);document.querySelector('#app h1')?.focus({preventScroll:true})}
 function closeSheets(){document.querySelectorAll('dialog.sheet[open]').forEach(d=>d.close())}
 function toggleTheme(){const r=document.documentElement,n=effectiveTheme()==='dark'?'light':'dark';r.dataset.theme=n;syncBrowserThemeColor();try{localStorage.setItem('mcc-theme',n)}catch(e){}}
 document.addEventListener('click',e=>{
@@ -66,7 +69,7 @@ function render(){
   document.getElementById('cloudPanel').hidden=tab!=='cuenta';
   document.body.dataset.tab=tab;
   const a=document.getElementById('app');
-  const views={dash:vDash,mov:vMov,dia:vDia,metas:vMetas,turnos:vTurnos,inf:vReports,cuenta:()=>''};
+  const views={dash:vDash,mov:vMov,dia:vDia,metas:vMetas,turnos:vTurnos,inf:vReports,notif:vNotif,cuenta:()=>''};
   a.innerHTML=`<div class="ph"><h1 tabindex="-1">${T[2]}</h1>${tab==='dash'?`<p>${esc(fechaLarga(hoy()))}</p>`:''}</div>`+views[tab]();
   animateEnter(a);requestAnimationFrame(placeIndicators);
   document.dispatchEvent(new Event('mcc:rendered'));

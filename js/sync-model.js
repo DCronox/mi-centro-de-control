@@ -76,7 +76,7 @@ function mergeData(remote,local){
     return Object.assign({},w,extra);
   };
   /* Valores únicos (no listas) que llevan su propia marca `u`: gana el más reciente. */
-  ['activeShift'].forEach(k=>{const r=remote[k],l=local[k];if(r||l)out[k]=ts(r)>ts(l)?r:l});
+  ['activeShift','notifPrefs'].forEach(k=>{const r=remote[k],l=local[k];if(r||l)out[k]=ts(r)>ts(l)?r:l});
   SYNC_COLLECTIONS.forEach(col=>{out[col]=union(col,remote[col],local[col],col+'|',col==='goals'?mergeGoal:pick)});
   const inst={},ri=remote.inst||{},li=local.inst||{};
   new Set([...Object.keys(ri),...Object.keys(li)]).forEach(day=>{inst[day]=union('inst',ri[day],li[day],'inst|'+day+'|')});

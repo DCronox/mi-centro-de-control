@@ -18,6 +18,7 @@ app.addEventListener('submit',async e=>{
   else if(f.classList.contains('fAp')){const g=S.goals.find(x=>x.id===f.dataset.id),n=+v.amount;if(!g||!(n>0))return;if(isPersonalGoal(g)){g.progress=Array.isArray(g.progress)?g.progress:[];g.progress.push({id:uid(),amount:n,date:hoy(),note:String(v.note||'').trim().slice(0,80)})}else{g.aportes.push({id:uid(),amount:Math.round(n),date:hoy()})}}
   else if(f.id==='fObligation'){S.obligations.push({id:uid(),name:v.name.trim(),amount:+v.amount,cat:v.cat.trim()||'Otros',day:Math.min(31,Math.max(1,+v.day||1)),active:true,generatedMonths:[]});generateMonthlyObligations()}
   else if(f.id==='fSchedule'){S.scheduledShifts.push({id:uid(),name:(v.name||'').trim(),date:v.date,in:v.in,out:v.out,brk:+v.brk||0,rate:S.rate})}
+  else if(f.id==='fNotifPrefs'){const p={enabled:!!v.enabled,categories:{}};NOTIF_CATS.forEach(([k])=>p.categories[k]=!!v['cat_'+k]);['paymentLeadDays','shiftLeadMin','goalLeadDays','weeklyDay','bigExpense','savingsDay'].forEach(k=>p[k]=Math.max(0,Math.round(+v[k]||0)));p.savingsDay=Math.min(31,Math.max(1,p.savingsDay||25));['summaryTime','weeklyTime','quietStart','quietEnd'].forEach(k=>{if(/^\d{2}:\d{2}$/.test(v[k]||''))p[k]=v[k]});saveNotifPrefs(p);render();toast('Preferencias guardadas');return}
   else if(f.id==='fShift'){const r=+v.rate||S.rate;S.rate=r;S.shifts.push({id:uid(),date:v.date,in:v.in,out:v.out,brk:+v.brk||0,rate:r,paid:false,source:'manual'})}
   else return;
   save();render();toast(budgetAlert||'Cambios guardados');
@@ -29,6 +30,13 @@ app.addEventListener('click',async e=>{
   if(a==='exportReport'){exportReportCsv();return}
   if(a==='printReport'){window.print();return}
   if(a==='reportView'){window._reportView=id;render();return}
+  if(a==='enablePush'){enablePush();return}
+  if(a==='disablePush'){disablePushHere();return}
+  if(a==='testPush'){sendTestPush();return}
+  if(a==='localAlerts'){enableLocalAlerts();return}
+  if(a==='devRemove'){removeDevice(id);return}
+  if(a==='readAll'){await markAllRead();render();return}
+  if(a==='openNotif'){await markRead(id);const t=actionButton.dataset.tab;if(t&&t!=='notif'&&TABS.some(x=>x[0]===t))goTab(t);else render();return}
   if(a==='pay'){const t=S.tx.find(x=>x.id===id);if(t.type==='gasto'&&t.status==='pendiente'){const month=mes(t.date),before=monthlyCategorySpend(t.cat,month);t.status='pagado';budgetAlert=budgetThresholdMessage(t.cat,before,before+(+t.amount||0),month)}else t.status='recibido'}
   else if(a==='delTx'){if(!await ask('Se quitará de tus registros y de tus informes.',{title:'¿Eliminar este movimiento?',confirmLabel:'Eliminar',danger:true}))return;S.tx=S.tx.filter(x=>x.id!==id)}
   else if(a==='delBudget'){if(!await ask('Los movimientos de esa categoría se conservan.',{title:'¿Eliminar este presupuesto?',confirmLabel:'Eliminar',danger:true}))return;S.budgets=S.budgets.filter(x=>x.id!==id)}
@@ -65,6 +73,7 @@ app.addEventListener('change',e=>{
   if(e.target.id==='insightsRange'){window._insightsRange=Number(e.target.value);render();return}
   if(e.target.dataset.filter){window[e.target.dataset.filter]=e.target.value;render2();return}
   const a=e.target.dataset.a,id=e.target.dataset.id;
+  if(a==='devToggle'){setDeviceEnabled(id,e.target.checked);return}
   if(a==='viewDay'){viewDay=/^\d{4}-\d{2}-\d{2}$/.test(e.target.value)?e.target.value:hoy();render();return}
   if(a==='tgl'){const i=getI(e.target.dataset.d||viewDay,id);if(i){sfx(e.target.checked?'check':'uncheck');i.done=e.target.checked;i.real=i.done?hora():'';save();render()}}
   else if(a==='note'){const i=getI(viewDay,id);if(i){i.note=e.target.value;save()}}
@@ -83,3 +92,4 @@ document.getElementById('th').onclick=e=>{sfx('tap');animatedThemeToggle(e)};
 {const ps=document.getElementById('prefSound');if(ps){ps.checked=soundOn();ps.addEventListener('change',()=>{setSound(ps.checked);if(ps.checked)sfx('check')})}}
 migrate();gen();
 render();
+openFromHash();

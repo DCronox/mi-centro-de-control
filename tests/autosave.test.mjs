@@ -91,3 +91,8 @@ test('el turno en curso más reciente prevalece al unir',()=>{
   assert.equal(ctx.mergeData(A,B).activeShift.on,false);
   assert.equal(ctx.mergeData(B,A).activeShift.on,false);
 });
+test('las preferencias de notificaciones más recientes prevalecen al unir',()=>{
+  const A=D({notifPrefs:{enabled:false,u:900}}),B=D({notifPrefs:{enabled:true,u:100}});
+  assert.equal(ctx.mergeData(A,B).notifPrefs.enabled,false);
+  assert.equal(ctx.mergeData(B,A).notifPrefs.enabled,false);
+});
