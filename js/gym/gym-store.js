@@ -131,3 +131,60 @@ async function gymSaveMetric(m){
 }
 async function gymDeleteMetric(id){await gq(gymClient.from('body_metrics').delete().eq('id',id));GS.metrics=GS.metrics.filter(m=>m.id!==id)}
 addEventListener('online',()=>{if(GS.user)gymFlushQueue().then(()=>typeof gRender==='function'&&gRender(false))});
+
+/* ---- Evaluación inicial y objetivos nutricionales (Gym Intelligence, fase B) ----
+   Tablas gym_profiles y nutrition_targets (migración 20261106_gym_perfil). Si aún no existen, Gym sigue
+   funcionando: la evaluación se puede calcular en el dispositivo pero no se guarda. */
+GS.profile=null;GS.targets=[];GS.profileSchema=null;
+const GYM_PROFILE_FIELDS=['birth_year','sex','height_cm','weight_kg','goal','secondary_goals','experience','occupation','walking','training_days','session_min','cardio_min_week','equipment','sleep_hours','pregnant','lactating','condition','medication','eating_disorder','notes'];
+async function gymLoadProfile(){
+  if(!gymClient||!GS.user)return false;
+  const p=await gymClient.from('gym_profiles').select('*').eq('user_id',GS.user.id).maybeSingle();
+  if(p.error){GS.profileSchema=!/schema cache|does not exist|relation/i.test(p.error.message||'')?true:false;GS.profile=null;GS.targets=[];return false}
+  GS.profileSchema=true;GS.profile=p.data||null;
+  const t=await gymClient.from('nutrition_targets').select('*').eq('user_id',GS.user.id).order('created_at',{ascending:false}).limit(50);
+  GS.targets=t.error?[]:[...(t.data||[])].sort((a,b)=>String(b.created_at).localeCompare(String(a.created_at)));
+  return true;
+}
+/* Fila de la base de datos → entrada del motor de cálculo. */
+function gymProfileInput(row){
+  if(!row)return null;
+  return{birth_year:+row.birth_year,sex:row.sex,height_cm:+row.height_cm,weight_kg:+row.weight_kg,goal:row.goal,experience:row.experience,occupation:row.occupation,walking:row.walking,
+    training_days:+row.training_days,session_min:+row.session_min,cardio_min_week:+(row.cardio_min_week||0),equipment:row.equipment,sleep_hours:row.sleep_hours===null||row.sleep_hours===undefined||row.sleep_hours===''?null:+row.sleep_hours,
+    safety:{pregnant:!!row.pregnant,lactating:!!row.lactating,condition:!!row.condition,medication:!!row.medication,eating_disorder:!!row.eating_disorder}};
+}
+/* Formulario → fila normalizada. */
+function gymProfileRow(v){
+  const num=x=>x===''||x===undefined||x===null?null:+x,b=x=>x===true||x==='on'||x==='1'||x==='true';
+  return{birth_year:num(v.birth_year),sex:v.sex,height_cm:num(v.height_cm),weight_kg:num(v.weight_kg),goal:v.goal,secondary_goals:[].concat(v.secondary_goals||[]).filter(g=>g&&g!==v.goal),
+    experience:v.experience,occupation:v.occupation,walking:v.walking,training_days:num(v.training_days),session_min:num(v.session_min),cardio_min_week:num(v.cardio_min_week)||0,
+    equipment:v.equipment||'gym',sleep_hours:num(v.sleep_hours),pregnant:b(v.pregnant),lactating:b(v.lactating),condition:b(v.condition),medication:b(v.medication),eating_disorder:b(v.eating_disorder),notes:String(v.notes||'').slice(0,500)};
+}
+async function gymSaveProfile(row){
+  if(!GS.profileSchema)throw new Error('La evaluación aún no se puede guardar: falta aplicar la actualización de la base de datos de Gym.');
+  const body={...row,user_id:GS.user.id,assessment_version:1,completed_at:new Date().toISOString()};
+  const saved=await gq(gymClient.from('gym_profiles').upsert(body,{onConflict:'user_id'}).select('*').single());
+  GS.profile=saved;return saved;
+}
+const gymActiveTarget=()=>GS.targets.find(t=>t.status==='accepted'||t.status==='manual')||null;
+/* Guarda un objetivo nuevo (nunca sobrescribe): el anterior vigente pasa a «superseded». */
+async function gymSaveTarget(result,{status='accepted',manual=null}={}){
+  if(!GS.profileSchema)throw new Error('Los objetivos aún no se pueden guardar: falta aplicar la actualización de la base de datos de Gym.');
+  if(!result||!result.ok||!result.energy)throw new Error('No hay un objetivo calculado que guardar.');
+  const m=manual||{};
+  const row={user_id:GS.user.id,status,
+    kcal:Math.round(m.kcal??result.energy.kcal),protein_g:Math.round(m.protein_g??result.macros.protein),carbs_g:Math.round(m.carbs_g??result.macros.carbs),fat_g:Math.round(m.fat_g??result.macros.fat),
+    fiber_g:Math.round(m.fiber_g??result.macros.fiber),water_ml:Math.round((m.water_l??result.water.liters)*1000),
+    method:'mifflin_stjeor+pal',engine_version:result.version,
+    details:{input:gymProfileInput(GS.profile),computed:{energy:result.energy,macros:result.macros,water:result.water},warnings:result.warnings,refs:result.refs,safety:result.safety.mode,manual:!!manual}};
+  const prev=gymActiveTarget();
+  const saved=await gq(gymClient.from('nutrition_targets').insert(row).select('*').single());
+  if(prev){const r=await gymClient.from('nutrition_targets').update({status:'superseded'}).eq('id',prev.id);if(!r.error)prev.status='superseded'}
+  GS.targets.unshift(saved);return saved;
+}
+/* Borra la evaluación y todo el historial de objetivos de la persona (acción explícita del usuario). */
+async function gymDeleteProfileData(){
+  await gq(gymClient.from('nutrition_targets').delete().eq('user_id',GS.user.id));
+  await gq(gymClient.from('gym_profiles').delete().eq('user_id',GS.user.id));
+  GS.profile=null;GS.targets=[];
+}
