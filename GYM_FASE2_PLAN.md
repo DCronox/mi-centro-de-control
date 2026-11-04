@@ -1,7 +1,8 @@
-# Gym · Fase 2: almacenamiento (propuesta, no aplicada)
+# Gym · Fase 2: almacenamiento
 
-**Estado (2026-11-04): aplicado.** La migración `supabase/migrations/20261104120000_gym.sql` está en Supabase con RLS verificado. Nutrición sigue pendiente. Gym solo lee la sesión de Supabase y las tareas de
-«Mi día» con categoría Gimnasio guardadas en el navegador.
+**Estado (2026-11-04): aplicado.** La migración `supabase/migrations/20261104120000_gym.sql` está en Supabase
+con RLS verificado (otro usuario ve 0 filas; reintentar un guardado no duplica). Nutrición sigue pendiente.
+Además de sus tablas, Gym lee (sin modificar) las tareas de «Mi día» con categoría Gimnasio guardadas en el navegador.
 
 ## Cómo encaja con lo existente
 
