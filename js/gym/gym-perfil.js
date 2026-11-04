@@ -139,11 +139,7 @@ function gProfileCta(){
   if(GS.profile&&gymActiveTarget())return '';
   return `<button type="button" class="card gp-cta" data-g="perfil">${gico('user',22)}<span><b>${GS.profile?'Revisa tus objetivos':'Haz tu evaluación inicial'}</b><small>Calorías, proteína y agua según tu cuerpo, tu actividad y tu objetivo</small></span>${gico('right',18)}</button>`;
 }
-function vNutricion(){
-  const t=signedIn()&&GS.ready?gymActiveTarget():null;
-  const targets=t?`<section class="card"><h2>Tus objetivos diarios</h2><div class="gp-kcal gp-kcal-sm"><b>${gpNum(t.kcal)}</b><span>kcal</span></div>${gpTiles({protein:t.protein_g,carbs:t.carbs_g,fat:t.fat_g,fiber:t.fiber_g,water:(t.water_ml||0)/1000})}<button class="lk" type="button" data-g="perfil">Ver o cambiar objetivos</button></section>`:(gProfileCta()||'');
-  return targets+`<section class="card pending-card"><div class="pending-head">${gico('apple',26)}<div><h2>Registro de comidas ${phase('Próxima fase')}</h2><p class="k">Registrar alimentos y ver tu avance frente a estos objetivos llegará en la siguiente fase.</p></div></div></section>`;
-}
+/* vNutricion está en gym-nutri-ui.js. */
 
 /* ---- Eventos ---- */
 function gpStepValid(){

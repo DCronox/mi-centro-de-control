@@ -243,3 +243,43 @@ body.gym{background:radial-gradient(1200px 500px at 85% -10%,color-mix(in srgb,v
 .gp-cta span{flex:1;display:grid;gap:2px}.gp-cta small{color:var(--muted)}
 .gp-cta>svg:first-child{color:var(--accent)}
 @media (max-width:560px){.gp-opts-2,.gp-opts-3{grid-template-columns:1fr}.gp-progress li em{display:none}.gp-steps li{flex-direction:column}.gp-steps em{text-align:left}}
+
+/* ---- Panel nutricional (fase C) ---- */
+.gn-daynav{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:var(--gap)}
+.gn-daynav>div{display:grid;justify-items:center;gap:2px;text-align:center}.gn-daynav b{font-size:var(--fs-lg);text-transform:capitalize}
+.gn-daynav button[disabled]{opacity:.35;cursor:default}
+.gn-main{display:grid;grid-template-columns:auto 1fr;gap:22px;align-items:center}
+.gn-big{display:grid;justify-items:center;gap:8px}
+.gn-ring-wrap{position:relative;display:grid;place-items:center}
+.gn-ring-wrap>b,.gn-big-txt{position:absolute;inset:0;display:grid;place-content:center;text-align:center}
+.gn-ring-wrap>b{font-size:var(--fs-sm)}
+.gn-big-txt b{font-size:2rem;font-weight:800;letter-spacing:-.02em;line-height:1}.gn-big-txt span{color:var(--muted);font-size:var(--fs-xs);font-weight:600;margin-top:4px}
+.gn-track{stroke:var(--surface-2)}
+.gn-arc{stroke:var(--accent);transition:stroke-dashoffset .8s cubic-bezier(.2,.8,.2,1),stroke .3s}
+.gn-ring.is-over .gn-arc{stroke:var(--warn)}
+.gn-status{margin:0;font-size:var(--fs-sm);font-weight:700;color:var(--muted);text-align:center}.gn-status.is-over{color:var(--warn)}
+.gn-macros{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 10px;align-items:start}
+.gn-mini{display:grid;justify-items:center;gap:2px;text-align:center;min-width:0}
+.gn-mini-name{font-weight:700;font-size:var(--fs-sm)}.gn-mini-val{color:var(--muted);font-size:var(--fs-xs)}
+.gn-over{font-size:var(--fs-xs);font-weight:700;color:var(--warn)}
+.gn-note{grid-column:1/-1;display:flex;gap:6px;align-items:center;margin:0}
+.gn-water-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px}.gn-water-head h2{margin:0}
+.gn-bar{height:12px;border-radius:99px;background:var(--surface-2);overflow:hidden;margin:12px 0}
+.gn-bar i{display:block;height:100%;background:var(--accent);border-radius:inherit;transition:width .6s cubic-bezier(.2,.8,.2,1)}
+.gn-bar.is-over i{background:var(--warn)}
+.gn-water-btns{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.gn-week{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;height:140px;margin:6px 0 4px}
+.gn-col{display:grid;grid-template-rows:1fr auto;gap:6px;text-align:center;font-size:var(--fs-xs);color:var(--muted);font-weight:700}
+.gn-col-bar{position:relative;background:var(--surface-2);border-radius:var(--r-sm);overflow:hidden}
+.gn-col-bar i{position:absolute;left:0;right:0;bottom:0;background:var(--accent-soft);border-top:3px solid var(--accent);transition:height .6s}
+.gn-col-bar i.is-ok{background:var(--accent)}.gn-col-bar i.is-over{background:var(--warn-soft);border-top-color:var(--warn)}
+.gn-col-bar em{position:absolute;left:0;right:0;border-top:2px dashed var(--ink);opacity:.45}
+.gn-col.is-sel span{color:var(--ink)}
+.gn-legend{display:flex;align-items:center;gap:6px}.gn-leg-line{display:inline-block;width:18px;border-top:2px dashed var(--ink);opacity:.45}
+.gn-meal{padding:10px 0;border-top:1px solid var(--line)}.gn-meal:first-of-type{border-top:0}
+.gn-meal-head{display:flex;align-items:center;gap:10px}.gn-meal-head b{flex:1}
+.gn-meal .row{padding:8px 0}
+.gn-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-top:10px;padding:14px;border:1px solid var(--line-strong);border-radius:var(--r-md)}
+.gn-form .wide{grid-column:1/-1}
+@media (max-width:560px){.gn-main{grid-template-columns:1fr}.gn-week{gap:5px}}
+@media (prefers-reduced-motion:reduce){.gn-arc,.gn-bar i,.gn-col-bar i{transition:none}}

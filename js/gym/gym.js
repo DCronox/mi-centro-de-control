@@ -350,7 +350,7 @@ async function gymBoot(){
   pill.dataset.state=M[0];label.textContent=M[1];pill.title=gAccount.user?.email?'Sesión: '+gAccount.user.email:M[1];
   if(gAccount.user){const d=gymReadLocalData(gAccount.user.id);if(d){gData=d;gSummary=gymSummary(gData)}}
   gRender(false);
-  if(GS.user){await gymFlushQueue();await gymLoadAll();await gymLoadProfile();gRefreshSummary();gRender(false)}
+  if(GS.user){await gymFlushQueue();await gymLoadAll();await gymLoadProfile();await gymLoadNutrition();gRefreshSummary();gRender(false)}
 }
 document.querySelectorAll('dialog.sheet [data-close]').forEach(b=>b.innerHTML=gico('x',16));
 document.getElementById('gymDate').textContent=new Intl.DateTimeFormat('es-CO',{timeZone:GYM_TZ,weekday:'long',day:'numeric',month:'long',year:'numeric'}).format(new Date());

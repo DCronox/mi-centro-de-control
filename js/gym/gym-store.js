@@ -188,3 +188,46 @@ async function gymDeleteProfileData(){
   await gq(gymClient.from('gym_profiles').delete().eq('user_id',GS.user.id));
   GS.profile=null;GS.targets=[];
 }
+
+/* ---- Registro de comidas y agua (fase C; tablas food_logs y water_logs, migración 20261107) ----
+   Se cargan los últimos 35 días; los días anteriores se piden al navegar hacia ellos. */
+GS.foods=[];GS.water=[];GS.nutriSchema=null;GS.nutriFrom=null;
+const GYM_FOOD_COLS='id,date,meal,name,quantity,unit,grams,kcal,protein_g,carbs_g,fat_g,fiber_g,source,source_ref,original_text,estimated,created_at';
+async function gymLoadNutrition(from,to){
+  if(!gymClient||!GS.user)return false;
+  to=to||gymToday();from=from||gymAddDays(to,-34);
+  const [f,w]=await Promise.all([
+    gymClient.from('food_logs').select(GYM_FOOD_COLS).eq('user_id',GS.user.id).gte('date',from).lte('date',to).order('created_at'),
+    gymClient.from('water_logs').select('id,date,ml,created_at').eq('user_id',GS.user.id).gte('date',from).lte('date',to).order('created_at')]);
+  const err=f.error||w.error;
+  if(err){GS.nutriSchema=/schema cache|does not exist|relation/i.test(err.message||'')?false:GS.nutriSchema;return false}
+  GS.nutriSchema=true;
+  const inRange=x=>x.date>=from&&x.date<=to;
+  GS.foods=GS.foods.filter(x=>!inRange(x)).concat((f.data||[]).filter(inRange));
+  GS.water=GS.water.filter(x=>!inRange(x)).concat((w.data||[]).filter(inRange));
+  if(!GS.nutriFrom||from<GS.nutriFrom)GS.nutriFrom=from;
+  return true;
+}
+/* Asegura que haya datos de la semana que termina en `date` (y la anterior, para comparar). */
+async function gymEnsureNutritionFor(date){const from=gymAddDays(date,-13);if(GS.nutriFrom&&from>=GS.nutriFrom)return true;return gymLoadNutrition(from,GS.nutriFrom?gymAddDays(GS.nutriFrom,-1):date)}
+function gymNutriGuard(){if(!GS.nutriSchema)throw new Error('El registro de comidas aún no se puede guardar: falta aplicar la actualización de la base de datos de Gym.')}
+async function gymAddFood(v){
+  gymNutriGuard();
+  const errs=gymValidateFood(v);if(errs.length)throw new Error(errs.join(' '));
+  const kc=gymFoodKcal(v),n=x=>x===''||x===undefined||x===null?0:Math.round(+x*10)/10;
+  const row={user_id:GS.user.id,date:v.date,meal:v.meal,name:String(v.name).trim().slice(0,120),quantity:v.quantity===''||v.quantity===undefined?null:+v.quantity,unit:String(v.unit||'').slice(0,30),
+    grams:v.grams===''||v.grams===undefined?null:+v.grams,kcal:kc.kcal,protein_g:n(v.protein_g),carbs_g:n(v.carbs_g),fat_g:n(v.fat_g),fiber_g:n(v.fiber_g),
+    source:'manual',estimated:kc.derived||!!v.estimated};
+  const saved=await gq(gymClient.from('food_logs').insert(row).select(GYM_FOOD_COLS).single());
+  GS.foods.push(saved);return saved;
+}
+async function gymDeleteFood(id){gymNutriGuard();await gq(gymClient.from('food_logs').delete().eq('id',id));GS.foods=GS.foods.filter(f=>f.id!==id)}
+async function gymAddWater(date,ml){
+  gymNutriGuard();ml=Math.round(+ml);if(!(ml>=1&&ml<=5000))throw new Error('Cantidad de agua no válida.');
+  const saved=await gq(gymClient.from('water_logs').insert({user_id:GS.user.id,date,ml}).select('id,date,ml,created_at').single());
+  GS.water.push(saved);return saved;
+}
+async function gymUndoWater(date){
+  gymNutriGuard();const last=GS.water.filter(w=>w.date===date).sort((a,b)=>String(a.created_at).localeCompare(String(b.created_at))).at(-1);if(!last)return null;
+  await gq(gymClient.from('water_logs').delete().eq('id',last.id));GS.water=GS.water.filter(w=>w.id!==last.id);return last;
+}
