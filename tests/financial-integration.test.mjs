@@ -2,8 +2,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
-const source=fs.readFileSync(new URL('../index.html',import.meta.url),'utf8');
-function evaluate(name,context,args=[]){const lines=source.split(/\r?\n/),i=lines.findIndex(line=>line.startsWith('function '+name+'('));assert.notEqual(i,-1,'function '+name+' exists');let code=lines[i];if(name==='calc'){const start=source.indexOf('function calc(){'),end=source.indexOf('\n/* ---- vistas ---- */',start);code=source.slice(start,end)}vm.runInNewContext(code+'\nglobalThis.result='+name+'(...globalThis.args);',Object.assign(context,{args}));return context.result}
+import { appSource } from './helpers/app-source.mjs';
+const source=appSource();
+function evaluate(name,context,args=[]){const lines=source.split(/\r?\n/),i=lines.findIndex(line=>line.startsWith('function '+name+'('));assert.notEqual(i,-1,'function '+name+' exists');let code=lines[i];if(name==='calc'){const start=source.indexOf('function calc(){'),end=source.indexOf('\n}',start)+2;code=source.slice(start,end)}vm.runInNewContext(code+'\nglobalThis.result='+name+'(...globalThis.args);',Object.assign(context,{args}));return context.result}
 const sample=[
  {type:'ingreso',amount:100000,status:'recibido',date:'2026-10-02',cat:'Trabajo'},
  {type:'gasto',amount:40000,status:'pagado',date:'2026-10-03',cat:'Alimentación'},

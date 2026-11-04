@@ -2,12 +2,14 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
+import { appSource } from './helpers/app-source.mjs';
 
-const source = fs.readFileSync(new URL('../index.html', import.meta.url), 'utf8');
+const source = appSource();
 const lineFunction = name => source.split(/\r?\n/).find(line => line.startsWith(`function ${name}(`));
 const lineConst = name => source.split(/\r?\n/).find(line => line.startsWith(`const ${name}=`));
-const insightModel = source.slice(source.indexOf('function insightsMonthData('), source.indexOf('function insightTrendSvg('));
-const financeFunctions = ['reportTotals', 'expenseCategories', 'monthShift'].map(lineFunction).join('\n');
+const insightStart = source.indexOf('function insightsMonthData(');
+const insightModel = source.slice(insightStart, source.indexOf('\n}', insightStart) + 2);
+const financeFunctions = ['reportTotals', 'expenseCategories', 'monthShift', 'monthDays'].map(lineFunction).join('\n');
 const addDays = lineConst('addDays');
 
 function getModel(tx, extras = {}) {

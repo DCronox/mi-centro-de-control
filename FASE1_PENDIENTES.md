@@ -15,7 +15,7 @@ descarga esa librería, guárdala como `vendor/supabase.js`, cambia el `src` del
 
 ## 4. Funcionalidad ya incluida
 - Insights usa la fuente financiera existente y no requiere una migración de esquema.
-- La importación Nu permite revisar movimientos extraídos en el dispositivo antes de guardarlos; no hace OCR.
+- Guardado automático en la nube con indicador de estado (reemplazó la importación de extractos Nu).
 
 ## 5. Cambios visibles que debes saber
 - Se quitó Google Fonts (enviaba la IP de cada visitante a Google). La app usa Inter si está instalada o la fuente del sistema.
