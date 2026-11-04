@@ -16,6 +16,7 @@ const IC={
   up:'<path d="M12 19V5m0 0-6 6m6-6 6 6"/>',
   down:'<path d="M12 5v14m0 0-6-6m6 6 6-6"/>',
   right:'<path d="m9 6 6 6-6 6"/>',
+  dumbbell:'<path d="M6.5 6.5v11M17.5 6.5v11M3.5 9v6M20.5 9v6M6.5 12h11"/>',
   bell:'<path d="M6 16V11a6 6 0 1 1 12 0v5l1.5 2h-15z"/><path d="M10 20a2 2 0 0 0 4 0"/>',
   phone:'<rect x="7" y="3" width="10" height="18" rx="2"/><path d="M11 18h2"/>'
 };
@@ -28,12 +29,14 @@ const MOBILE_MAIN=['dash','mov','dia'],MOBILE_MORE=['turnos','metas','inf','noti
 function navBadge(k){if(k!=='notif'||typeof unreadCount!=='function')return '';const n=unreadCount();return n?`<em class="badge" aria-label="${n} sin leer">${n>9?'9+':n}</em>`:''}
 function navButton([k,n,,i]){return `<button type="button" class="${tab===k?'on':''}" data-t="${k}" ${tab===k?'aria-current="page"':''}>${ico(i,19)}<span>${n}</span>${navBadge(k)}</button>`}
 function nav(){
-  document.getElementById('nav').innerHTML=TABS.map(navButton).join('');
+  /* Gym es una página aparte (gym.html): se abre con un enlace normal, no con goTab. */
+  const gymLink=cls=>`<a class="${cls}" href="./gym.html">${ico('dumbbell',cls==='more-item'?20:19)}<span>Gym</span>${cls==='more-item'?ico('right',16):''}</a>`;
+  document.getElementById('nav').innerHTML=TABS.map(navButton).join('')+gymLink('nav-link');
   const T=k=>TABS.find(x=>x[0]===k),moreOn=MOBILE_MORE.includes(tab);
   document.getElementById('tabbarItems').innerHTML=navButton(T('dash'))+navButton(T('mov'))+
     `<button type="button" class="tab-add" data-quick aria-label="Registrar movimiento">${ico('plus',24)}</button>`+navButton(T('dia'))+
     `<button type="button" class="${moreOn?'on':''}" data-more ${moreOn?'aria-current="page"':''} aria-haspopup="dialog">${ico('more',19)}<span>${moreOn?esc(T(tab)[1]):'Más'}</span></button>`;
-  document.getElementById('moreList').innerHTML=MOBILE_MORE.map(k=>{const [,n,,i]=T(k);return `<button type="button" class="more-item ${tab===k?'on':''}" data-t="${k}">${ico(i,20)}<span>${n}</span>${navBadge(k)}${ico('right',16)}</button>`}).join('')+
+  document.getElementById('moreList').innerHTML=MOBILE_MORE.map(k=>{const [,n,,i]=T(k);return `<button type="button" class="more-item ${tab===k?'on':''}" data-t="${k}">${ico(i,20)}<span>${n}</span>${navBadge(k)}${ico('right',16)}</button>`}).join('')+gymLink('more-item')+
     `<button type="button" class="more-item" data-theme-toggle>${ico('moon',20)}<span>Cambiar tema</span></button>`;
 }
 function goTab(k){if(k==='notif')notif.loaded=false;if(k==='ins'){k='inf';window._reportView='tendencias'}if(!TABS.some(x=>x[0]===k))k='dash';tab=k;E=null;render();scrollTo(0,0);document.querySelector('#app h1')?.focus({preventScroll:true})}

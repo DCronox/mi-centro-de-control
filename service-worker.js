@@ -1,12 +1,13 @@
-const CACHE = 'mi-centro-control-v13';
+const CACHE = 'mi-centro-control-v14';
 const CORE = [
   './', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png',
   './privacidad.html', './terminos.html', './cookies.html',
   './css/app.css', './lib/supabase-2.118.0.js', './fonts/manrope-latin-wght-normal.woff2', './fonts/manrope-latin-ext-wght-normal.woff2',
   './js/theme-boot.js', './js/util.js', './js/sync-model.js', './js/store.js', './js/domain.js', './js/finance.js',
-  './js/charts.js', './js/push-config.js', './js/reminders-core.mjs', './js/notifications.js', './js/views/notifications.js', './js/sound.js', './js/motion.js', './js/ui.js', './js/shell.js', './js/views/dashboard.js', './js/views/money.js', './js/views/day.js',
+  './js/charts.js', './js/cloud-config.js', './js/push-config.js', './js/reminders-core.mjs', './js/notifications.js', './js/views/notifications.js', './js/sound.js', './js/motion.js', './js/ui.js', './js/shell.js', './js/views/dashboard.js', './js/views/money.js', './js/views/day.js',
   './js/views/goals.js', './js/views/shifts.js', './js/views/reports.js', './js/views/insights.js',
-  './js/events.js', './js/cloud-auth.js', './js/sw-register.js'
+  './js/events.js', './js/cloud-auth.js', './js/sw-register.js',
+  './gym.html', './css/gym.css', './js/gym/gym-data.js', './js/gym/gym.js'
 ];
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(CORE)));

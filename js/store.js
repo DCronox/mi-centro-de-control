@@ -5,8 +5,6 @@ let syncBaseline=new Map();
 function resetSyncBaseline(){normalizeData(S);syncBaseline=syncSnapshot(S)}
 resetSyncBaseline();
 let cloudUser=null,cloudReady=false,cloudPending=null,cloudClient=null,cloudExistingData=null,cloudUpdatedAt=null,cloudSaving=false,cloudLocalCandidate=null,cloudPulling=false;
-const CLOUD_URL='https://xruxsuobpctyekkyracr.supabase.co';
-const CLOUD_KEY='sb_publishable_-0Zepm3uTSMSM1wMKTvpmA_ZP3vyPaM';
 try{if(window.supabase?.createClient)cloudClient=window.supabase.createClient(CLOUD_URL,CLOUD_KEY)}catch(e){}
 const cloudStatus=(m)=>{const el=document.getElementById('cloudStatus'),panel=document.getElementById('cloudPanel');if(el)el.textContent=m;if(panel)panel.setAttribute('aria-busy',String(/…$/.test(m)))};
 let localRevision=0,saveFailed=false,lastLocalJson=null,cloudResave=false,cloudRetry=null,renderPending=false,syncState='local';

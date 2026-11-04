@@ -60,7 +60,10 @@ button svg,button span{pointer-events:none}
 .logo::after{content:"";position:absolute;inset:8px 8px 8px 8px;border:2px solid var(--accent-ink);border-radius:50%;border-right-color:transparent;transform:rotate(-45deg)}
 .quick-btn{width:100%}
 #nav{display:flex;flex-direction:column;gap:2px}
-#nav button{display:flex;align-items:center;gap:12px;width:100%;min-height:42px;padding:9px 12px;border:0;border-radius:var(--r-sm);background:none;color:var(--muted);font-weight:600;text-align:left;cursor:pointer}
+#nav button,#nav a.nav-link{display:flex;align-items:center;gap:12px;width:100%;min-height:42px;padding:9px 12px;border:0;border-radius:var(--r-sm);background:none;color:var(--muted);font-weight:600;text-align:left;cursor:pointer;text-decoration:none}
+#nav a.nav-link{margin-top:6px;border-top:1px solid var(--line);border-radius:0 0 var(--r-sm) var(--r-sm);padding-top:13px}
+#nav a.nav-link:hover{color:var(--ink);background:var(--surface-2)}
+.more-item{text-decoration:none}
 #nav button:hover{background:var(--surface-2);color:var(--ink)}
 #nav button.on{color:var(--ink)}
 #nav button{position:relative;z-index:1}

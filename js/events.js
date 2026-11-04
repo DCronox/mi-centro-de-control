@@ -93,3 +93,4 @@ document.getElementById('th').onclick=e=>{sfx('tap');animatedThemeToggle(e)};
 migrate();gen();
 render();
 openFromHash();
+addEventListener('hashchange',openFromHash);
