@@ -1,8 +1,8 @@
 -- Programa la función «notify» cada 5 minutos con pg_cron + pg_net.
 -- No contiene secretos: el secreto del cron se genera aquí mismo con valores aleatorios y queda
 -- cifrado en Vault. La función lo lee con public.notify_cron_secret() (solo la clave de servicio).
--- La función mantiene la verificación de JWT, así que la llamada lleva la clave pública «anon»
--- (legacy) del proyecto: sustituye PEGA_AQUI_ANON_KEY por esa clave (Settings › API Keys › Legacy).
+-- La función «notify» se despliega con «Verify JWT» desactivado: ella misma exige este secreto para
+-- la ejecución programada y una sesión válida para el envío de prueba.
 create extension if not exists pg_cron;
 create extension if not exists pg_net;
 
@@ -25,7 +25,6 @@ select cron.schedule(
     url := 'https://xruxsuobpctyekkyracr.supabase.co/functions/v1/notify',
     headers := jsonb_build_object(
       'Content-Type', 'application/json',
-      'Authorization', 'Bearer PEGA_AQUI_ANON_KEY',
       'x-cron-secret', (select decrypted_secret from vault.decrypted_secrets where name = 'mcc_notify_cron_secret')
     ),
     body := '{"action":"run"}'::jsonb,

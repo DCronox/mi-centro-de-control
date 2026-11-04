@@ -8,21 +8,20 @@ proyecto; **nada de esto se ha aplicado todavía** en tu proyecto de Supabase.
 | Tablas | `supabase/migrations/20261103120000_notificaciones.sql` | `push_subscriptions` (dispositivos) y `notifications` (historial), con RLS. No toca `mcc_data`. |
 | Función | `supabase/functions/notify/` | Calcula los recordatorios de cada persona (mismas reglas que la app, `_shared/reminders-core.mjs`) y los envía con Web Push. |
 | Programación | `supabase/cron-notify.sql` | Llama a la función cada 5 minutos con `pg_cron` + `pg_net`. |
-| Secretos | `supabase/.env` (no se sube a GitHub) | Claves VAPID y `CRON_SECRET`. La clave pública también está en `js/push-config.js`. |
+| Secretos | `supabase/.env` (no se sube a GitHub) | Claves VAPID (y un `CRON_SECRET` opcional; el del cron vive en Vault). La clave pública también está en `js/push-config.js`. |
 
 ## Orden de instalación
 
 1. **Respaldo:** descarga una copia desde la app (Cuenta › Copia de seguridad).
 2. **Tablas:** en Supabase › SQL Editor ejecuta la migración. Luego las consultas de verificación del final.
 3. **Secretos de la función:** Supabase › Edge Functions › Secrets: agrega `VAPID_PUBLIC_KEY`,
-   `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` y `CRON_SECRET` con los valores de `supabase/.env`.
+   `VAPID_PRIVATE_KEY` y `VAPID_SUBJECT` con los valores de `supabase/.env` (el secreto del cron se genera solo en Vault).
    (Con la CLI: `supabase secrets set --env-file supabase/.env`.)
 4. **Función:** despliega `notify` **sin verificación de JWT** (la llama `pg_cron`, que no tiene sesión;
    la función comprueba su propio secreto). Con la CLI:
    `supabase functions deploy notify --no-verify-jwt --project-ref xruxsuobpctyekkyracr`.
    Debe incluir la carpeta `_shared`.
-5. **Programación:** en `supabase/cron-notify.sql` pega el `CRON_SECRET` donde dice `PEGA_AQUI_CRON_SECRET`,
-   ejecútalo y **no guardes el archivo con el secreto**.
+5. **Programación:** ejecuta `supabase/cron-notify.sql` (no lleva secretos: el del cron se genera en Vault).
 6. **Publica la app** (HTTPS; GitHub Pages sirve). Las notificaciones push no funcionan desde `file://`.
 7. **En cada dispositivo:** abre la app › Notificaciones › «Activar notificaciones» › «Enviar notificación de prueba».
    - Android (Chrome): funciona desde el navegador o con la app instalada.
