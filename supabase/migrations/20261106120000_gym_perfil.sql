@@ -106,6 +106,8 @@ alter table public.gym_audit         enable row level security;
 revoke all on table public.gym_profiles, public.nutrition_targets, public.gym_audit from public, anon;
 grant select, insert, update, delete on table public.gym_profiles, public.nutrition_targets to authenticated;
 grant select on table public.gym_audit to authenticated;
+-- Supabase concede por defecto todos los privilegios a authenticated en tablas nuevas: la auditoría solo la escriben los triggers.
+revoke insert, update, delete, truncate on table public.gym_audit from authenticated;
 
 drop policy if exists gym_profiles_own on public.gym_profiles;
 create policy gym_profiles_own on public.gym_profiles for all to authenticated
