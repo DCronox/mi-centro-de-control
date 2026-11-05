@@ -15,11 +15,12 @@ const GI={
   timer:'<circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M9.5 2.5h5"/>',lock:'<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',
   check:'<path d="m5 12.5 4.5 4.5L19 7.5"/>',flame:'<path d="M12 21c4 0 6.5-2.6 6.5-6.3 0-3.6-2.6-5.7-4-8.7-1 2.5-2.2 3.6-3.7 4.2.3-2.1-.4-4.2-2-6.2-.4 4.2-3.3 6.4-3.3 10.7C5.5 18.4 8 21 12 21z"/>',
   user:'<circle cx="12" cy="8" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/>',info:'<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.5h.01"/>',
+  moon:'<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/>',
   trophy:'<path d="M8 4h8v5a4 4 0 0 1-8 0zM8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v4M9 21h6M10 17h4"/>',cloud:'<path d="M7 18a4 4 0 0 1-.5-8 5.5 5.5 0 0 1 10.6 1.5A3.3 3.3 0 0 1 17 18z"/>'
 };
 const gico=(n,z=18)=>`<svg class="i" width="${z}" height="${z}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${GI[n]||''}</svg>`;
-const GYM_TABS=[['resumen','Resumen','Gym','home'],['rutinas','Rutinas','Rutinas','list'],['entrenar','Entrenar','Entrenamiento','dumbbell'],['progreso','Progreso','Progreso','chart'],['fisico','Físico','Seguimiento físico','body'],['nutricion','Nutrición','Nutrición','apple'],['perfil','Perfil','Tu evaluación y objetivos','user']];
-const GYM_MORE=['fisico','nutricion','perfil'];
+const GYM_TABS=[['resumen','Resumen','Gym','home'],['rutinas','Rutinas','Rutinas','list'],['entrenar','Entrenar','Entrenamiento','dumbbell'],['progreso','Progreso','Progreso','chart'],['fisico','Físico','Seguimiento físico','body'],['nutricion','Nutrición','Nutrición','apple'],['recuperacion','Recuperación','Recuperación','moon'],['perfil','Perfil','Tu evaluación y objetivos','user']];
+const GYM_MORE=['fisico','nutricion','recuperacion','perfil'];
 const DAYN=['D','L','M','X','J','V','S'],DAYL=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
 let gProfStep=0,gProfResult=null,gProfEdit=false,gProfManual=false,gProfDraft=null;
 let gtab='resumen',gData=null,gSummary=null,gAccount={state:'local',user:null},gEdit=null,gProgEx=null,gMapSel=null,gMapDays=7;
@@ -244,7 +245,7 @@ function gRender(animate){
   const keep=document.activeElement&&app.contains(document.activeElement)&&document.activeElement.matches('input,select')?{sel:document.activeElement.dataset.item!==undefined?`[data-item="${document.activeElement.dataset.item}"][data-k="${document.activeElement.dataset.k}"]`:document.activeElement.id?'#'+document.activeElement.id:null}:null;
   document.title=(gtab==='resumen'?'Gym':T[2]+' · Gym')+' · Mi Centro de Control';
   gNav();
-  app.innerHTML=`<div class="ph"><h1 tabindex="-1">${gesc(T[2])}</h1>${gtab==='resumen'?'<p>Tu entrenamiento, conectado con Mi Centro de Control.</p>':''}</div>`+({resumen:vResumen,rutinas:vRutinas,entrenar:vEntrenar,progreso:vProgreso,fisico:vFisico,nutricion:vNutricion,perfil:vPerfil}[gtab])();
+  app.innerHTML=`<div class="ph"><h1 tabindex="-1">${gesc(T[2])}</h1>${gtab==='resumen'?'<p>Tu entrenamiento, conectado con Mi Centro de Control.</p>':''}</div>`+({resumen:vResumen,rutinas:vRutinas,entrenar:vEntrenar,progreso:vProgreso,fisico:vFisico,nutricion:vNutricion,recuperacion:vRecuperacion,perfil:vPerfil}[gtab])();
   if(gtab==='entrenar')gTimerPaint();
   if(keep?.sel)app.querySelector(keep.sel)?.focus();
   if(animate&&!matchMedia('(prefers-reduced-motion: reduce)').matches){app.classList.remove('stagger');void app.offsetWidth;[...app.children].forEach((el,i)=>el.style.setProperty('--i',Math.min(i,8)));app.classList.add('stagger');setTimeout(()=>app.classList.remove('stagger'),1400)}
@@ -351,7 +352,7 @@ async function gymBoot(){
   pill.dataset.state=M[0];label.textContent=M[1];pill.title=gAccount.user?.email?'Sesión: '+gAccount.user.email:M[1];
   if(gAccount.user){const d=gymReadLocalData(gAccount.user.id);if(d){gData=d;gSummary=gymSummary(gData)}}
   gRender(false);
-  if(GS.user){await gymFlushQueue();await gymLoadAll();await gymLoadProfile();await gymLoadNutrition();await gymLoadCustomFoods();gRefreshSummary();gRender(false)}
+  if(GS.user){await gymFlushQueue();await gymLoadAll();await gymLoadProfile();await gymLoadNutrition();await gymLoadCustomFoods();await gymLoadRecovery();gRefreshSummary();gRender(false)}
 }
 document.querySelectorAll('dialog.sheet [data-close]').forEach(b=>b.innerHTML=gico('x',16));
 document.getElementById('gymDate').textContent=new Intl.DateTimeFormat('es-CO',{timeZone:GYM_TZ,weekday:'long',day:'numeric',month:'long',year:'numeric'}).format(new Date());

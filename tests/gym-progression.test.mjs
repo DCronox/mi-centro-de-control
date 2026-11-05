@@ -89,3 +89,11 @@ test('historial: agrupa por sesión, más reciente primero, sin la sesión actua
   assert.deepEqual(h.map((s) => s.session_id), ['b', 'a']);
   assert.deepEqual(h[0].sets.map((s) => [s.reps, s.rpe]), [[9, 8], [8, null]]);
 });
+
+test('con mala recuperación declarada hoy no se propone subir', () => {
+  const h = [S('2026-11-02', [[60, 12, 8], [60, 12, 8], [60, 12, 8]])];
+  const p = P.gymProgression(T, h, { today, readiness: { level: 'caution', reasons: ['Dormiste 5,5 h.'] } });
+  assert.deepEqual([p.action, p.weight], ['maintain', 60]);
+  assert.ok(p.notes.some((n) => /dormiste 5,5 h/.test(n)));
+  assert.equal(P.gymProgression(T, h, { today, readiness: { level: 'ok', reasons: [] } }).action, 'increase');
+});

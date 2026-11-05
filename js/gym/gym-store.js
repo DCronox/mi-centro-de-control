@@ -69,7 +69,7 @@ function gymCleanItems(items){return(items||[]).filter(i=>i&&i.exercise_id).slic
 /* Propuesta de progresión para un ejercicio (excluye el entrenamiento en curso). */
 function gymSuggestFor(exerciseId,target,excludeSession){
   const ex=gymExercise(exerciseId);
-  return gymProgression(target||{},gymExerciseHistory(exerciseId,GS.sessions,GS.sets,{excludeSession}),{today:gymToday(),name:ex?.name||''});
+  return gymProgression(target||{},gymExerciseHistory(exerciseId,GS.sessions,GS.sets,{excludeSession}),{today:gymToday(),name:ex?.name||'',readiness:gymTodayReadiness()});
 }
 /* Guardar con bloqueo: un doble clic no crea dos rutinas. */
 async function gymSaveRoutine(r){
@@ -311,3 +311,31 @@ async function gymSearchUsda(query){
   return{results:(data.results||[]).map(gymRefAsKnown),cached:!!data.cached,demo:!!data.demo_key,query_en:data.query_en||''};
 }
 function gymRememberRef(k){if(!GS.refFoods.some(r=>r.id===k.id))GS.refFoods.push(k)}
+
+/* ---- Recuperación (fase F; tabla recovery_logs, migración 20261110) ---- */
+GS.recovery=[];GS.recoverySchema=null;
+const GYM_REC_COLS='id,date,bed_time,wake_time,sleep_h,sleep_quality,energy,fatigue,soreness,stress,sore_muscles,notes,updated_at';
+async function gymLoadRecovery(){
+  if(!gymClient||!GS.user)return false;
+  const from=gymAddDays(gymToday(),-90);
+  const r=await gymClient.from('recovery_logs').select(GYM_REC_COLS).eq('user_id',GS.user.id).gte('date',from).order('date',{ascending:false});
+  if(r.error){GS.recoverySchema=/schema cache|does not exist|relation/i.test(r.error.message||'')?false:GS.recoverySchema;return false}
+  GS.recoverySchema=true;GS.recovery=[...(r.data||[])].sort((a,b)=>b.date.localeCompare(a.date));return true;
+}
+const gymRecoveryFor=date=>GS.recovery.find(l=>l.date===date)||null;
+/* Estado de hoy para las propuestas de progresión (sin registro → no influye). */
+function gymTodayReadiness(){const l=gymRecoveryFor(gymToday());return l?gymReadiness(l):null}
+function gymRecoveryRow(v){
+  const sc=k=>{const x=+v[k];return x>=1&&x<=5?Math.round(x):null},t=k=>/^\d{2}:\d{2}$/.test(v[k]||'')?v[k]:null;
+  return{date:v.date,bed_time:t('bed_time'),wake_time:t('wake_time'),sleep_h:v.sleep_h===''||v.sleep_h===undefined||v.sleep_h===null?null:Math.min(16,Math.max(0,Math.round(+v.sleep_h*10)/10)),
+    sleep_quality:sc('sleep_quality'),energy:sc('energy'),fatigue:sc('fatigue'),soreness:sc('soreness'),stress:sc('stress'),
+    sore_muscles:[].concat(v.sore_muscles||[]).filter(m=>GYM_MUSCLES_BY_ID[m]).slice(0,20),notes:String(v.notes||'').slice(0,300)};
+}
+async function gymSaveRecovery(v){
+  if(!GS.recoverySchema)throw new Error('El registro de recuperación aún no se puede guardar: falta aplicar la actualización de la base de datos de Gym.');
+  const row=gymRecoveryRow(v);
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(row.date||'')||row.date>gymToday())throw new Error('Elige una fecha válida (hoy o antes).');
+  const saved=await gq(gymClient.from('recovery_logs').upsert({...row,user_id:GS.user.id},{onConflict:'user_id,date'}).select(GYM_REC_COLS).single());
+  GS.recovery=GS.recovery.filter(l=>l.date!==saved.date).concat(saved).sort((a,b)=>b.date.localeCompare(a.date));return saved;
+}
+async function gymDeleteRecovery(id){await gq(gymClient.from('recovery_logs').delete().eq('id',id));GS.recovery=GS.recovery.filter(l=>l.id!==id)}

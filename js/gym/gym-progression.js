@@ -41,7 +41,7 @@ const gpBestE1=s=>Math.max(0,...s.sets.map(x=>gpE1(x.weight,x.reps)||0));
 
 /* Propuesta para la próxima sesión del ejercicio.
    target: {sets, reps_min, reps_max, rir_target, increment_kg}; history: gymExerciseHistory(); today: 'AAAA-MM-DD'. */
-function gymProgression(target,history,{today=null,name=''}={}){
+function gymProgression(target,history,{today=null,name='',readiness=null}={}){
   const t={sets:+target?.sets||3,reps_min:+target?.reps_min||8,reps_max:Math.max(+target?.reps_min||8,+target?.reps_max||12),
     rir:target?.rir_target===undefined||target?.rir_target===null||target?.rir_target===''?GYM_PROG_RIR:+target.rir_target,
     inc:target?.increment_kg===undefined||target?.increment_kg===null||target?.increment_kg===''?gymDefaultIncrement(name):+target.increment_kg};
@@ -104,6 +104,11 @@ function gymProgression(target,history,{today=null,name=''}={}){
   // Rendimiento claramente por debajo de las sesiones anteriores (1RM estimado).
   const prevE=history.slice(1,3).map(gpBestE1).filter(x=>x>0),lastE=gpBestE1(last);
   if(prevE.length&&lastE>0){const avg=prevE.reduce((a,b)=>a+b,0)/prevE.length;if(lastE<avg*0.95){out.notes.push(`Tu última sesión rindió un ${Math.round((1-lastE/avg)*100)} % por debajo de las anteriores (1RM estimado): revisa descanso, sueño y fatiga.`);if(out.action==='increase'){out.action='maintain';out.weight=W;out.title=`Mantén ${gpN(W)} kg una sesión más.`;out.confidence='media'}}}
+  // Recuperación declarada hoy (fase F): con señales de alerta no se propone subir.
+  if(readiness&&(readiness.level==='caution'||readiness.level==='low')){
+    out.notes.push(`Hoy registraste: ${readiness.reasons.join(' ').toLowerCase()}`.trim());
+    if(out.action==='increase'){out.action='maintain';out.weight=W;out.title=`Hoy mantén ${gpN(W)} kg; sube cuando te sientas mejor.`;out.confidence='media'}
+  }
   // Mucho tiempo sin hacerlo: prudencia.
   if(days>=GYM_PROG_STALE_DAYS){out.notes.push(`Hace ${days} días que no haces este ejercicio: empieza conservador.`);if(out.action==='increase'){out.action='maintain';out.weight=W;out.title=`Retoma con ${gpN(W)} kg (o algo menos) y comprueba cómo te sientes.`}out.confidence='baja'}
   return out;
