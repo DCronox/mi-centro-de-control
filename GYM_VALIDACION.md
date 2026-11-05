@@ -29,7 +29,7 @@ Fecha: 2026-11-04 · Rama `evolucion-v2` · 129 pruebas automáticas en verde (`
 - **16 tablas con RLS.** Todas las personales usan `(select auth.uid()) = user_id`; `anon` no puede leer ni escribir ninguna.
 - `food_reference` (USDA) es compartida y de solo lectura; `food_search_cache` y `food_search_log` solo las usa la función del servidor (un usuario con sesión recibe «permiso denegado»).
 - Asesor de seguridad: sin avisos nuevos de Gym. Los 4 que quedan son anteriores: `pg_net` en `public`, `rls_auto_enable()` ejecutable por anónimos, protección de contraseñas filtradas desactivada y `delete_my_account()` (intencional).
-- **Hallazgo:** 7 tablas creadas antes conservan `TRUNCATE` para usuarios con sesión (la API no lo permite, pero conviene retirarlo). Migración preparada: `20261111120000_gym_revoke_truncate.sql` (sin aplicar).
+- **Hallazgo:** 7 tablas creadas antes conservan `TRUNCATE` para usuarios con sesión (la API no lo permite, pero conviene retirarlo). Corregido: `20261111120000_gym_revoke_truncate.sql` aplicada el 2026-11-04; ninguna tabla de Gym conserva TRUNCATE.
 
 ## Rendimiento
 
@@ -63,7 +63,7 @@ Prueba automática: todo lo que carga `gym.html` está en la caché del service 
 
 ## Pendiente
 
-1. Aplicar `20261111120000_gym_revoke_truncate.sql` (con autorización).
-2. Aplicar `20261105120000_gym_catalogo.sql` (clasificación muscular estructurada; hoy se clasifica por nombre).
+1. ~~Retirar TRUNCATE~~ — aplicada y comprobada (2026-11-04).
+2. ~~Catálogo de ejercicios~~ — `20261105120000_gym_catalogo.sql` aplicada; el ejercicio existente quedó enlazado a `press_banca` (2026-11-04).
 3. Publicar en `main` (con autorización).
 4. Uso real prolongado: recomendaciones, tendencias y proyecciones necesitan semanas de registros para activarse.
