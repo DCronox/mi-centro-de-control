@@ -108,7 +108,7 @@ function vResumen(){
     </div></section>`;
   }else tiles=`<section class="card"><h2>Tu entrenamiento</h2>${needAccount('tus entrenamientos')||''}</section>`;
   const consist=`<section class="card"><h2>Constancia · 12 semanas</h2>${s&&s.hasAny?heat+`<p class="k">${s.last30} ${s.last30===1?'día':'días'} con gimnasio en los últimos 30 días.</p>`:'<div class="empty">Cuando entrenes o marques tareas de gimnasio en Mi día, aquí verás tu constancia semana a semana.</div>'}</section>`;
-  return syncBanner()+hero+gProfileCta()+quick+`<div class="cols">${tiles}${consist}</div>`;
+  return syncBanner()+hero+gProfileCta()+vInsightsCard()+quick+`<div class="cols">${tiles}${consist}</div>`;
 }
 
 /* ---- Rutinas ---- */

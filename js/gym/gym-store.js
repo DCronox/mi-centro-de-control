@@ -339,3 +339,23 @@ async function gymSaveRecovery(v){
   GS.recovery=GS.recovery.filter(l=>l.date!==saved.date).concat(saved).sort((a,b)=>b.date.localeCompare(a.date));return saved;
 }
 async function gymDeleteRecovery(id){await gq(gymClient.from('recovery_logs').delete().eq('id',id));GS.recovery=GS.recovery.filter(l=>l.id!==id)}
+
+/* ---- Recomendaciones integradas (fase G): reúne los datos para gym-insights.js ---- */
+function gymInsightsContext(){
+  const today=gymToday(),t=gymActiveTarget(),since14=gymAddDays(today,-13),since7=gymAddDays(today,-6);
+  const goal=t?.details?.computed?.energy?.goal||GS.profile?.goal||null;
+  const waterBy=new Map();GS.water.filter(w=>w.date>=since7&&w.date<=today).forEach(w=>waterBy.set(w.date,(waterBy.get(w.date)||0)+(+w.ml||0)));
+  const weights=GS.metrics.filter(m=>m.weight_kg!==null&&m.weight_kg!==undefined).map(m=>m.date).sort();
+  const days=new Set(GS.routines.flatMap(r=>r.days||[]));
+  const st14=gymMuscleStats(GS.sessions,GS.sets,GS.exercises,since14,today);
+  const recentEx=[...new Set(GS.sets.filter(s=>{const ses=GS.sessions.find(x=>x.id===s.session_id);return ses&&gymDateOf(ses.started_at)>=gymAddDays(today,-29)}).map(s=>s.exercise_id))];
+  const itemFor=id=>GS.routines.flatMap(r=>r.items||[]).find(it=>it.exercise_id===id)||{};
+  return{today,goal,target:t?{kcal:+t.kcal,protein_g:+t.protein_g,water_ml:+t.water_ml}:null,
+    week:gymWeekNutrition(GS.foods,GS.water,GS.targets,today),waterDays:[...waterBy.values()].map(ml=>({ml})),
+    weightRate:gymWeightRate(GS.metrics,today),lastWeightDate:weights[weights.length-1]||null,
+    sessions14:GS.sessions.filter(s=>gymDateOf(s.started_at)>=since14).length,plannedPerWeek:GS.sessions.some(x=>gymDateOf(x.started_at)>=gymAddDays(today,-59))?(days.size||(+GS.profile?.training_days||0)):0, // solo si ya registra entrenos
+    
+    muscles14:Object.values(st14).map(m=>({name:m.name,group:m.group,weightedSets:m.weightedSets})),
+    progressions:recentEx.map(id=>{const p=gymSuggestFor(id,itemFor(id));return{name:gymExercise(id)?.name||'Ejercicio',action:p.action,title:p.title}}),
+    sleep:GS.recoverySchema?(({cur,n})=>({cur,n}))(gymRecoveryTrend(GS.recovery,today).sleep_h):null,readiness:GS.recoverySchema?gymTodayReadiness():null};
+}

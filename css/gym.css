@@ -339,3 +339,16 @@ body.gym{background:radial-gradient(1200px 500px at 85% -10%,color-mix(in srgb,v
 
 /* app.css da a todo <form> columnas automáticas; estos formularios son de una columna. */
 form.rc-form,form.gnf-write,form#fProfile{grid-template-columns:1fr;align-items:stretch;margin-bottom:0}
+
+/* ---- Recomendaciones (fase G) ---- */
+.gin-card{display:grid;gap:8px}.gin-card h2{margin:0}
+.gin-item{border:1px solid var(--line);border-radius:var(--r-sm);border-left:3px solid var(--accent);padding:0 12px}
+.gin-item.is-recovery{border-left-color:var(--warn)}.gin-item.is-body{border-left-color:var(--muted)}
+.gin-item summary{cursor:pointer;padding:10px 0;list-style:none}.gin-item summary::-webkit-details-marker{display:none}
+.gin-sum{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center}.gin-sum b{flex:1 1 220px;font-size:var(--fs-sm)}
+.gin-chips{display:flex;gap:6px;flex-wrap:wrap}
+.gin-body{margin:0 0 8px;display:grid;grid-template-columns:auto 1fr;gap:6px 12px;font-size:var(--fs-sm)}
+.gin-body dt{color:var(--muted);font-weight:700}.gin-body dd{margin:0}.gin-body ul{margin:0;padding-left:16px}
+.gin-actions{display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding-bottom:12px}
+.gin-foot{margin:0}
+@media (max-width:560px){.gin-body{grid-template-columns:1fr}.gin-body dt{margin-top:4px}}

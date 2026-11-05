@@ -1,4 +1,4 @@
-const CACHE = 'mi-centro-control-v24';
+const CACHE = 'mi-centro-control-v25';
 const CORE = [
   './', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png',
   './privacidad.html', './terminos.html', './cookies.html',
@@ -7,7 +7,7 @@ const CORE = [
   './js/charts.js', './js/cloud-config.js', './js/push-config.js', './js/reminders-core.mjs', './js/notifications.js', './js/views/notifications.js', './js/sound.js', './js/motion.js', './js/ui.js', './js/shell.js', './js/views/dashboard.js', './js/views/money.js', './js/views/day.js',
   './js/views/goals.js', './js/views/shifts.js', './js/views/reports.js', './js/views/insights.js',
   './js/events.js', './js/cloud-auth.js', './js/sw-register.js',
-  './gym.html', './css/gym.css', './js/gym/gym-data.js', './js/gym/gym-calc.js', './js/gym/gym-muscles.js', './js/gym/gym-map.js', './js/gym/gym-store.js', './js/gym/references.js', './js/gym/gym-engine.js', './js/gym/gym-nutrition.js', './js/gym/gym-foods.js', './js/gym/gym-progression.js', './js/gym/gym-recovery.js', './js/gym/gym-perfil.js', './js/gym/gym-nutri-ui.js', './js/gym/gym-foods-ui.js', './js/gym/gym-progress-ui.js', './js/gym/gym-recovery-ui.js', './js/gym/gym.js'
+  './gym.html', './css/gym.css', './js/gym/gym-data.js', './js/gym/gym-calc.js', './js/gym/gym-muscles.js', './js/gym/gym-map.js', './js/gym/gym-store.js', './js/gym/references.js', './js/gym/gym-engine.js', './js/gym/gym-nutrition.js', './js/gym/gym-foods.js', './js/gym/gym-progression.js', './js/gym/gym-recovery.js', './js/gym/gym-insights.js', './js/gym/gym-perfil.js', './js/gym/gym-nutri-ui.js', './js/gym/gym-foods-ui.js', './js/gym/gym-progress-ui.js', './js/gym/gym-recovery-ui.js', './js/gym/gym-insights-ui.js', './js/gym/gym.js'
 ];
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(CORE)));
