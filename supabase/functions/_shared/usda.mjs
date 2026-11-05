@@ -26,7 +26,10 @@ export function usdaNutrients(food) {
   if (kcal === undefined && m.has(N.kj)) { kcal = m.get(N.kj) / 4.184; energySource = 'kj'; }
   const carbs = m.get(N.carbs) ?? m.get(N.carbsSum);
   const complete = kcal !== undefined && m.has(N.protein) && m.has(N.fat) && carbs !== undefined;
-  return { kcal: Math.round(kcal || 0), protein_g: r1(m.get(N.protein)), carbs_g: r1(carbs), fat_g: r1(m.get(N.fat)), fiber_g: r1(m.get(N.fiber)), energySource, complete };
+  // Los carbohidratos «por diferencia» pueden publicarse ligeramente negativos (p. ej. −0,428 g en pechuga cruda):
+  // se acotan a 0–100 g por 100 g y la energía a 0–1000 kcal.
+  const g100 = (x) => r1(Math.min(100, Math.max(0, +x || 0)));
+  return { kcal: Math.round(Math.min(1000, Math.max(0, kcal || 0))), protein_g: g100(m.get(N.protein)), carbs_g: g100(carbs), fat_g: g100(m.get(N.fat)), fiber_g: g100(m.get(N.fiber)), energySource, complete };
 }
 
 /* Porciones caseras del detalle de FDC → [{unit, grams}] con etiqueta legible. */

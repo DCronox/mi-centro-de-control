@@ -49,3 +49,10 @@ test('traduce términos de comida del español sin perder palabras desconocidas'
   assert.equal(toEnglishQuery('plátano maduro frito'), 'plantain ripe fried');
   assert.equal(normQuery('  Fríjoles ROJOS!! '), 'frijoles rojos');
 });
+
+test('acota valores publicados fuera de rango (carbohidratos por diferencia negativos)', () => {
+  // Caso real: FDC 2727569 «Chicken, breast, meat and skin, raw» publica Carbohydrate, by difference = −0.428 g.
+  const n = usdaNutrients({ foodNutrients: [{ nutrientId: 1003, value: 21.4 }, { nutrientId: 1004, value: 4.78 }, { nutrientId: 1005, value: -0.428 }, { nutrientId: 2047, value: 129 }] });
+  assert.deepEqual([n.carbs_g, n.protein_g, n.fat_g, n.kcal], [0, 21.4, 4.8, 129]);
+  assert.equal(usdaNutrients({ foodNutrients: [{ nutrientId: 1008, value: 5000 }] }).kcal, 1000);
+});
