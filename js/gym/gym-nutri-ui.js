@@ -80,6 +80,7 @@ function vNutriWeek(date){
 
 function vNutricion(){
   const gate=needAccount('tu alimentación');if(gate)return gate;
+  gnfDraftSync();
   const date=gnDate(),today=gymToday(),tot=gymDayTotals(GS.foods,GS.water,date),tg=gymTargetFor(GS.targets,date);
   const nav=`<div class="gn-daynav"><button class="g ic-b" type="button" data-nact="prevDay" aria-label="Día anterior">${gico('back',16)}</button>
     <div><b>${date===today?'Hoy':date===gymAddDays(today,-1)?'Ayer':gesc(fdate(date))}</b>${date!==today?`<button class="lk" type="button" data-nact="today">Ir a hoy</button>`:`<span class="k">${gesc(fdate(date))}</span>`}</div>
@@ -97,8 +98,8 @@ document.addEventListener('click',async e=>{
     gNutDate=next===gymToday()?null:next;gNutAdd=null;await gymEnsureNutritionFor(next);gRender(false);return}
   if(a==='water'){b.disabled=true;const r=await gTry(()=>gymAddWater(date,+b.dataset.ml));if(r){sfx('check');gRender(false)}else b.disabled=false;return}
   if(a==='undoWater'){const r=await gTry(()=>gymUndoWater(date));if(r){gToast(`Se quitaron ${r.ml} ml`);gRender(false)}return}
-  if(a==='addFood'){gNutAdd=b.dataset.meal;gNutItems=null;gNutText='';gNutMode='text';gRender(false);document.querySelector('#fNlp textarea')?.focus();return}
-  if(a==='cancelFood'){gNutAdd=null;gNutItems=null;gNutText='';gRender(false);return}
+  if(a==='addFood'){gnfDraftClear();gNutAdd=b.dataset.meal;gNutItems=null;gNutText='';gNutMode='text';gRender(false);document.querySelector('#fNlp textarea')?.focus();return}
+  if(a==='cancelFood'){gnfDraftClear();gNutAdd=null;gNutItems=null;gNutText='';gRender(false);return}
   if(a==='delFood'){const f=GS.foods.find(x=>x.id===b.dataset.id);if(!f)return;
     if(!await ask(`Se borrará «${f.name}» (${gnFmt(f.kcal)} kcal) de este día.`,{title:'¿Eliminar registro?',confirmLabel:'Eliminar',danger:true}))return;
     const ok=await gTry(()=>gymDeleteFood(f.id).then(()=>true),'Registro eliminado');if(ok)sfx('delete');gRender(false);return}
@@ -110,5 +111,5 @@ document.addEventListener('submit',async e=>{
   const btn=f.querySelector('[type=submit]');btn.disabled=true;
   const r=await gTry(()=>gymAddFood(v),'Comida registrada');btn.disabled=false;
   if(r&&new FormData(f).has('saveCustom')&&!GS.customFoods.some(c=>gfNorm(c.name)===gfNorm(r.name))){const u=r.unit||'porción';await gTry(()=>gymSaveCustomFood({name:r.name,serving_qty:r.quantity||1,serving_unit:u,grams_per_serving:gfUnitKey(u)==='g'?r.quantity:'',kcal:r.kcal,protein_g:r.protein_g,carbs_g:r.carbs_g,fat_g:r.fat_g,fiber_g:r.fiber_g}))}
-  if(r){sfx('success');gNutAdd=null;gRender(false)}
+  if(r){sfx('success');gnfDraftClear();gNutAdd=null;gRender(false)}
 });

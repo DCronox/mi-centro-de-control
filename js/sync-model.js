@@ -51,6 +51,14 @@ function trackChanges(d,baseline,now){
 }
 /* Une dos copias sin perder nada y respetando borrados y la edición más reciente. */
 function mergeData(remote,local){
+  /* Tarifa por hora: es un valor suelto sin lista. `rateU` marca cuándo la cambió la persona.
+     Si alguna copia tiene marca, gana la más reciente. Sin marcas (datos anteriores) prevalece la de este
+     dispositivo, SALVO que sea solo el valor por defecto: así un dispositivo nuevo no pisa la tarifa de la cuenta. */
+  const rawR=remote&&typeof remote==='object'?remote:{},rawL=local&&typeof local==='object'?local:{};
+  const rU=Number(rawR.rateU)||0,lU=Number(rawL.rateU)||0,DEF=defaultData().rate;
+  const localIsOwn=rawL.rate!==undefined&&+rawL.rate!==DEF;
+  const rateWin=(rU||lU)?(lU>rU?rawL:rawR):(localIsOwn||rawR.rate===undefined?rawL:rawR);
+  const rate=rateWin.rate!==undefined?rateWin.rate:(rawR.rate!==undefined?rawR.rate:rawL.rate),rateU=Math.max(rU,lU)||undefined;
   remote=normalizeData(Object.assign(defaultData(),remote));local=normalizeData(Object.assign(defaultData(),local));
   const out=Object.assign(defaultData(),remote,local);
   const ts=v=>Number(v&&v.u)||0;
@@ -77,6 +85,8 @@ function mergeData(remote,local){
   };
   /* Valores únicos (no listas) que llevan su propia marca `u`: gana el más reciente. */
   ['activeShift','notifPrefs'].forEach(k=>{const r=remote[k],l=local[k];if(r||l)out[k]=ts(r)>ts(l)?r:l});
+  if(rate!==undefined)out.rate=rate;
+  if(rateU)out.rateU=rateU;else delete out.rateU;
   SYNC_COLLECTIONS.forEach(col=>{out[col]=union(col,remote[col],local[col],col+'|',col==='goals'?mergeGoal:pick)});
   const inst={},ri=remote.inst||{},li=local.inst||{};
   new Set([...Object.keys(ri),...Object.keys(li)]).forEach(day=>{inst[day]=union('inst',ri[day],li[day],'inst|'+day+'|')});

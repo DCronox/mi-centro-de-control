@@ -102,7 +102,9 @@ function vRecentPicker(){
 function vAddPanel(meal,date){
   const tabs=[['text','Escribir'],['recent','Recientes y propios'],['manual','Manual']];
   const body=gNutMode==='recent'?vRecentPicker()+(gNutItems?`<p class="k">${gNutItems.length} en revisión. <button class="lk" type="button" data-fact="mode" data-mode="text">Ver revisión</button></p>`:''):gNutMode==='manual'?vFoodForm(meal,date):gNutItems?vNlpReview():vNlpWrite();
-  return `<div class="gnf-panel"><div class="gnf-tabs" role="tablist">${tabs.map(([k,n])=>`<button type="button" role="tab" aria-selected="${gNutMode===k}" class="${gNutMode===k?'on':''}" data-fact="mode" data-mode="${k}">${n}</button>`).join('')}</div>${body}</div>`;
+  if(gNutMode==='manual'&&Object.keys(gNutManual).length)setTimeout(gnfFillManual,0);
+  const note=gnfDraftNote?`<p class="sync-banner gnf-draft">${gico('check',15)}<span>Recuperamos lo que estabas registrando y no habías guardado.</span><button class="lk" type="button" data-nact="cancelFood">Descartar</button></p>`:'';
+  return note+`<div class="gnf-panel"><div class="gnf-tabs" role="tablist">${tabs.map(([k,n])=>`<button type="button" role="tab" aria-selected="${gNutMode===k}" class="${gNutMode===k?'on':''}" data-fact="mode" data-mode="${k}">${n}</button>`).join('')}</div>${body}</div>`;
 }
 
 /* ---- Mis alimentos ---- */
@@ -149,7 +151,7 @@ document.addEventListener('click',async e=>{
     const cap=s=>String(s||'').trim().replace(/^./,c=>c.toUpperCase());
     const items=gNutItems.map(it=>({...it,name:it.food?(it.food.kind==='ref'&&it.food_text?cap(it.food_text):it.food.name):cap(it.food_text),estimated:it.status==='estimated'}));
     b.disabled=true;const r=await gTry(()=>gymAddFoods(items,{meal:gNutAdd,date:gnDate(),originalText:gNutText}),items.length===1?'Alimento registrado':items.length+' alimentos registrados');b.disabled=false;
-    if(r){sfx('success');gNutItems=null;gNutText='';gNutAdd=null;gNutMode='text';gRender(false)}return}
+    if(r){sfx('success');gnfDraftClear();gNutItems=null;gNutText='';gNutAdd=null;gNutMode='text';gRender(false)}return}
   if(a==='newCustom'){gFoodEdit='new';gRender(false);document.querySelector('#fCustom input[name=name]')?.focus();return}
   if(a==='editCustom'){gFoodEdit=b.dataset.id;gRender(false);return}
   if(a==='cancelCustom'){gFoodEdit=null;gRender(false);return}
@@ -177,3 +179,38 @@ document.addEventListener('submit',async e=>{
   if(f.id==='fCustom'){e.preventDefault();const v=Object.fromEntries(new FormData(f)),btn=f.querySelector('[type=submit]');btn.disabled=true;
     const r=await gTry(()=>gymSaveCustomFood(v,f.dataset.id||null),'Alimento guardado');btn.disabled=false;if(r){sfx('success');gFoodEdit=null;gRender(false)}}
 });
+
+/* ---- Borrador de la comida en curso ----
+   Lo que se está escribiendo o revisando se guarda en este navegador (por cuenta) para no perderlo si la
+   página se recarga o el móvil cierra la pestaña. Se borra al guardar o cancelar; caduca a los 3 días. */
+let gnfDraftRestored=null,gnfDraftNote=false,gNutManual={};
+const GNF_DRAFT_TTL=3*864e5;
+const gnfDraftKey=()=>GS.user?'mcc-gym-fooddraft-'+GS.user.id:null;
+function gnfDraftRead(){const k=gnfDraftKey();if(!k)return null;try{const d=JSON.parse(localStorage.getItem(k));return d&&d.v===1&&Date.now()-d.at<GNF_DRAFT_TTL&&GYM_MEALS[d.meal]?d:null}catch(_){return null}}
+function gnfDraftSave(){
+  const k=gnfDraftKey();if(!k)return;
+  try{
+    const empty=!gNutAdd||(!gNutItems&&!String(gNutText||'').trim()&&!Object.values(gNutManual).some(v=>String(v||'').trim()));
+    if(empty){localStorage.removeItem(k);return}
+    localStorage.setItem(k,JSON.stringify({v:1,at:Date.now(),date:gnDate(),meal:gNutAdd,mode:gNutMode,text:gNutText,items:gNutItems,manual:gNutManual}));
+  }catch(_){/* almacenamiento lleno o bloqueado: se sigue sin borrador */}
+}
+function gnfDraftClear(){gNutManual={};gnfDraftNote=false;const k=gnfDraftKey();if(k)try{localStorage.removeItem(k)}catch(_){}}
+/* Se llama al dibujar Nutrición: la primera vez recupera el borrador; después lo mantiene al día. */
+function gnfDraftSync(){
+  if(GS.user&&GS.ready&&gnfDraftRestored!==GS.user.id){
+    gnfDraftRestored=GS.user.id;const d=gnfDraftRead();
+    if(d&&!gNutAdd){
+      gNutAdd=d.meal;gNutMode=d.mode||'text';gNutText=d.text||'';gNutManual=d.manual||{};
+      gNutItems=Array.isArray(d.items)&&d.items.length?d.items:null;
+      (gNutItems||[]).forEach(it=>{if(it.food&&it.food.kind==='ref')gymRememberRef(it.food);it.usda=null;gnfRecalc(it)});
+      if(d.date&&d.date!==gymToday()&&d.date<gymToday()){gNutDate=d.date;gymEnsureNutritionFor(d.date).then(()=>gRender(false))}
+      gnfDraftNote=true;
+      if(gNutMode==='manual')setTimeout(gnfFillManual,0);
+    }
+  }
+  if(GS.user&&gnfDraftRestored===GS.user.id)gnfDraftSave();
+}
+function gnfFillManual(){const f=document.getElementById('fFood');if(!f)return;Object.entries(gNutManual).forEach(([n,v])=>{const el=f.elements[n];if(!el)return;if(el.type==='checkbox')el.checked=!!v;else el.value=v})}
+document.addEventListener('input',e=>{const f=e.target.form;if(f&&f.id==='fFood'){gNutManual[e.target.name]=e.target.type==='checkbox'?e.target.checked:e.target.value;gnfDraftSave()}else if(f&&f.id==='fNlp')gnfDraftSave()});
+document.addEventListener('change',e=>{const f=e.target.form;if(f&&f.id==='fFood'&&e.target.type==='checkbox'){gNutManual[e.target.name]=e.target.checked;gnfDraftSave()}});

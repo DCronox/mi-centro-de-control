@@ -1,4 +1,4 @@
-const CACHE = 'mi-centro-control-v21';
+const CACHE = 'mi-centro-control-v22';
 const CORE = [
   './', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png',
   './privacidad.html', './terminos.html', './cookies.html',

@@ -19,7 +19,7 @@ app.addEventListener('submit',async e=>{
   else if(f.id==='fObligation'){S.obligations.push({id:uid(),name:v.name.trim(),amount:+v.amount,cat:v.cat.trim()||'Otros',day:Math.min(31,Math.max(1,+v.day||1)),active:true,generatedMonths:[]});generateMonthlyObligations()}
   else if(f.id==='fSchedule'){S.scheduledShifts.push({id:uid(),name:(v.name||'').trim(),date:v.date,in:v.in,out:v.out,brk:+v.brk||0,rate:S.rate})}
   else if(f.id==='fNotifPrefs'){const p={enabled:!!v.enabled,categories:{}};NOTIF_CATS.forEach(([k])=>p.categories[k]=!!v['cat_'+k]);['paymentLeadDays','shiftLeadMin','goalLeadDays','weeklyDay','bigExpense','savingsDay'].forEach(k=>p[k]=Math.max(0,Math.round(+v[k]||0)));p.savingsDay=Math.min(31,Math.max(1,p.savingsDay||25));['summaryTime','weeklyTime','quietStart','quietEnd'].forEach(k=>{if(/^\d{2}:\d{2}$/.test(v[k]||''))p[k]=v[k]});saveNotifPrefs(p);render();toast('Preferencias guardadas');return}
-  else if(f.id==='fShift'){const r=+v.rate||S.rate;S.rate=r;S.shifts.push({id:uid(),date:v.date,in:v.in,out:v.out,brk:+v.brk||0,rate:r,paid:false,source:'manual'})}
+  else if(f.id==='fShift'){const r=+v.rate||S.rate;if(r!==S.rate)S.rateU=Date.now();S.rate=r;S.shifts.push({id:uid(),date:v.date,in:v.in,out:v.out,brk:+v.brk||0,rate:r,paid:false,source:'manual'})}
   else return;
   save();render();toast(budgetAlert||'Cambios guardados');
 });
