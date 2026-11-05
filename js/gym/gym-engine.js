@@ -77,7 +77,7 @@ function gymPal(p){
   const train=Math.min(0.20,trainH*0.025),cardio=Math.min(0.25,cardioH*0.05);
   const value=geClamp(base+walk+train+cardio,1.40,2.40);
   const band=GYM_PAL_BANDS.find(b=>value>=b.min&&value<=b.max+0.005)||GYM_PAL_BANDS[0];
-  return{value:Math.round(value*100)/100,low:Math.max(1.40,value-0.10),high:Math.min(2.40,value+0.10),band:band.label,parts:{base,walk,train:geR1(train*100)/100,cardio:geR1(cardio*100)/100,trainH:geR1(trainH),cardioH:geR1(cardioH)}};
+  return{value:Math.round(value*100)/100,low:Math.round(Math.max(1.40,value-0.10)*100)/100,high:Math.round(Math.min(2.40,value+0.10)*100)/100,band:band.label,parts:{base,walk,train:geR1(train*100)/100,cardio:geR1(cardio*100)/100,trainH:geR1(trainH),cardioH:geR1(cardioH)}};
 }
 
 /* Modo de seguridad: decide si se calculan objetivos y con qué límites. */

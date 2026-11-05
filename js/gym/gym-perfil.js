@@ -3,6 +3,8 @@
    Calcula en el dispositivo (gym-engine.js) y guarda en gym_profiles / nutrition_targets (gym-store.js). */
 const GP_STEPS=['Datos básicos','Objetivo','Actividad diaria','Entrenamiento','Salud y seguridad'];
 const gpNum=(n,d=0)=>(+n).toLocaleString('es-CO',{maximumFractionDigits:d});
+/* Fecha del objetivo en Bogotá (effective_from la pone la app/la base de datos en hora local). */
+const gpLocalDate=t=>t.effective_from||new Intl.DateTimeFormat('en-CA',{timeZone:GYM_TZ}).format(new Date(t.created_at));
 const gpRange=r=>{if(!r)return '';const d=Math.abs(r[1])<10?2:0;return `${gpNum(r[0],d)}–${gpNum(r[1],d)}`};
 
 function gpRadios(name,opts,val,{cols}={}){return `<div class="gp-opts ${cols?'gp-opts-'+cols:''}" role="radiogroup">${Object.entries(opts).map(([k,o])=>`<label class="gp-opt"><input type="radio" name="${name}" value="${k}" ${val===k?'checked':''} required><span><b>${gesc(o.label)}</b>${o.hint?`<small>${gesc(o.hint)}</small>`:''}</span></label>`).join('')}</div>`}
@@ -107,9 +109,9 @@ function gpManualCheck(r,v){
 
 function vActiveTargets(){
   const t=gymActiveTarget(),p=GS.profile,d=t.details||{},c=d.computed||{};
-  const hist=GS.targets.slice(0,10).map(x=>`<div class="row"><div class="g1"><b>${gpNum(x.kcal)} kcal · ${x.protein_g} g proteína</b><small>${gesc(fshort(String(x.created_at).slice(0,10)))} · ${({accepted:'Aceptado',manual:'Manual',superseded:'Reemplazado',proposed:'Propuesto'})[x.status]||x.status}</small></div></div>`).join('');
+  const hist=GS.targets.slice(0,10).map(x=>`<div class="row"><div class="g1"><b>${gpNum(x.kcal)} kcal · ${x.protein_g} g proteína</b><small>${gesc(fshort(gpLocalDate(x)))} · ${({accepted:'Aceptado',manual:'Manual',superseded:'Reemplazado',proposed:'Propuesto'})[x.status]||x.status}</small></div></div>`).join('');
   const age=gymAgeFrom(p.birth_year);
-  return `<section class="card gp-hero"><span class="hero-label">Tus objetivos diarios · ${t.status==='manual'?'definidos por ti':'aceptados'} el ${gesc(fshort(String(t.created_at).slice(0,10)))}</span>
+  return `<section class="card gp-hero"><span class="hero-label">Tus objetivos diarios · ${t.status==='manual'?'definidos por ti':'aceptados'} el ${gesc(fshort(gpLocalDate(t)))}</span>
     <div class="gp-kcal"><b>${gpNum(t.kcal)}</b><span>kcal al día</span></div>
     ${c.energy?`<p class="k">Mantenimiento estimado ${gpNum(c.energy.tdee)} kcal (rango ${gpRange(c.energy.tdeeRange)}).</p>`:''}
     ${gpTiles({protein:t.protein_g,carbs:t.carbs_g,fat:t.fat_g,fiber:t.fiber_g,water:(t.water_ml||0)/1000})}
