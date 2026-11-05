@@ -172,7 +172,7 @@ async function gymSaveTarget(result,{status='accepted',manual=null}={}){
   if(!GS.profileSchema)throw new Error('Los objetivos aún no se pueden guardar: falta aplicar la actualización de la base de datos de Gym.');
   if(!result||!result.ok||!result.energy)throw new Error('No hay un objetivo calculado que guardar.');
   const m=manual||{};
-  const row={user_id:GS.user.id,status,
+  const row={user_id:GS.user.id,status,effective_from:gymToday(),
     kcal:Math.round(m.kcal??result.energy.kcal),protein_g:Math.round(m.protein_g??result.macros.protein),carbs_g:Math.round(m.carbs_g??result.macros.carbs),fat_g:Math.round(m.fat_g??result.macros.fat),
     fiber_g:Math.round(m.fiber_g??result.macros.fiber),water_ml:Math.round((m.water_l??result.water.liters)*1000),
     method:'mifflin_stjeor+pal',engine_version:result.version,
@@ -230,4 +230,55 @@ async function gymAddWater(date,ml){
 async function gymUndoWater(date){
   gymNutriGuard();const last=GS.water.filter(w=>w.date===date).sort((a,b)=>String(a.created_at).localeCompare(String(b.created_at))).at(-1);if(!last)return null;
   await gq(gymClient.from('water_logs').delete().eq('id',last.id));GS.water=GS.water.filter(w=>w.id!==last.id);return last;
+}
+
+/* ---- Alimentos propios y registro desde texto (fase D1; tabla food_custom, migración 20261108) ---- */
+GS.customFoods=[];GS.customSchema=null;
+const GYM_CUSTOM_COLS='id,name,aliases,serving_qty,serving_unit,grams_per_serving,kcal,protein_g,carbs_g,fat_g,fiber_g,notes,updated_at';
+async function gymLoadCustomFoods(){
+  if(!gymClient||!GS.user)return false;
+  const r=await gymClient.from('food_custom').select(GYM_CUSTOM_COLS).eq('user_id',GS.user.id).order('name');
+  if(r.error){GS.customSchema=/schema cache|does not exist|relation/i.test(r.error.message||'')?false:GS.customSchema;return false}
+  GS.customSchema=true;GS.customFoods=r.data||[];return true;
+}
+/* Alimentos conocidos para el analizador: propios primero, luego los recientes del historial. */
+function gymKnownFoods(){
+  const own=GS.customFoods.map(gymCustomAsKnown),names=new Set(own.map(f=>gfNorm(f.name)));
+  return own.concat(gymRecentFoods(GS.foods).filter(r=>!names.has(gfNorm(r.name))));
+}
+function gymCustomRow(v){
+  const n=x=>x===''||x===undefined||x===null?0:Math.round(+x*10)/10;
+  return{name:String(v.name||'').trim().slice(0,120),aliases:String(v.aliases||'').split(',').map(s=>s.trim()).filter(Boolean).slice(0,10),
+    serving_qty:+v.serving_qty>0?+v.serving_qty:1,serving_unit:gfUnitKey(v.serving_unit||'')||String(v.serving_unit||'porción').trim().slice(0,30)||'porción',
+    grams_per_serving:v.grams_per_serving===''||v.grams_per_serving===undefined||v.grams_per_serving===null?null:+v.grams_per_serving,
+    kcal:n(v.kcal),protein_g:n(v.protein_g),carbs_g:n(v.carbs_g),fat_g:n(v.fat_g),fiber_g:n(v.fiber_g),notes:String(v.notes||'').slice(0,300)};
+}
+function gymValidateCustom(row){
+  const e=[];if(!row.name)e.push('Ponle un nombre al alimento.');
+  if(!(row.kcal>0||row.protein_g>0||row.carbs_g>0||row.fat_g>0))e.push('Indica al menos las calorías o algún macronutriente de la porción.');
+  if(row.grams_per_serving!==null&&!(row.grams_per_serving>0))e.push('Los gramos por porción deben ser mayores que 0.');
+  return e;
+}
+async function gymSaveCustomFood(v,id){
+  if(!GS.customSchema)throw new Error('Los alimentos propios aún no se pueden guardar: falta aplicar la actualización de la base de datos de Gym.');
+  const row=gymCustomRow(v),errs=gymValidateCustom(row);if(errs.length)throw new Error(errs.join(' '));
+  if(!(row.kcal>0))row.kcal=Math.round(row.protein_g*4+row.carbs_g*4+row.fat_g*9);
+  const dup=GS.customFoods.find(f=>gfNorm(f.name)===gfNorm(row.name)&&f.id!==id);if(dup)throw new Error(`Ya tienes un alimento llamado «${dup.name}».`);
+  const q=id?gymClient.from('food_custom').update(row).eq('id',id):gymClient.from('food_custom').insert({...row,user_id:GS.user.id});
+  const saved=await gq(q.select(GYM_CUSTOM_COLS).single());
+  GS.customFoods=GS.customFoods.filter(f=>f.id!==saved.id).concat(saved).sort((a,b)=>a.name.localeCompare(b.name,'es'));
+  return saved;
+}
+async function gymDeleteCustomFood(id){await gq(gymClient.from('food_custom').delete().eq('id',id));GS.customFoods=GS.customFoods.filter(f=>f.id!==id)}
+/* Guarda varios elementos confirmados de una vez (desde el texto o desde recientes). */
+async function gymAddFoods(items,{meal,date,originalText=''}){
+  gymNutriGuard();
+  if(!GYM_MEALS[meal])throw new Error('Elige la comida del día.');
+  const rows=items.map(i=>{const n=i.nutrients||{};const known=i.food||{};
+    return{user_id:GS.user.id,date,meal,name:String(i.name||known.name||i.food_text||'').trim().slice(0,120),quantity:+i.qty>0?+i.qty:null,unit:String(i.unit||'').slice(0,30),
+      grams:i.grams>0?Math.round(i.grams*10)/10:null,kcal:Math.round(+n.kcal||0),protein_g:+n.protein_g||0,carbs_g:+n.carbs_g||0,fat_g:+n.fat_g||0,fiber_g:+n.fiber_g||0,
+      source:known.kind==='custom'?'custom':originalText?'text':'manual',source_ref:known.kind==='custom'?known.id:'',original_text:String(i.raw||originalText||'').slice(0,300),estimated:!!i.estimated}});
+  for(const r of rows){const e=gymValidateFood({...r});if(e.length)throw new Error(`«${r.name||'?'}»: ${e.join(' ')}`)}
+  const saved=await gq(gymClient.from('food_logs').insert(rows).select(GYM_FOOD_COLS));
+  GS.foods.push(...saved);return saved;
 }

@@ -52,8 +52,8 @@ function vFoodForm(meal,date){
     <label class="fl">Carbohidratos (g)<input name="carbs_g" type="number" min="0" max="1000" step="0.1" inputmode="decimal"></label>
     <label class="fl">Grasas (g)<input name="fat_g" type="number" min="0" max="500" step="0.1" inputmode="decimal"></label>
     <label class="fl">Fibra (g)<input name="fiber_g" type="number" min="0" max="200" step="0.1" inputmode="decimal"></label>
-    <label class="gp-check wide"><input type="checkbox" name="estimated"><span><b>Son valores aproximados</b><small>Márcalo si calculaste a ojo</small></span></label>
-    <p class="k wide">Si no sabes las calorías, escribe los macronutrientes y se calculan (4 kcal por g de proteína y carbohidratos, 9 por g de grasa); quedará marcado como estimado. La búsqueda de alimentos llegará en la siguiente fase.</p>
+    ${GS.customSchema?'<label class="gp-check wide"><input type="checkbox" name="saveCustom"><span><b>Guardar también en Mis alimentos</b><small>Con esta cantidad como porción, para reconocerlo la próxima vez</small></span></label>':''}<label class="gp-check wide"><input type="checkbox" name="estimated"><span><b>Son valores aproximados</b><small>Márcalo si calculaste a ojo</small></span></label>
+    <p class="k wide">Si no sabes las calorías, escribe los macronutrientes y se calculan (4 kcal por g de proteína y carbohidratos, 9 por g de grasa); quedará marcado como estimado. </p>
     <div class="gp-res-actions wide"><button class="b" type="submit">${gico('check',15)}<span>Guardar</span></button><button class="g" type="button" data-nact="cancelFood">Cancelar</button></div></form>`;
 }
 function vNutriMeals(date){
@@ -62,7 +62,7 @@ function vNutriMeals(date){
     const list=day.filter(f=>f.meal===k),kc=list.reduce((a,f)=>a+(+f.kcal||0),0);
     return `<div class="gn-meal"><div class="gn-meal-head"><b>${n}</b><span class="k">${list.length?gnFmt(kc)+' kcal':''}</span>${gNutAdd===k?'':`<button class="lk" type="button" data-nact="addFood" data-meal="${k}">${gico('plus',14)} Añadir</button>`}</div>
       ${list.map(f=>`<div class="row"><div class="g1"><b class="t">${gesc(f.name)}${f.quantity?` <span class="k">· ${gnFmt(f.quantity,1)} ${gesc(f.unit||'')}</span>`:''}</b><small>${gnFmt(f.kcal)} kcal · P ${gnFmt(f.protein_g,1)} · C ${gnFmt(f.carbs_g,1)} · G ${gnFmt(f.fat_g,1)} g${f.estimated?' · <span class="tag">estimado</span>':''}</small></div><button class="g ic-b" type="button" data-nact="delFood" data-id="${gesc(f.id)}" aria-label="Eliminar ${gesc(f.name)}">${gico('x',15)}</button></div>`).join('')}
-      ${gNutAdd===k?vFoodForm(k,date):''}</div>`}).join('')}</section>`;
+      ${gNutAdd===k?vAddPanel(k,date):''}</div>`}).join('')}</section>`;
 }
 function vNutriWeek(date){
   const w=gymWeekNutrition(GS.foods,GS.water,GS.targets,date),dn=['D','L','M','X','J','V','S'];
@@ -86,7 +86,7 @@ function vNutricion(){
     <button class="g ic-b" type="button" data-nact="nextDay" aria-label="Día siguiente" ${date>=today?'disabled':''}>${gico('right',16)}</button></div>`;
   const banner=GS.nutriSchema===false?`<p class="sync-banner">${gico('cloud',16)}<span>El registro de comidas y agua aún no se puede guardar: falta aplicar la actualización de la base de datos de Gym.</span></p>`:'';
   const noTarget=tg?'':(gProfileCta()||`<section class="card"><p class="k">No hay un objetivo vigente para este día. <button class="lk" type="button" data-g="perfil">Definir objetivos</button></p></section>`);
-  return banner+nav+noTarget+vNutriRings(tot,tg)+`<div class="cols">${vNutriWater(tot,tg,date)}${vNutriWeek(date)}</div>`+vNutriMeals(date);
+  return banner+nav+noTarget+vNutriRings(tot,tg)+`<div class="cols">${vNutriWater(tot,tg,date)}${vNutriWeek(date)}</div>`+vNutriMeals(date)+vCustomFoods();
 }
 
 /* ---- Eventos ---- */
@@ -97,8 +97,8 @@ document.addEventListener('click',async e=>{
     gNutDate=next===gymToday()?null:next;gNutAdd=null;await gymEnsureNutritionFor(next);gRender(false);return}
   if(a==='water'){b.disabled=true;const r=await gTry(()=>gymAddWater(date,+b.dataset.ml));if(r){sfx('check');gRender(false)}else b.disabled=false;return}
   if(a==='undoWater'){const r=await gTry(()=>gymUndoWater(date));if(r){gToast(`Se quitaron ${r.ml} ml`);gRender(false)}return}
-  if(a==='addFood'){gNutAdd=b.dataset.meal;gRender(false);document.querySelector('#fFood input[name=name]')?.focus();return}
-  if(a==='cancelFood'){gNutAdd=null;gRender(false);return}
+  if(a==='addFood'){gNutAdd=b.dataset.meal;gNutItems=null;gNutText='';gNutMode='text';gRender(false);document.querySelector('#fNlp textarea')?.focus();return}
+  if(a==='cancelFood'){gNutAdd=null;gNutItems=null;gNutText='';gRender(false);return}
   if(a==='delFood'){const f=GS.foods.find(x=>x.id===b.dataset.id);if(!f)return;
     if(!await ask(`Se borrará «${f.name}» (${gnFmt(f.kcal)} kcal) de este día.`,{title:'¿Eliminar registro?',confirmLabel:'Eliminar',danger:true}))return;
     const ok=await gTry(()=>gymDeleteFood(f.id).then(()=>true),'Registro eliminado');if(ok)sfx('delete');gRender(false);return}
@@ -109,5 +109,6 @@ document.addEventListener('submit',async e=>{
   const errs=gymValidateFood(v);if(errs.length){await notify(errs.join(' '),{title:'Revisa el registro'});return}
   const btn=f.querySelector('[type=submit]');btn.disabled=true;
   const r=await gTry(()=>gymAddFood(v),'Comida registrada');btn.disabled=false;
+  if(r&&new FormData(f).has('saveCustom')&&!GS.customFoods.some(c=>gfNorm(c.name)===gfNorm(r.name))){const u=r.unit||'porción';await gTry(()=>gymSaveCustomFood({name:r.name,serving_qty:r.quantity||1,serving_unit:u,grams_per_serving:gfUnitKey(u)==='g'?r.quantity:'',kcal:r.kcal,protein_g:r.protein_g,carbs_g:r.carbs_g,fat_g:r.fat_g,fiber_g:r.fiber_g}))}
   if(r){sfx('success');gNutAdd=null;gRender(false)}
 });

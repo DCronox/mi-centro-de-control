@@ -5,7 +5,7 @@
   const KEY='gym-mock-db';
   const seed=()=>({gym_routines:[],gym_sessions:[{id:'ses-anterior',routine_id:null,name:'Entreno anterior',started_at:'2026-10-28T11:00:00Z',ended_at:'2026-10-28T12:00:00Z',notes:''}],
     gym_sets:[{id:'set-anterior',session_id:'ses-anterior',exercise_id:'ex-banca',set_index:1,weight_kg:60,reps:10,rpe:null}],
-    gym_exercises:[{id:'ex-banca',name:'Press de banca',muscle:'Pecho',notes:'',archived:false,catalog_key:null,muscles:{}}],body_metrics:[],gym_profiles:[],nutrition_targets:[],food_logs:[],water_logs:[]});
+    gym_exercises:[{id:'ex-banca',name:'Press de banca',muscle:'Pecho',notes:'',archived:false,catalog_key:null,muscles:{}}],body_metrics:[],gym_profiles:[],nutrition_targets:[],food_logs:[],water_logs:[],food_custom:[]});
   const load=()=>{try{return JSON.parse(sessionStorage.getItem(KEY))||seed()}catch(e){return seed()}};
   const persist=db=>sessionStorage.setItem(KEY,JSON.stringify(db));
   window.gymMockCalls=[];
@@ -14,7 +14,7 @@
     const api={select(){return api},insert(b){st.op='insert';st.body=b;return api},update(b){st.op='update';st.body=b;return api},upsert(b,o){st.op='upsert';st.body=b;st.key=(o&&o.onConflict)||'id';return api},delete(){st.op='delete';return api},
       eq(k,v){st.filters.push([k,v]);return api},in(){return api},gte(k,v){st.filters.push([k,v,"gte"]);return api},lte(k,v){st.filters.push([k,v,"lte"]);return api},order(){return api},limit(){return api},single(){st.single=true;return api},maybeSingle(){st.single=true;return api},
       then(res,rej){
-        const db=load();if(/^(food|water)_logs$/.test(table)&&!db[table]&&!db.__noNutri)db[table]=[];const rows=db[table],match=r=>st.filters.every(([k,v,op])=>op==="gte"?String(r[k])>=String(v):op==="lte"?String(r[k])<=String(v):r[k]===v);let data=null;
+        const db=load();if(/^(food_logs|water_logs|food_custom)$/.test(table)&&!db[table]&&!db.__noNutri)db[table]=[];const rows=db[table],match=r=>st.filters.every(([k,v,op])=>op==="gte"?String(r[k])>=String(v):op==="lte"?String(r[k])<=String(v):r[k]===v);let data=null;
         gymMockCalls.push(st.op+' '+table);
         if(!rows){persist(db);return Promise.resolve({data:null,error:{message:'Could not find the table public.'+table+' in the schema cache'}}).then(res,rej)}
         if(st.op==='select'){data=st.filters.length?rows.filter(match):rows;if(st.single)data=data[0]||null}
@@ -29,7 +29,7 @@
   window.gymMockDb=()=>load();
   window.gymMockReset=()=>sessionStorage.removeItem(KEY);
   /* Simula que la migración de perfil aún no se aplicó. */
-  window.gymMockNoNutriTables=()=>{const db=load();delete db.food_logs;delete db.water_logs;db.__noNutri=true;persist(db)};
+  window.gymMockNoNutriTables=()=>{const db=load();delete db.food_logs;delete db.water_logs;delete db.food_custom;db.__noNutri=true;persist(db)};
   window.gymMockNoProfileTables=()=>{const db=load();delete db.gym_profiles;delete db.nutrition_targets;persist(db)};
   window.gymMockBoot=async()=>{gymClient={from,auth:{getSession:async()=>({data:{session:{user:{id:'u-prueba',email:'prueba@local'}}},error:null})}};await gymBoot()};
 })();
