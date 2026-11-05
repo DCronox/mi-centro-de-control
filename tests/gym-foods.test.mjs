@@ -69,3 +69,26 @@ test('recientes: uno por nombre, con usos y la última porción', () => {
   assert.equal(F.gymScaleFood(r[0], 1, 'unidad').kcal, 269);
   assert.equal(r[1].serving_unit, 'porción');
 });
+
+test('porciones de USDA: convierte «large» a gramos con el peso publicado', () => {
+  const ref = { kind: 'ref', id: 'usda:171287', name: 'Egg, whole, raw, fresh', serving_qty: 100, serving_unit: 'g', grams_per_serving: 100,
+    portions: [{ unit: 'large', grams: 50 }, { unit: 'cup (4.86 large eggs)', grams: 243 }], kcal: 143, protein_g: 12.6, carbs_g: 0.7, fat_g: 9.5, fiber_g: 0 };
+  assert.equal(F.gymScaleFood(ref, 2, 'large').kcal, 143); // 2 × 50 g = 100 g
+  assert.equal(F.gymScaleFood(ref, 1, 'cup (4.86 large eggs)').kcal, Math.round(143 * 2.43));
+  assert.equal(F.gymScaleFood(ref, 30, 'g').protein_g, 3.8);
+  assert.equal(F.gymScaleFood(ref, 1, 'unidad'), null, 'sin porción «unidad» publicada no se adivina');
+});
+
+test('los nombres con comas (p. ej. de USDA) también coinciden', () => {
+  const k = [{ kind: 'recent', id: 'r', name: 'Egg, whole, raw, fresh', serving_qty: 1, serving_unit: 'large', kcal: 72 }];
+  assert.equal(F.gymMatchFood('egg', k)[0]?.food.id, 'r');
+  assert.deepEqual(F.gfTokens('Pollo, pechuga/asada.'), ['pollo', 'pechuga', 'asada']);
+});
+
+test('el tamaño escrito no se marca como pendiente si la unidad ya es de ese tamaño', () => {
+  const r = [{ kind: 'recent', id: 'r', name: 'Huevos', serving_qty: 2, serving_unit: 'large', kcal: 143, protein_g: 12.6 }];
+  const ok = F.gymProposeItem(F.gymParseItem('3 huevos grandes'), r);
+  assert.deepEqual([ok.status, ok.nutrients.kcal, ok.notes], ['ok', 215, []]);
+  const pend = F.gymProposeItem(F.gymParseItem('3 huevos pequeños'), r);
+  assert.equal(pend.status, 'estimated');
+});

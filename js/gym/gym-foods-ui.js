@@ -24,7 +24,7 @@ function gnfRecalc(it){
   it.status=it.forceEstimated||k.estimated?'estimated':'ok';return it;
 }
 function gnfFromProposal(p){
-  const it={raw:p.raw,qty:p.qty,unit:p.unit,food_text:p.food,matches:p.matches.map(m=>({id:m.food.id,name:m.food.name,score:m.score})),choice:p.choice||(p.matches.length?null:'manual'),manual:{},baseNotes:p.notes.filter(n=>!/^No sé convertir/.test(n)),forceEstimated:p.status==='estimated'};
+  const it={raw:p.raw,qty:p.qty,unit:p.unit,size:p.size,food_text:p.food,matches:p.matches.map(m=>({id:m.food.id,name:m.food.name,score:m.score})),choice:p.choice||(p.matches.length?null:'manual'),manual:{},baseNotes:p.notes.filter(n=>!/^No sé convertir/.test(n)),forceEstimated:p.status==='estimated'};
   if(!it.choice)it.choice='manual';
   return gnfRecalc(it);
 }
@@ -32,7 +32,7 @@ function gnfStatusChip(s){return{ok:'<span class="chip chip-ok">Listo</span>',es
 
 function vNlpReview(){
   const rows=gNutItems.map((it,i)=>{
-    const units=[...new Set([it.unit,...GNF_UNITS])].map(u=>`<option ${u===it.unit?'selected':''}>${gesc(u)}</option>`).join('');
+    const units=[...new Set([it.unit,...((it.food&&it.food.portions)||[]).map(p=>p.unit),...GNF_UNITS])].map(u=>`<option ${u===it.unit?'selected':''}>${gesc(u)}</option>`).join('');
     const opts=it.matches.map(m=>`<option value="${gesc(m.id)}" ${m.id===it.choice?'selected':''}>${gesc(m.name)}${m.score<0.75?' (aprox.)':''}</option>`).join('')+`<option value="manual" ${it.choice==='manual'?'selected':''}>Escribir valores a mano</option>`;
     const manual=it.choice==='manual'?`<div class="gnf-manual">${[['kcal','kcal'],['protein_g','Prot. g'],['carbs_g','Carb. g'],['fat_g','Grasa g']].map(([k,n])=>`<label class="fl">${n}<input id="ni-${i}-${k}" data-ni="${i}" data-k="m.${k}" type="number" min="0" step="0.1" inputmode="decimal" value="${gesc(it.manual[k]??'')}"></label>`).join('')}</div>`:'';
     const n=it.nutrients;
@@ -42,6 +42,7 @@ function vNlpReview(){
         <label class="fl gnf-food">Alimento<select id="ni-${i}-choice" data-ni="${i}" data-k="choice">${opts}</select></label></div>
       ${it.choice==='manual'?`<label class="fl">Nombre<input id="ni-${i}-name" data-ni="${i}" data-k="food_text" maxlength="120" value="${gesc(it.food_text||'')}"></label>`:''}
       ${manual}
+      ${vUsdaBox(it,i)}
       <p class="gnf-values">${n?`<b>${gnFmt(n.kcal)} kcal</b> · P ${gnFmt(n.protein_g,1)} · C ${gnFmt(n.carbs_g,1)} · G ${gnFmt(n.fat_g,1)} g`:'Sin valores todavía'}</p>
       ${it.notes.length?`<p class="k">${it.notes.map(gesc).join(' ')}</p>`:''}</div>`}).join('');
   const tot=gNutItems.reduce((a,it)=>a+(it.nutrients?.kcal||0),0),bad=gNutItems.filter(it=>!it.nutrients||it.status==='unit'||it.status==='nomatch').length;
@@ -49,6 +50,42 @@ function vNlpReview(){
     <p class="gnf-total"><b>Total: ${gnFmt(tot)} kcal</b>${bad?` · <span class="gn-over">${bad} ${bad===1?'elemento necesita':'elementos necesitan'} datos</span>`:''}</p>
     <div class="gp-res-actions"><button class="b" type="button" data-fact="saveItems" ${!gNutItems.length||bad?'disabled':''}>${gico('check',15)}<span>Guardar ${gNutItems.length===1?'1 alimento':gNutItems.length+' alimentos'}</span></button>
       <button class="g" type="button" data-fact="backText">Volver a escribir</button><button class="g" type="button" data-nact="cancelFood">Cancelar</button></div></div>`;
+}
+/* Búsqueda en USDA dentro de un elemento: resultados por 100 g con sus porciones publicadas. */
+function vUsdaBox(it,i){
+  const u=it.usda;
+  if(!u)return it.status==='ok'?'':`<button class="lk gnf-usda-open" type="button" data-fact="usdaOpen" data-i="${i}">${gico('plus',13)} Buscar en USDA</button>`;
+  const res=u.results||[];
+  const list=u.loading?'<p class="k">Buscando…</p>':u.error?`<p class="gn-over">${gesc(u.error)}</p>`:!u.results?'':res.length?
+    `<div class="gnf-usda-list">${res.slice(0,8).map(r=>`<button type="button" class="gnf-chip" data-fact="usdaPick" data-i="${i}" data-id="${gesc(r.id)}"><b>${gesc(r.name)}</b><small>Por 100 g: ${gnFmt(r.kcal)} kcal · P ${gnFmt(r.protein_g,1)} · C ${gnFmt(r.carbs_g,1)} · G ${gnFmt(r.fat_g,1)} g${r.portions.length?' · '+r.portions.length+' porciones':''}${r.estimated?' · datos incompletos':''}</small></button>`).join('')}</div>`
+    :'<p class="k">USDA no devolvió resultados. Prueba con otras palabras (también en inglés).</p>';
+  const foot=u.query_en?`<p class="k">Buscado como «${gesc(u.query_en)}»${u.cached?' (guardado)':''}. Fuente: USDA FoodData Central, dominio público. Los nombres están en inglés.${u.demo?' Se está usando la clave de demostración de USDA, muy limitada.':''}</p>`:'';
+  return `<div class="gnf-usda"><div class="gnf-usda-q"><input id="ni-${i}-usdaq" maxlength="80" value="${gesc(u.q)}" aria-label="Buscar en USDA" placeholder="Ej.: pechuga de pollo"><button class="g" type="button" data-fact="usdaGo" data-i="${i}">Buscar</button><button class="g ic-b" type="button" data-fact="usdaClose" data-i="${i}" aria-label="Cerrar búsqueda">${gico('x',14)}</button></div>${list}${foot}</div>`;
+}
+async function gnfUsdaRun(i){
+  const it=gNutItems&&gNutItems[i];if(!it||!it.usda)return;
+  const q=(document.getElementById(`ni-${i}-usdaq`)?.value||it.usda.q||'').trim();
+  it.usda={q,loading:true};gRender(false);
+  try{const r=await gymSearchUsda(q);if(!gNutItems||gNutItems[i]!==it)return;it.usda={q,results:r.results,cached:r.cached,demo:r.demo,query_en:r.query_en}}
+  catch(e){if(!gNutItems||gNutItems[i]!==it)return;it.usda={q,error:e.message||String(e)}}
+  gRender(false);
+}
+function gnfUsdaPick(i,id){
+  const it=gNutItems[i],k=(it.usda?.results||[]).find(r=>r.id===id);if(!k)return;
+  gymRememberRef(k);
+  it.matches=[{id:k.id,name:k.name+' (USDA)',score:1},...it.matches.filter(m=>m.id!==k.id)];
+  it.choice=k.id;it.usda=null;it.baseNotes=(it.baseNotes||[]).filter(n=>!/^Coincidencia aproximada/.test(n));
+  // Unidad: si la actual no se puede convertir con este alimento, se usa su primera porción publicada o gramos.
+  if(!gymScaleFood(k,it.qty,it.unit)){const p=gnfBestPortion(k.portions,it.size);if(p){it.unit=p.unit;if(it.size)it.baseNotes=it.baseNotes.filter(n=>!/^Tamaño/.test(n))}else{it.unit='g';it.qty=100;it.baseNotes.push('Sin porciones publicadas: ajusta los gramos.')}}
+  gnfRecalc(it);sfx('check');gRender(false);
+}
+/* Porción preferida: la del tamaño escrito (grande → large…); si no, una «por unidad» antes que tazas o cucharadas. */
+const GNF_SIZE_EN={grande:'large',mediano:'medium',pequeño:'small'};
+function gnfBestPortion(portions,size){
+  if(!portions||!portions.length)return null;
+  const en=GNF_SIZE_EN[size];
+  if(en){const p=portions.find(x=>x.unit.toLowerCase()===en)||portions.find(x=>new RegExp('\\b'+en+'\\b','i').test(x.unit)&&!/extra|cup|tbsp|tsp|oz/i.test(x.unit));if(p)return p}
+  return portions.find(x=>/\bmedium\b/i.test(x.unit))||portions.find(x=>!/cup|tbsp|tsp|oz|fl|slice|serving/i.test(x.unit))||portions[0];
 }
 function vNlpWrite(){
   const known=gymKnownFoods();
@@ -101,10 +138,16 @@ document.addEventListener('click',async e=>{
   if(a==='mode'){gNutMode=b.dataset.mode;gRender(false);return}
   if(a==='pickKnown'){const k=gnfKnownById(b.dataset.id);if(!k)return;const it=gnfRecalc({raw:'',qty:k.serving_qty,unit:k.serving_unit,food_text:k.name,matches:[{id:k.id,name:k.name,score:1}],choice:k.id,manual:{},baseNotes:[]});
     gNutItems=(gNutItems||[]).concat(it);gNutMode='text';sfx('check');gRender(false);return}
+  if(a==='usdaOpen'){const it=gNutItems[+b.dataset.i];it.usda={q:it.food_text||it.raw||''};await gnfUsdaRun(+b.dataset.i);return}
+  if(a==='usdaGo'){await gnfUsdaRun(+b.dataset.i);return}
+  if(a==='usdaClose'){gNutItems[+b.dataset.i].usda=null;gRender(false);return}
+  if(a==='usdaPick'){gnfUsdaPick(+b.dataset.i,b.dataset.id);return}
   if(a==='removeItem'){gNutItems.splice(+b.dataset.i,1);if(!gNutItems.length)gNutItems=null;gRender(false);return}
   if(a==='backText'){gNutItems=null;gNutMode='text';gRender(false);document.querySelector('#fNlp textarea')?.focus();return}
   if(a==='saveItems'){
-    const items=gNutItems.map(it=>({...it,name:it.food?it.food.name:(it.food_text||'').replace(/^./,c=>c.toUpperCase()),estimated:it.status==='estimated'}));
+    // Con USDA se guarda el nombre tal como lo escribió la persona (en español) y el código de USDA en source_ref.
+    const cap=s=>String(s||'').trim().replace(/^./,c=>c.toUpperCase());
+    const items=gNutItems.map(it=>({...it,name:it.food?(it.food.kind==='ref'&&it.food_text?cap(it.food_text):it.food.name):cap(it.food_text),estimated:it.status==='estimated'}));
     b.disabled=true;const r=await gTry(()=>gymAddFoods(items,{meal:gNutAdd,date:gnDate(),originalText:gNutText}),items.length===1?'Alimento registrado':items.length+' alimentos registrados');b.disabled=false;
     if(r){sfx('success');gNutItems=null;gNutText='';gNutAdd=null;gNutMode='text';gRender(false)}return}
   if(a==='newCustom'){gFoodEdit='new';gRender(false);document.querySelector('#fCustom input[name=name]')?.focus();return}
@@ -115,6 +158,7 @@ document.addEventListener('click',async e=>{
     const ok=await gTry(()=>gymDeleteCustomFood(f.id).then(()=>true),'Alimento eliminado');if(ok)sfx('delete');gRender(false);return}
 });
 document.addEventListener('input',e=>{const t=e.target;if(t.id==='fNlpText'||t.name==='text'&&t.form?.id==='fNlp')gNutText=t.value});
+document.addEventListener('keydown',e=>{const m=/^ni-(\d+)-usdaq$/.exec(e.target.id||'');if(m&&e.key==='Enter'){e.preventDefault();gnfUsdaRun(+m[1])}});
 document.addEventListener('change',e=>{
   const t=e.target;if(t.dataset.ni===undefined||!gNutItems)return;
   const it=gNutItems[+t.dataset.ni];if(!it)return;const k=t.dataset.k;

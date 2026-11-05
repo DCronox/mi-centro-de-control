@@ -24,11 +24,13 @@ const GF_STOP=new Set(['de','del','la','el','los','las','con','y','en','al','a',
 
 function gfNorm(s){return String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9ñ\s.,/]/g,' ').replace(/\s+/g,' ').trim()}
 const gfStem=w=>w.length>4&&w.endsWith('es')?w.slice(0,-2):w.length>3&&w.endsWith('s')?w.slice(0,-1):w;
-function gfTokens(s){return gfNorm(s).split(' ').filter(w=>w&&!GF_STOP.has(w)&&!/^\d/.test(w)).map(gfStem)}
+function gfTokens(s){return gfNorm(s).split(/[\s.,/]+/).filter(w=>w&&!GF_STOP.has(w)&&!/^\d/.test(w)).map(gfStem)}
 function gfUnitKey(u){return GF_UNIT_MAP.get(gfNorm(u))||null}
 
 /* Convierte cantidad+unidad a gramos o ml cuando es posible, con la equivalencia propia del alimento si existe. */
 function gfToBase(qty,unit,food){
+  const por=food&&Array.isArray(food.portions)?food.portions.find(p=>p.unit===unit):null;
+  if(por&&+por.grams>0)return{g:qty*+por.grams};
   const std=GF_UNIT_STD[unit];
   if(std&&std.g)return{g:qty*std.g};
   if(std&&std.ml)return{ml:qty*std.ml};
@@ -119,9 +121,11 @@ function gymProposeItem(item,known){
   if(!best)return out;
   const n=gymScaleFood(best.food,item.qty,unit);
   if(!n){out.status='unit';out.notes.push(`No sé convertir «${unit}» para ${best.food.name}; cambia la unidad o escribe los gramos.`);return out}
-  out.nutrients=n;out.status=best.score<0.75||item.size||!item.qtyExplicit||best.food.estimated?'estimated':'ok';
+  // El tamaño ya está cubierto si la unidad es una porción de ese tamaño (p. ej. «large» de USDA para «grande»).
+  const sizeOk=!item.size||new RegExp('\\b'+({grande:'large',mediano:'medium',pequeño:'small'}[item.size]||item.size)+'\\b','i').test(unit)&&!/extra/i.test(unit);
+  out.nutrients=n;out.status=best.score<0.75||!sizeOk||!item.qtyExplicit||best.food.estimated?'estimated':'ok';
   if(best.score<0.75)out.notes.push(`Coincidencia aproximada con «${best.food.name}».`);
-  if(item.size)out.notes.push(`Tamaño «${item.size}» no ajustado: revisa la cantidad.`);
+  if(!sizeOk)out.notes.push(`Tamaño «${item.size}» no ajustado: revisa la cantidad.`);
   if(!item.qtyExplicit)out.notes.push('No indicaste cantidad: se supone 1.');
   return out;
 }

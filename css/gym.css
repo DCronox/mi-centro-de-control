@@ -304,3 +304,9 @@ body.gym{background:radial-gradient(1200px 500px at 85% -10%,color-mix(in srgb,v
 .gnf-chip{display:grid;gap:2px;text-align:left;padding:10px 12px;border:1px solid var(--line-strong);border-radius:var(--r-sm);background:var(--surface);color:var(--ink);font:inherit;cursor:pointer;min-height:var(--tap)}
 .gnf-chip:hover{border-color:var(--accent)}.gnf-chip small{color:var(--muted);font-size:var(--fs-xs)}
 @media (max-width:560px){.gnf-grid{grid-template-columns:1fr 1fr}.gnf-grid .gnf-food{grid-column:1/-1}.gnf-manual{grid-template-columns:1fr 1fr}}
+
+/* ---- Búsqueda USDA (fase D2) ---- */
+.gnf-usda-open{justify-self:start;margin:0}
+.gnf-usda{display:grid;gap:8px;padding:10px;border:1px dashed var(--line-strong);border-radius:var(--r-sm);background:var(--surface)}
+.gnf-usda-q{display:flex;gap:6px}.gnf-usda-q input{flex:1;min-width:0}
+.gnf-usda-list{display:grid;gap:6px}

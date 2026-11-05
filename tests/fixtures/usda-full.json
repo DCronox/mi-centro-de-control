@@ -1,0 +1,202 @@
+[
+ {
+  "fdcId": 171287,
+  "description": "Egg, whole, raw, fresh",
+  "dataType": "SR Legacy",
+  "publicationDate": "4/1/2019",
+  "foodNutrients": [
+   {
+    "nutrient": {
+     "id": 1008,
+     "number": "208",
+     "name": "Energy",
+     "unitName": "kcal"
+    },
+    "amount": 143
+   },
+   {
+    "nutrient": {
+     "id": 1062,
+     "number": "268",
+     "name": "Energy",
+     "unitName": "kJ"
+    },
+    "amount": 599
+   },
+   {
+    "nutrient": {
+     "id": 1003,
+     "number": "203",
+     "name": "Protein",
+     "unitName": "g"
+    },
+    "amount": 12.56
+   },
+   {
+    "nutrient": {
+     "id": 1004,
+     "number": "204",
+     "name": "Total lipid (fat)",
+     "unitName": "g"
+    },
+    "amount": 9.51
+   },
+   {
+    "nutrient": {
+     "id": 1005,
+     "number": "205",
+     "name": "Carbohydrate, by difference",
+     "unitName": "g"
+    },
+    "amount": 0.72
+   },
+   {
+    "nutrient": {
+     "id": 1079,
+     "number": "291",
+     "name": "Fiber, total dietary",
+     "unitName": "g"
+    },
+    "amount": 0
+   }
+  ],
+  "foodPortions": [
+   {
+    "amount": 1,
+    "modifier": "cup (4.86 large eggs)",
+    "measureUnit": {
+     "name": "undetermined"
+    },
+    "gramWeight": 243
+   },
+   {
+    "amount": 1,
+    "modifier": "medium",
+    "measureUnit": {
+     "name": "undetermined"
+    },
+    "gramWeight": 44
+   },
+   {
+    "amount": 1,
+    "modifier": "extra large",
+    "measureUnit": {
+     "name": "undetermined"
+    },
+    "gramWeight": 56
+   },
+   {
+    "amount": 1,
+    "modifier": "small",
+    "measureUnit": {
+     "name": "undetermined"
+    },
+    "gramWeight": 38
+   },
+   {
+    "amount": 1,
+    "modifier": "jumbo",
+    "measureUnit": {
+     "name": "undetermined"
+    },
+    "gramWeight": 63
+   },
+   {
+    "amount": 1,
+    "modifier": "large",
+    "measureUnit": {
+     "name": "undetermined"
+    },
+    "gramWeight": 50
+   }
+  ]
+ },
+ {
+  "fdcId": 1105314,
+  "description": "Bananas, ripe and slightly ripe, raw",
+  "dataType": "Foundation",
+  "publicationDate": "4/1/2020",
+  "foodNutrients": [
+   {
+    "nutrient": {
+     "id": 1008,
+     "number": "208",
+     "name": "Energy",
+     "unitName": "kcal"
+    },
+    "amount": 97
+   },
+   {
+    "nutrient": {
+     "id": 1062,
+     "number": "268",
+     "name": "Energy",
+     "unitName": "kJ"
+    },
+    "amount": 408
+   },
+   {
+    "nutrient": {
+     "id": 1003,
+     "number": "203",
+     "name": "Protein",
+     "unitName": "g"
+    },
+    "amount": 0.74
+   },
+   {
+    "nutrient": {
+     "id": 1004,
+     "number": "204",
+     "name": "Total lipid (fat)",
+     "unitName": "g"
+    },
+    "amount": 0.29
+   },
+   {
+    "nutrient": {
+     "id": 1005,
+     "number": "205",
+     "name": "Carbohydrate, by difference",
+     "unitName": "g"
+    },
+    "amount": 23
+   },
+   {
+    "nutrient": {
+     "id": 1050,
+     "number": "205.2",
+     "name": "Carbohydrate, by summation",
+     "unitName": "g"
+    },
+    "amount": 21.2
+   },
+   {
+    "nutrient": {
+     "id": 1079,
+     "number": "291",
+     "name": "Fiber, total dietary",
+     "unitName": "g"
+    },
+    "amount": 1.7
+   }
+  ],
+  "foodPortions": [
+   {
+    "amount": 1,
+    "modifier": "Peeled",
+    "measureUnit": {
+     "name": "Banana"
+    },
+    "gramWeight": 115
+   },
+   {
+    "amount": 1,
+    "measureUnit": {
+     "name": "RACC"
+    },
+    "gramWeight": 140
+   }
+  ]
+ }
+]

@@ -244,7 +244,7 @@ async function gymLoadCustomFoods(){
 /* Alimentos conocidos para el analizador: propios primero, luego los recientes del historial. */
 function gymKnownFoods(){
   const own=GS.customFoods.map(gymCustomAsKnown),names=new Set(own.map(f=>gfNorm(f.name)));
-  return own.concat(gymRecentFoods(GS.foods).filter(r=>!names.has(gfNorm(r.name))));
+  return own.concat(gymRecentFoods(GS.foods).filter(r=>!names.has(gfNorm(r.name))),GS.refFoods);
 }
 function gymCustomRow(v){
   const n=x=>x===''||x===undefined||x===null?0:Math.round(+x*10)/10;
@@ -277,8 +277,29 @@ async function gymAddFoods(items,{meal,date,originalText=''}){
   const rows=items.map(i=>{const n=i.nutrients||{};const known=i.food||{};
     return{user_id:GS.user.id,date,meal,name:String(i.name||known.name||i.food_text||'').trim().slice(0,120),quantity:+i.qty>0?+i.qty:null,unit:String(i.unit||'').slice(0,30),
       grams:i.grams>0?Math.round(i.grams*10)/10:null,kcal:Math.round(+n.kcal||0),protein_g:+n.protein_g||0,carbs_g:+n.carbs_g||0,fat_g:+n.fat_g||0,fiber_g:+n.fiber_g||0,
-      source:known.kind==='custom'?'custom':originalText?'text':'manual',source_ref:known.kind==='custom'?known.id:'',original_text:String(i.raw||originalText||'').slice(0,300),estimated:!!i.estimated}});
+      source:known.kind==='custom'?'custom':known.kind==='ref'?'usda':originalText?'text':'manual',source_ref:known.kind==='custom'?known.id:known.kind==='ref'?known.source_id:'',original_text:String(i.raw||originalText||'').slice(0,300),estimated:!!i.estimated}});
   for(const r of rows){const e=gymValidateFood({...r});if(e.length)throw new Error(`«${r.name||'?'}»: ${e.join(' ')}`)}
   const saved=await gq(gymClient.from('food_logs').insert(rows).select(GYM_FOOD_COLS));
   GS.foods.push(...saved);return saved;
 }
+
+/* ---- Búsqueda en USDA FoodData Central (fase D2; función Edge food-search, migración 20261109) ----
+   La clave de USDA está solo en el servidor. Los resultados elegidos se guardan en la sesión como «ref». */
+GS.refFoods=[];
+function gymRefAsKnown(r){return{kind:'ref',id:'usda:'+r.source_id,source_id:String(r.source_id),name:r.name_en,serving_qty:100,serving_unit:'g',grams_per_serving:100,
+  portions:Array.isArray(r.portions)?r.portions:[],kcal:+r.kcal||0,protein_g:+r.protein_g||0,carbs_g:+r.carbs_g||0,fat_g:+r.fat_g||0,fiber_g:+r.fiber_g||0,estimated:r.complete===false,uses:0}}
+async function gymSearchUsda(query){
+  if(!gymClient||!GS.user)throw new Error('Inicia sesión para buscar alimentos.');
+  const q=String(query||'').trim();if(q.length<2)throw new Error('Escribe al menos 2 letras.');
+  const {data,error}=await gymClient.functions.invoke('food-search',{body:{query:q}});
+  if(error){
+    let msg='';try{const b=await error.context?.json();msg=b?.error||''}catch(_){}
+    const st=error.context?.status;
+    if(st===404)throw new Error('La búsqueda en USDA aún no está activada en el servidor.');
+    if(/Failed to fetch|NetworkError/i.test(String(error.message)))throw new Error('Sin conexión. Inténtalo de nuevo cuando tengas internet.');
+    throw new Error(msg||'No se pudo buscar en USDA.');
+  }
+  if(!data?.ok)throw new Error(data?.error||'No se pudo buscar en USDA.');
+  return{results:(data.results||[]).map(gymRefAsKnown),cached:!!data.cached,demo:!!data.demo_key,query_en:data.query_en||''};
+}
+function gymRememberRef(k){if(!GS.refFoods.some(r=>r.id===k.id))GS.refFoods.push(k)}

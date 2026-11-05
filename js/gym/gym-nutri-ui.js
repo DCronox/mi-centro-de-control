@@ -61,7 +61,7 @@ function vNutriMeals(date){
   return `<section class="card gn-meals"><h2>Comidas</h2>${Object.entries(GYM_MEALS).map(([k,n])=>{
     const list=day.filter(f=>f.meal===k),kc=list.reduce((a,f)=>a+(+f.kcal||0),0);
     return `<div class="gn-meal"><div class="gn-meal-head"><b>${n}</b><span class="k">${list.length?gnFmt(kc)+' kcal':''}</span>${gNutAdd===k?'':`<button class="lk" type="button" data-nact="addFood" data-meal="${k}">${gico('plus',14)} Añadir</button>`}</div>
-      ${list.map(f=>`<div class="row"><div class="g1"><b class="t">${gesc(f.name)}${f.quantity?` <span class="k">· ${gnFmt(f.quantity,1)} ${gesc(f.unit||'')}</span>`:''}</b><small>${gnFmt(f.kcal)} kcal · P ${gnFmt(f.protein_g,1)} · C ${gnFmt(f.carbs_g,1)} · G ${gnFmt(f.fat_g,1)} g${f.estimated?' · <span class="tag">estimado</span>':''}</small></div><button class="g ic-b" type="button" data-nact="delFood" data-id="${gesc(f.id)}" aria-label="Eliminar ${gesc(f.name)}">${gico('x',15)}</button></div>`).join('')}
+      ${list.map(f=>`<div class="row"><div class="g1"><b class="t">${gesc(f.name)}${f.quantity?` <span class="k">· ${gnFmt(f.quantity,1)} ${gesc(f.unit||'')}</span>`:''}</b><small>${gnFmt(f.kcal)} kcal · P ${gnFmt(f.protein_g,1)} · C ${gnFmt(f.carbs_g,1)} · G ${gnFmt(f.fat_g,1)} g${f.estimated?' · <span class="tag">estimado</span>':''}${f.source==='usda'?' · <span class="tag" title="Valores de USDA FoodData Central">USDA</span>':''}</small></div><button class="g ic-b" type="button" data-nact="delFood" data-id="${gesc(f.id)}" aria-label="Eliminar ${gesc(f.name)}">${gico('x',15)}</button></div>`).join('')}
       ${gNutAdd===k?vAddPanel(k,date):''}</div>`}).join('')}</section>`;
 }
 function vNutriWeek(date){

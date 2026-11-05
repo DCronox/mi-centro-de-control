@@ -1,0 +1,107 @@
+{
+ "totalHits": 2179,
+ "foods": [
+  {
+   "fdcId": 171287,
+   "description": "Egg, whole, raw, fresh",
+   "dataType": "SR Legacy",
+   "publishedDate": "2019-04-01",
+   "foodCategory": "Dairy and Egg Products",
+   "foodNutrients": [
+    {
+     "nutrientId": 1008,
+     "nutrientName": "Energy",
+     "nutrientNumber": "208",
+     "unitName": "KCAL",
+     "value": 143
+    },
+    {
+     "nutrientId": 1062,
+     "nutrientName": "Energy",
+     "nutrientNumber": "268",
+     "unitName": "kJ",
+     "value": 599
+    },
+    {
+     "nutrientId": 1003,
+     "nutrientName": "Protein",
+     "nutrientNumber": "203",
+     "unitName": "G",
+     "value": 12.6
+    },
+    {
+     "nutrientId": 1004,
+     "nutrientName": "Total lipid (fat)",
+     "nutrientNumber": "204",
+     "unitName": "G",
+     "value": 9.51
+    },
+    {
+     "nutrientId": 1005,
+     "nutrientName": "Carbohydrate, by difference",
+     "nutrientNumber": "205",
+     "unitName": "G",
+     "value": 0.72
+    },
+    {
+     "nutrientId": 1079,
+     "nutrientName": "Fiber, total dietary",
+     "nutrientNumber": "291",
+     "unitName": "G",
+     "value": 0
+    }
+   ]
+  },
+  {
+   "fdcId": 172189,
+   "description": "Egg, duck, whole, fresh, raw",
+   "dataType": "SR Legacy",
+   "publishedDate": "2019-04-01",
+   "foodCategory": "Dairy and Egg Products",
+   "foodNutrients": [
+    {
+     "nutrientId": 1062,
+     "nutrientName": "Energy",
+     "nutrientNumber": "268",
+     "unitName": "kJ",
+     "value": 776
+    },
+    {
+     "nutrientId": 1003,
+     "nutrientName": "Protein",
+     "nutrientNumber": "203",
+     "unitName": "G",
+     "value": 12.8
+    },
+    {
+     "nutrientId": 1079,
+     "nutrientName": "Fiber, total dietary",
+     "nutrientNumber": "291",
+     "unitName": "G",
+     "value": 0
+    },
+    {
+     "nutrientId": 1004,
+     "nutrientName": "Total lipid (fat)",
+     "nutrientNumber": "204",
+     "unitName": "G",
+     "value": 13.8
+    },
+    {
+     "nutrientId": 1005,
+     "nutrientName": "Carbohydrate, by difference",
+     "nutrientNumber": "205",
+     "unitName": "G",
+     "value": 1.45
+    },
+    {
+     "nutrientId": 1008,
+     "nutrientName": "Energy",
+     "nutrientNumber": "208",
+     "unitName": "KCAL",
+     "value": 185
+    }
+   ]
+  }
+ ]
+}

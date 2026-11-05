@@ -31,5 +31,20 @@
   /* Simula que la migración de perfil aún no se aplicó. */
   window.gymMockNoNutriTables=()=>{const db=load();delete db.food_logs;delete db.water_logs;delete db.food_custom;db.__noNutri=true;persist(db)};
   window.gymMockNoProfileTables=()=>{const db=load();delete db.gym_profiles;delete db.nutrition_targets;persist(db)};
-  window.gymMockBoot=async()=>{gymClient={from,auth:{getSession:async()=>({data:{session:{user:{id:'u-prueba',email:'prueba@local'}}},error:null})}};await gymBoot()};
+  /* Función «food-search» simulada a partir de las respuestas reales de USDA guardadas en tests/fixtures.
+     gymMockUsda.mode: 'ok' | 'notDeployed' | 'error'. */
+  window.gymMockUsda={mode:'ok',calls:0};
+  async function invoke(name,{body}){
+    gymMockUsda.calls++;
+    const fail=(status,error)=>({data:null,error:{message:'FunctionsHttpError',context:{status,json:async()=>({ok:false,error})}}});
+    if(name!=='food-search')return fail(404,'Not found');
+    if(gymMockUsda.mode==='notDeployed')return fail(404,'Requested function was not found');
+    if(gymMockUsda.mode==='error')return fail(429,'USDA limitó las búsquedas por ahora. Inténtalo más tarde.');
+    const U=await import('/supabase/functions/_shared/usda.mjs');
+    const full=await (await fetch('/tests/fixtures/usda-full.json')).json();
+    const q=U.normQuery(body.query),en=U.toEnglishQuery(q);
+    const results=full.map(U.usdaToRef).filter(r=>en.split(' ').some(w=>w.length>2&&r.name_en.toLowerCase().includes(w)));
+    return{data:{ok:true,cached:false,demo_key:true,query_en:en,results},error:null};
+  }
+  window.gymMockBoot=async()=>{gymClient={from,functions:{invoke},auth:{getSession:async()=>({data:{session:{user:{id:'u-prueba',email:'prueba@local'}}},error:null})}};await gymBoot()};
 })();
