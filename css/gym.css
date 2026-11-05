@@ -352,3 +352,19 @@ form.rc-form,form.gnf-write,form#fProfile{grid-template-columns:1fr;align-items:
 .gin-actions{display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding-bottom:12px}
 .gin-foot{margin:0}
 @media (max-width:560px){.gin-body{grid-template-columns:1fr}.gin-body dt{margin-top:4px}}
+
+/* ---- Historial y proyecciones (fase H) ---- */
+.gh-head h2{margin-top:0}
+.gh-seg{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));margin:6px 0}
+.gh-svg .gh-band{fill:var(--accent);opacity:.14}
+.gh-svg .gh-fit{stroke:var(--muted);stroke-width:1.5;stroke-dasharray:2 4}
+.gh-svg .gh-proj{stroke:var(--accent);stroke-width:2;stroke-dasharray:6 5}
+.gh-proj-txt{margin:8px 0 4px;font-size:var(--fs-sm)}
+.gh-nobase{display:flex;gap:6px;align-items:flex-start}
+.gh-table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.gh-table{width:100%;border-collapse:collapse;font-size:var(--fs-sm);min-width:560px}
+.gh-table th,.gh-table td{padding:8px 6px;text-align:right;border-top:1px solid var(--line);white-space:nowrap}
+.gh-table th:first-child,.gh-table td:first-child{text-align:left}
+.gh-table th{color:var(--muted);font-weight:700;border-top:0}
+@media (max-width:560px){.gh-seg span{font-size:var(--fs-xs);padding:0 4px}}
+@media (max-width:560px){.gh-svg text{font-size:18px}}
