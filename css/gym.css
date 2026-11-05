@@ -310,3 +310,12 @@ body.gym{background:radial-gradient(1200px 500px at 85% -10%,color-mix(in srgb,v
 .gnf-usda{display:grid;gap:8px;padding:10px;border:1px dashed var(--line-strong);border-radius:var(--r-sm);background:var(--surface)}
 .gnf-usda-q{display:flex;gap:6px}.gnf-usda-q input{flex:1;min-width:0}
 .gnf-usda-list{display:grid;gap:6px}
+
+/* ---- Progresión de cargas (fase E) ---- */
+.pg-box{margin-top:10px;padding:10px 12px;border-radius:var(--r-sm);background:var(--surface-2);border-left:3px solid var(--accent);display:grid;gap:6px}
+.pg-box.is-retry,.pg-box.is-maintain{border-left-color:var(--line-strong)}.pg-box.is-reduce{border-left-color:var(--warn)}.pg-box.is-start{border-left-color:var(--muted)}
+.pg-head{display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap}.pg-head b{flex:1 1 200px;font-size:var(--fs-sm)}.pg-head svg{flex:none;margin-top:2px;color:var(--accent)}
+.pg-box.is-reduce .pg-head svg{color:var(--warn)}
+.pg-why{margin:0;padding-left:18px;font-size:var(--fs-sm);color:var(--muted);display:grid;gap:2px}
+.pg-data{margin:0;font-size:var(--fs-xs)}
+.pg-apply{justify-self:start;min-height:36px}

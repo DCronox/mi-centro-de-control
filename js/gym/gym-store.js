@@ -62,7 +62,15 @@ async function gymEnsureExercise(name,{primary=null,secondary=null}={}){
 async function gymUpdateExercise(id,patch){const row=await gq(gymClient.from('gym_exercises').update(patch).eq('id',id).select('*').single());Object.assign(gymExercise(id),row);return row}
 
 /* Rutinas. items: [{exercise_id,sets,reps_min,reps_max,rest_s,notes}] */
-function gymCleanItems(items){return(items||[]).filter(i=>i&&i.exercise_id).slice(0,40).map(i=>({exercise_id:i.exercise_id,sets:Math.min(20,Math.max(1,Math.round(+i.sets||3))),reps_min:Math.min(100,Math.max(1,Math.round(+i.reps_min||8))),reps_max:Math.min(100,Math.max(1,Math.round(+i.reps_max||+i.reps_min||12))),rest_s:Math.min(900,Math.max(0,Math.round(+i.rest_s||90))),notes:String(i.notes||'').slice(0,120)}))}
+function gymCleanItems(items){return(items||[]).filter(i=>i&&i.exercise_id).slice(0,40).map(i=>({exercise_id:i.exercise_id,sets:Math.min(20,Math.max(1,Math.round(+i.sets||3))),reps_min:Math.min(100,Math.max(1,Math.round(+i.reps_min||8))),reps_max:Math.min(100,Math.max(1,Math.round(+i.reps_max||+i.reps_min||12))),rest_s:Math.min(900,Math.max(0,Math.round(+i.rest_s||90))),notes:String(i.notes||'').slice(0,120),
+  /* Fase E (opcionales; si faltan se usan RIR 2 y el incremento por defecto del tipo de ejercicio). */
+  ...(i.rir_target===''||i.rir_target===null||i.rir_target===undefined||!isFinite(+i.rir_target)?{}:{rir_target:Math.min(5,Math.max(0,Math.round(+i.rir_target)))}),
+  ...(i.increment_kg===''||i.increment_kg===null||i.increment_kg===undefined||!isFinite(+i.increment_kg)?{}:{increment_kg:Math.min(20,Math.max(0,Math.round(+i.increment_kg*4)/4))})}))}
+/* Propuesta de progresión para un ejercicio (excluye el entrenamiento en curso). */
+function gymSuggestFor(exerciseId,target,excludeSession){
+  const ex=gymExercise(exerciseId);
+  return gymProgression(target||{},gymExerciseHistory(exerciseId,GS.sessions,GS.sets,{excludeSession}),{today:gymToday(),name:ex?.name||''});
+}
 /* Guardar con bloqueo: un doble clic no crea dos rutinas. */
 async function gymSaveRoutine(r){
   if(GS.busy)return null;GS.busy=true;
