@@ -348,7 +348,8 @@ function gymInsightsContext(){
   const weights=GS.metrics.filter(m=>m.weight_kg!==null&&m.weight_kg!==undefined).map(m=>m.date).sort();
   const days=new Set(GS.routines.flatMap(r=>r.days||[]));
   const st14=gymMuscleStats(GS.sessions,GS.sets,GS.exercises,since14,today);
-  const recentEx=[...new Set(GS.sets.filter(s=>{const ses=GS.sessions.find(x=>x.id===s.session_id);return ses&&gymDateOf(ses.started_at)>=gymAddDays(today,-29)}).map(s=>s.exercise_id))];
+  const since30=gymAddDays(today,-29),recentSes=new Set(GS.sessions.filter(x=>gymDateOf(x.started_at)>=since30).map(x=>x.id));
+  const recentEx=[...new Set(GS.sets.filter(s=>recentSes.has(s.session_id)).map(s=>s.exercise_id))];
   const itemFor=id=>GS.routines.flatMap(r=>r.items||[]).find(it=>it.exercise_id===id)||{};
   return{today,goal,target:t?{kcal:+t.kcal,protein_g:+t.protein_g,water_ml:+t.water_ml}:null,
     week:gymWeekNutrition(GS.foods,GS.water,GS.targets,today),waterDays:[...waterBy.values()].map(ml=>({ml})),

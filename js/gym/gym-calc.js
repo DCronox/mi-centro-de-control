@@ -14,17 +14,19 @@ function gymStats(sessions,sets,exercises,today,{weeks=8}={}){
   const exById=new Map((exercises||[]).map(e=>[e.id,e]));
   const sesById=new Map((sessions||[]).map(s=>[s.id,s]));
   const valid=(sets||[]).filter(s=>sesById.has(s.session_id));
+  /* Fecha y semana de cada sesión, una sola vez (antes se recalculaban por cada serie). */
+  const sDate=new Map(),sWeek=new Map();for(const x of sessions||[]){const d=gymDateOf(x.started_at);sDate.set(x.id,d);sWeek.set(x.id,gymWeekStart(d))}
   const thisWeek=gymWeekStart(today);
   /* Volumen por semana (las últimas `weeks`, terminando en la actual). */
   const weekKeys=Array.from({length:weeks},(_,i)=>{const d=new Date(thisWeek+'T12:00:00Z');d.setUTCDate(d.getUTCDate()-7*(weeks-1-i));return d.toISOString().slice(0,10)});
   const volByWeek=new Map(weekKeys.map(k=>[k,0])),sesByWeek=new Map(weekKeys.map(k=>[k,new Set()]));
-  for(const s of valid){const wk=gymWeekStart(gymDateOf(sesById.get(s.session_id).started_at));if(volByWeek.has(wk)){volByWeek.set(wk,volByWeek.get(wk)+gymSetVolume(s));sesByWeek.get(wk).add(s.session_id)}}
+  for(const s of valid){const wk=sWeek.get(s.session_id);if(volByWeek.has(wk)){volByWeek.set(wk,volByWeek.get(wk)+gymSetVolume(s));sesByWeek.get(wk).add(s.session_id)}}
   for(const ses of sessions||[]){const wk=gymWeekStart(gymDateOf(ses.started_at));if(sesByWeek.has(wk))sesByWeek.get(wk).add(ses.id)}
   const weekly=weekKeys.map(k=>({week:k,volume:Math.round(volByWeek.get(k)),sessions:sesByWeek.get(k).size}));
   /* Récords por ejercicio: mayor peso (con sus reps) y mejor 1RM estimado, con fecha. */
   const prs=new Map();
   for(const s of valid){
-    const ex=exById.get(s.exercise_id);if(!ex)continue;const date=gymDateOf(sesById.get(s.session_id).started_at),w=+s.weight_kg||0,r=+s.reps||0,e=gymE1rm(w,r);
+    const ex=exById.get(s.exercise_id);if(!ex)continue;const date=sDate.get(s.session_id),w=+s.weight_kg||0,r=+s.reps||0,e=gymE1rm(w,r);
     const p=prs.get(ex.id)||{exercise_id:ex.id,name:ex.name,muscle:ex.muscle,bestWeight:0,bestWeightReps:0,bestWeightDate:null,bestE1rm:null,bestE1rmDate:null,sets:0};
     p.sets++;
     if(w>p.bestWeight||(w===p.bestWeight&&r>p.bestWeightReps)){p.bestWeight=w;p.bestWeightReps=r;p.bestWeightDate=date}
@@ -34,7 +36,7 @@ function gymStats(sessions,sets,exercises,today,{weeks=8}={}){
   /* Series por grupo muscular en los últimos 30 días. */
   const from30=(()=>{const d=new Date(today+'T12:00:00Z');d.setUTCDate(d.getUTCDate()-29);return d.toISOString().slice(0,10)})();
   const muscles={};
-  for(const s of valid){const date=gymDateOf(sesById.get(s.session_id).started_at);if(date<from30||date>today)continue;const m=exById.get(s.exercise_id)?.muscle||'Otro';muscles[m]=(muscles[m]||0)+1}
+  for(const s of valid){const date=sDate.get(s.session_id);if(date<from30||date>today)continue;const m=exById.get(s.exercise_id)?.muscle||'Otro';muscles[m]=(muscles[m]||0)+1}
   const cur=weekly[weekly.length-1]||{volume:0,sessions:0},prev=weekly[weekly.length-2]||{volume:0,sessions:0};
   const sorted=[...(sessions||[])].sort((a,b)=>String(b.started_at).localeCompare(String(a.started_at)));
   return{weekly,week:cur,prevWeek:prev,prs:[...prs.values()].sort((a,b)=>(b.bestE1rm||b.bestWeight)-(a.bestE1rm||a.bestWeight)),muscles:Object.entries(muscles).sort((a,b)=>b[1]-a[1]),lastSession:sorted[0]||null,totalSessions:(sessions||[]).length,hasData:valid.length>0};

@@ -300,7 +300,10 @@ document.addEventListener('click',async e=>{
     const n=w.exercises.reduce((x,e)=>x+e.sets.filter(s=>s.done).length,0);
     if(!n&&!await ask('No marcaste ninguna serie como hecha: se guardará el entrenamiento sin series.',{title:'¿Terminar sin series?',confirmLabel:'Terminar'}))return;
     b.disabled=true;const r=await gymFinishWorkout();gRefreshSummary();gTimerStop();gRender(false);
-    if(r.saved){sfx('success');await notify(`${r.minutes} min · ${r.exercises} ${r.exercises===1?'ejercicio':'ejercicios'} · ${r.sets} series · ${vol(r.volume)} de volumen. Ya aparece en tu historial y en tu progreso.`,{title:'Entrenamiento guardado'})}
+    if(r.saved){sfx('success');
+      // Fase E: propuesta para la próxima sesión de cada ejercicio, con lo que se acaba de registrar.
+      const next=w.exercises.filter(ex=>ex.sets.some(s=>s.done)).map(ex=>{const p=gymSuggestFor(ex.exercise_id,ex.target||{});return `• ${exName(ex.exercise_id)}: ${p.title}`});
+      await notify(`${r.minutes} min · ${r.exercises} ${r.exercises===1?'ejercicio':'ejercicios'} · ${r.sets} series · ${vol(r.volume)} de volumen. Ya aparece en tu historial y en tu progreso.${next.length?'\n\nPróxima vez:\n'+next.join('\n'):''}`,{title:'Entrenamiento guardado'})}
     else if(r.queued){sfx('tap');await notify('No se pudo subir ahora ('+(GS.error||'sin conexión')+'). Quedó guardado en este dispositivo y se enviará automáticamente.',{title:'Pendiente de subir'})}
     return}
   if(a==='deleteSession'){if(!await ask('Se borrarán el entrenamiento y sus series. Tus récords se recalculan.',{title:'¿Eliminar entrenamiento?',confirmLabel:'Eliminar',danger:true}))return;await gTry(()=>gymDeleteSession(id),'Entrenamiento eliminado');gRefreshSummary();sfx('delete');gRender(false);return}

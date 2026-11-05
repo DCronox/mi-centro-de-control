@@ -98,10 +98,12 @@ function gymDaysAgo(today,n){const d=new Date(today+'T12:00:00Z');d.setUTCDate(d
 /* Estadísticas por músculo en una ventana [from, to] (fechas de Bogotá, inclusive). */
 function gymMuscleStats(sessions,sets,exercises,from,to){
   const sesById=new Map((sessions||[]).map(s=>[s.id,s])),exById=new Map((exercises||[]).map(e=>[e.id,e]));
+  const musclesOf=new Map(); // la clasificación de cada ejercicio se calcula una vez, no por serie
+  const dateOf=new Map();for(const x of sessions||[]){const d=gymDateOf(x.started_at);if(d>=from&&d<=to)dateOf.set(x.id,d)}
   const out={};for(const id in GYM_MUSCLES_BY_ID)out[id]={id,name:GYM_MUSCLES_BY_ID[id].name,group:GYM_MUSCLES_BY_ID[id].group,sets:0,weightedSets:0,volume:0,primarySets:0,secondarySets:0,rpeKnown:0,exercises:{},dates:new Set()};
   for(const s of sets||[]){
-    const ses=sesById.get(s.session_id);if(!ses)continue;const date=gymDateOf(ses.started_at);if(date<from||date>to)continue;
-    const ex=exById.get(s.exercise_id),{map}=gymExerciseMuscles(ex),eff=gymEffort(s.rpe),load=(+s.weight_kg||0)*(+s.reps||0);
+    const date=dateOf.get(s.session_id);if(!date)continue; // solo sesiones dentro del rango
+    const ex=exById.get(s.exercise_id);let mm=musclesOf.get(s.exercise_id);if(!mm){mm=gymExerciseMuscles(ex);musclesOf.set(s.exercise_id,mm)}const {map}=mm,eff=gymEffort(s.rpe),load=(+s.weight_kg||0)*(+s.reps||0);
     for(const [m,role] of Object.entries(map)){
       const o=out[m];if(!o)continue;const c=GYM_COEF[role];
       o.sets++;o.weightedSets+=c*eff;o.volume+=load*c;if(role==='P')o.primarySets++;else o.secondarySets++;if(s.rpe!==null&&s.rpe!==undefined&&s.rpe!=='')o.rpeKnown++;o.dates.add(date);

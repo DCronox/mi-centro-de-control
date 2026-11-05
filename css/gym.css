@@ -368,3 +368,5 @@ form.rc-form,form.gnf-write,form#fProfile{grid-template-columns:1fr;align-items:
 .gh-table th{color:var(--muted);font-weight:700;border-top:0}
 @media (max-width:560px){.gh-seg span{font-size:var(--fs-xs);padding:0 4px}}
 @media (max-width:560px){.gh-svg text{font-size:18px}}
+/* Los avisos de Gym pueden traer varias líneas (p. ej. «Próxima vez» al terminar un entrenamiento). */
+#uiMsg{white-space:pre-line}

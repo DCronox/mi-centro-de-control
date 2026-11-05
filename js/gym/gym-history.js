@@ -10,7 +10,8 @@ const GH_MIN_N=8,GH_MIN_SPAN=28;
 const ghAdd=(date,n)=>{const d=new Date(date+'T12:00:00Z');d.setUTCDate(d.getUTCDate()+n);return d.toISOString().slice(0,10)};
 const ghDiff=(a,b)=>Math.round((Date.parse(b+'T12:00:00Z')-Date.parse(a+'T12:00:00Z'))/864e5);
 const ghWeek=date=>{const d=new Date(date+'T12:00:00Z'),dow=(d.getUTCDay()+6)%7;d.setUTCDate(d.getUTCDate()-dow);return d.toISOString().slice(0,10)};
-const ghDateOf=ts=>new Intl.DateTimeFormat('en-CA',{timeZone:'America/Bogota'}).format(new Date(ts));
+/* Fecha en Bogotá (UTC−5 fijo, sin horario de verano). Igual que gymDateOf; crear un Intl.DateTimeFormat por fila era lento. */
+const ghDateOf=ts=>new Date((typeof ts==='number'?ts:Date.parse(ts))-5*3600000).toISOString().slice(0,10);
 
 /* Valor t de Student bilateral al 95 % según grados de libertad (tabla estándar). */
 function ghT95(df){
