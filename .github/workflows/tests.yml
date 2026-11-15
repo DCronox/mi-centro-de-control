@@ -17,4 +17,4 @@ jobs:
       - name: Comprobar sintaxis de los scripts
         run: for f in js/*.js js/views/*.js js/gym/*.js; do node --check "$f"; done
       - name: Pruebas
-        run: node --test tests/
+        run: node --test "tests/**/*.test.mjs"
