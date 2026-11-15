@@ -17,7 +17,7 @@ function gpValues(){
   const w=[...(GS.metrics||[])].filter(m=>m.weight_kg!==null).sort((a,b)=>b.date.localeCompare(a.date))[0];
   return{weight_kg:w?+w.weight_kg:'',cardio_min_week:0,equipment:'gym',secondary_goals:[]};
 }
-function gpReadForm(f){const fd=new FormData(f),v=Object.fromEntries(fd);v.secondary_goals=fd.getAll('secondary_goals');['pregnant','lactating','condition','medication','eating_disorder'].forEach(k=>v[k]=fd.has(k));return gymProfileRow(v)}
+function gpReadForm(f){const fd=new FormData(f),v=Object.fromEntries(fd);v.secondary_goals=fd.getAll('secondary_goals');['pregnant','lactating','condition','medication','eating_disorder','health_consent'].forEach(k=>v[k]=fd.has(k));return gymProfileRow(v)}
 
 function vProfileWizard(){
   const v=gpValues(),y=new Date().getFullYear(),st=gProfStep;
@@ -46,7 +46,8 @@ function vProfileWizard(){
       ${gpCheck('condition','Condición de salud relevante',v.condition,'Por ejemplo diabetes, enfermedad renal, cardiaca o tiroidea')}
       ${gpCheck('medication','Medicación que afecta el peso o el apetito',v.medication)}
       ${gpCheck('eating_disorder','Antecedente de trastorno de la conducta alimentaria',v.eating_disorder)}</div>
-      <label class="fl">Notas (opcional)<input name="notes" maxlength="500" value="${gesc(v.notes||'')}" placeholder="Lesiones, preferencias…"></label>`)}
+      <label class="fl">Notas (opcional)<input name="notes" maxlength="500" value="${gesc(v.notes||'')}" placeholder="Lesiones, preferencias…"></label>
+      <label class="gp-check gp-consent"><input type="checkbox" name="health_consent" required ${v.health_consent||(GS.profile?.health_consent_version===GYM_CONSENT_VERSION)?'checked':''}><span><b>Autorizo el tratamiento de mis datos de salud</b><small>Edad, peso, estatura, actividad, sueño y lo que marques arriba se usan solo para calcular tus objetivos y se guardan en tu cuenta, visibles solo para ti. Son datos sensibles (Ley 1581 de 2012): esta autorización es voluntaria y puedes retirarla borrando tu evaluación en Perfil. <a href="./privacidad.html#salud" target="_blank" rel="noopener">Política de privacidad</a></small></span></label>`)}
     <div class="gp-nav">${st>0?`<button type="button" class="g" data-pact="prev">${gico('back',15)}<span>Atrás</span></button>`:(GS.profile?`<button type="button" class="g" data-pact="cancelEdit">Cancelar</button>`:'<span></span>')}
       ${st<GP_STEPS.length-1?`<button type="button" class="b" data-pact="next"><span>Siguiente</span>${gico('right',15)}</button>`:`<button type="submit" class="b">${gico('check',15)}<span>Calcular mis objetivos</span></button>`}</div>
   </form></section>
@@ -122,7 +123,7 @@ function vActiveTargets(){
     <div><span class="k">Entrenamiento</span><b>${p.training_days} días</b><small>${p.session_min} min por sesión · ${gesc(GYM_EXPERIENCE[p.experience]?.label||'')}</small></div>
     <div><span class="k">Actividad diaria</span><b>${gesc(GYM_OCCUPATIONS[p.occupation]?.label||'')}</b><small>Caminata: ${gesc(GYM_WALKING[p.walking]?.label||'')}</small></div></div></section>
   <section class="card"><h2>Historial de objetivos</h2>${hist}</section></div>
-  <section class="card"><h2>Tus datos</h2><p class="k">Tu evaluación y tus objetivos solo son visibles para tu cuenta. Puedes borrarlos cuando quieras; tus entrenamientos y medidas no se tocan.</p><button class="g danger" type="button" data-pact="deleteAll">${gico('x',15)}<span>Borrar evaluación y objetivos</span></button></section>`;
+  <section class="card"><h2>Tus datos</h2>${GS.consentSchema&&p.health_consent_version!==GYM_CONSENT_VERSION?`<p class="sync-banner">${gico('info',16)}<span>Falta tu autorización para tratar tus datos de salud. Actualiza tu evaluación y márcala en el último paso, o bórrala si no quieres que se guarden.</span><button class="lk" type="button" data-pact="edit">Actualizar evaluación</button></p>`:''}${p.health_consent_at?`<p class="k">Autorizaste el tratamiento de tus datos de salud el ${gesc(fshort(String(p.health_consent_at).slice(0,10)))}.</p>`:''}<p class="k">Tu evaluación y tus objetivos solo son visibles para tu cuenta. Puedes borrarlos cuando quieras; tus entrenamientos y medidas no se tocan. Borrarlos también retira tu autorización.</p><button class="g danger" type="button" data-pact="deleteAll">${gico('x',15)}<span>Borrar evaluación y objetivos</span></button></section>`;
 }
 
 function vPerfil(){

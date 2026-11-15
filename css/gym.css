@@ -370,3 +370,7 @@ form.rc-form,form.gnf-write,form#fProfile{grid-template-columns:1fr;align-items:
 @media (max-width:560px){.gh-svg text{font-size:18px}}
 /* Los avisos de Gym pueden traer varias líneas (p. ej. «Próxima vez» al terminar un entrenamiento). */
 #uiMsg{white-space:pre-line}
+
+/* Autorización de datos de salud (MCC 0.3) */
+.gp-consent{margin-top:8px;padding:10px 12px;border:1px solid var(--line-strong);border-radius:var(--r-sm)}
+.gp-consent a{color:var(--accent);font-weight:700}

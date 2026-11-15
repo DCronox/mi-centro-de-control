@@ -1,0 +1,20 @@
+# Ejecuta las pruebas automáticas en cada push y pull request. No despliega nada.
+name: Pruebas
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  node-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Comprobar sintaxis de los scripts
+        run: for f in js/*.js js/views/*.js js/gym/*.js; do node --check "$f"; done
+      - name: Pruebas
+        run: node --test tests/

@@ -34,7 +34,7 @@ footer{margin:22px 4px 0;font-size:14px;color:var(--mut);display:flex;gap:6px 18
 <div class="top"><a class="back" href="./index.html">← Volver a la aplicación</a></div>
 <main><article>
 <h1>Política de privacidad</h1>
-<p class="meta">Mi Centro de Control · Versión 2026-10-28 · Vigente desde el 28 de octubre de 2026</p>
+<p class="meta">Mi Centro de Control · Versión 2026-11-15 · Vigente desde el 15 de noviembre de 2026 · <a href="#cambios">Qué cambió</a></p>
 
 <div class="note">Este texto es una base redactada para esta aplicación. Debe ser revisado por un abogado antes de abrir la aplicación al público.</div>
 <h2>1. Responsable del tratamiento</h2>
@@ -50,20 +50,28 @@ footer{margin:22px 4px 0;font-size:14px;color:var(--mut);display:flex;gap:6px 18
 <tr><td>Contraseña</td><td>Autenticarte. El proveedor la guarda cifrada; el responsable no puede verla.</td></tr>
 <tr><td>Fecha y versión de aceptación de estos textos</td><td>Poder demostrar que diste tu autorización.</td></tr>
 <tr><td>Contenido que tú registras: movimientos, categorías, metas, rutinas, tareas, turnos y tarifa por hora.</td><td>Mostrarte y sincronizar tus datos entre dispositivos. Se guardan como un único documento asociado a tu cuenta.</td></tr>
+<tr><td>Módulo Gym: rutinas, ejercicios, series, peso y medidas corporales, comidas, agua y alimentos propios.</td><td>Registrar tu entrenamiento y tu alimentación y calcular tu progreso. Se guardan en tablas asociadas a tu cuenta.</td></tr>
+<tr id="salud"><td><strong>Datos de salud (sensibles)</strong>: año de nacimiento, sexo, estatura, peso, nivel de actividad, horas y calidad de sueño, energía, fatiga, dolor muscular, estrés y, solo si los marcas, embarazo, lactancia, condición de salud, medicación o antecedente de trastorno de la conducta alimentaria.</td><td>Calcular tus objetivos orientativos de energía, nutrientes y recuperación, y activar un modo prudente cuando corresponde. <strong>Solo con tu autorización explícita</strong> (ver punto 5). Ninguno es obligatorio para usar el resto de la aplicación.</td></tr>
+<tr><td>Suscripción a notificaciones (dirección del servicio de notificaciones de tu navegador y claves técnicas)</td><td>Enviarte los recordatorios que actives. Puedes desactivarlas en cualquier momento.</td></tr>
+<tr><td>Texto de las búsquedas de alimentos</td><td>Buscar información nutricional. La búsqueda se hace desde nuestro servidor: el proveedor de alimentos recibe solo el texto buscado, no tu cuenta ni tu dirección IP.</td></tr>
 <tr><td>Datos técnicos mínimos (por ejemplo, dirección IP y registros de acceso)</td><td>Los procesan el proveedor de autenticación y el de alojamiento para operar el servicio y proteger la seguridad.</td></tr>
 </tbody></table></div>
-<p>No pedimos tu nombre, teléfono, documento de identidad, ubicación, fotos ni datos de menores de edad. Te pedimos no escribir en la aplicación datos personales sensibles tuyos o de otras personas (por ejemplo, salud, origen racial, orientación política, religión o datos biométricos). No usamos analítica, publicidad ni seguimiento.</p>
+<p>No pedimos tu nombre, teléfono, documento de identidad, ubicación, fotos ni datos de menores de edad. Fuera del módulo Gym, te pedimos no escribir datos sensibles tuyos o de otras personas (por ejemplo, salud, origen racial, orientación política, religión o datos biométricos). No usamos analítica, publicidad ni seguimiento.</p>
+<p>Las recomendaciones de Gym son estimaciones orientativas basadas en fuentes científicas publicadas; <strong>no son diagnóstico ni consejo médico</strong>.</p>
 <h2>4. Finalidades</h2>
 <ul>
 <li>Crear tu cuenta y permitirte iniciar sesión.</li>
 <li>Guardar, mostrar y sincronizar la información que registras.</li>
 <li>Enviarte correos transaccionales (confirmación de cuenta y recuperación de contraseña).</li>
+<li>Enviarte las notificaciones y recordatorios que actives.</li>
+<li>Con tu autorización explícita, calcular objetivos orientativos de Gym a partir de tus datos de salud.</li>
 <li>Mantener la seguridad del servicio y prevenir abusos.</li>
 <li>Cumplir obligaciones legales y atender requerimientos de autoridades competentes.</li>
 </ul>
 <p>No vendemos tus datos, no los usamos para publicidad ni para elaborar perfiles comerciales.</p>
 <h2>5. Autorización</h2>
 <p>Tratamos tus datos con tu autorización previa, expresa e informada, que otorgas marcando la casilla al crear tu cuenta. Puedes revocarla en cualquier momento eliminando tu cuenta desde la aplicación o escribiéndonos; la revocatoria no aplica cuando exista un deber legal o contractual de conservar los datos.</p>
+<p><strong>Datos sensibles de salud.</strong> Conforme a los artículos 5 y 6 de la Ley 1581 de 2012, su tratamiento requiere tu autorización explícita, que otorgas aparte marcando la casilla correspondiente en la evaluación de Gym. Esa autorización es <strong>facultativa</strong>: no estás obligado a darla y puedes usar el resto de la aplicación sin ella. Guardamos la fecha y la versión del texto que aceptaste. Puedes retirarla en cualquier momento borrando tu evaluación en Gym › Perfil, lo que elimina esos datos.</p>
 <h2>6. Proveedores y transferencia internacional</h2>
 <p>Para operar el servicio usamos proveedores que pueden tratar datos fuera de Colombia:</p>
 <div class="scroll"><table>
@@ -71,22 +79,25 @@ footer{margin:22px 4px 0;font-size:14px;color:var(--mut);display:flex;gap:6px 18
 <tbody>
 <tr><td>Supabase</td><td>Base de datos y autenticación de cuentas, envío de correos de cuenta</td><td>Norte de Virginia, Estados Unidos (us-east-1)</td></tr>
 <tr><td>GitHub Pages</td><td>Alojamiento de la página (recibe la dirección IP de quien la visita)</td><td>Estados Unidos y otros países</td></tr>
+<tr><td>Servicio de notificaciones de tu navegador (por ejemplo, Google Firebase Cloud Messaging en Chrome)</td><td>Entregar las notificaciones a tu dispositivo; recibe el aviso cifrado, no tus datos</td><td>Según el navegador; principalmente Estados Unidos</td></tr>
+<tr><td>USDA FoodData Central</td><td>Información nutricional de alimentos; recibe solo el texto buscado desde nuestro servidor</td><td>Estados Unidos</td></tr>
 </tbody></table></div>
 <p>Al aceptar esta política autorizas expresamente la transferencia y transmisión de tus datos a estos proveedores en el exterior, únicamente para las finalidades descritas.</p>
 <h2>7. Tus derechos</h2>
 <p>Como titular puedes: conocer, actualizar y rectificar tus datos; solicitar prueba de tu autorización; ser informado sobre el uso de tus datos; presentar quejas ante la Superintendencia de Industria y Comercio (SIC); revocar la autorización y solicitar la supresión de tus datos; y acceder gratuitamente a ellos.</p>
 <p><strong>Cómo ejercerlos:</strong> desde la aplicación puedes descargar una copia de tus datos (Copia de seguridad) y eliminar tu cuenta y tus datos en la nube. También puedes escribir a <a href="mailto:esticarored@gmail.com">esticarored@gmail.com</a>. Las consultas se responden en máximo 10 días hábiles (prorrogables por 5 más) y los reclamos en máximo 15 días hábiles (prorrogables por 8 más), según la Ley 1581 de 2012.</p>
 <h2>8. Conservación</h2>
-<p>Conservamos tus datos mientras tu cuenta exista. Al eliminarla, se borran tu cuenta y tu documento de datos en la nube. Pueden persistir copias técnicas en los sistemas del proveedor durante un tiempo limitado. Los datos guardados en tu propio dispositivo quedan bajo tu control y no se borran al eliminar la cuenta.</p>
+<p>Conservamos tus datos mientras tu cuenta exista. Al eliminarla, se borran tu cuenta, tu documento de datos y todos tus datos de Gym, notificaciones y suscripciones en la nube. También puedes <a href="./borrar-cuenta.html">solicitar el borrado de tu cuenta</a> sin abrir la aplicación. Pueden persistir copias técnicas en los sistemas del proveedor durante un tiempo limitado. Los datos guardados en tu propio dispositivo quedan bajo tu control y no se borran al eliminar la cuenta.</p>
 <h2>9. Seguridad</h2>
 <p>Usamos conexión cifrada (HTTPS), autenticación de cuentas y reglas de seguridad a nivel de fila que permiten a cada usuario acceder solo a sus propios datos. Ningún sistema es completamente seguro; protege tu contraseña y tu dispositivo y no compartas tus copias de seguridad.</p>
 <h2>10. Menores de edad</h2>
 <p>El servicio es solo para mayores de 18 años. No recolectamos intencionalmente datos de menores. Si detectamos una cuenta de un menor, la eliminaremos.</p>
-<h2>11. Cambios a esta política</h2>
+<h2 id="cambios">11. Cambios a esta política</h2>
 <p>Si cambiamos esta política de forma sustancial, lo anunciaremos en la aplicación y, cuando la ley lo exija, te pediremos una nueva autorización. La versión vigente siempre estará en esta página.</p>
+<p><strong>Cambios de la versión 2026-11-15:</strong> se incorporan el módulo Gym y sus datos de salud (con autorización explícita separada), las notificaciones, la búsqueda de alimentos de USDA y la página de solicitud de borrado de cuenta.</p>
 
 </article></main>
-<footer><a href="./privacidad.html">Política de privacidad</a><a href="./terminos.html">Términos y condiciones</a><a href="./cookies.html">Cookies y almacenamiento</a></footer>
+<footer><a href="./privacidad.html">Política de privacidad</a><a href="./terminos.html">Términos y condiciones</a><a href="./cookies.html">Cookies y almacenamiento</a><a href="./borrar-cuenta.html">Eliminar tu cuenta</a></footer>
 </div>
 </body>
 </html>

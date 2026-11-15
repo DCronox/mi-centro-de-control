@@ -31,7 +31,7 @@
     <span id="gymAccount" class="sync-pill" data-state="local" role="status" aria-live="polite"><i aria-hidden="true"></i><span>Comprobando sesión…</span></span>
   </header>
   <div id="gymApp" tabindex="-1"></div>
-  <footer class="legal"><a href="./index.html">Mi Centro de Control</a><a href="./privacidad.html">Política de privacidad</a></footer>
+  <footer class="legal"><a href="./index.html">Mi Centro de Control</a><a href="./privacidad.html">Política de privacidad</a><span class="ver" data-mcc-version></span></footer>
 </main>
 </div>
 <nav id="tabbar" class="tabbar" aria-label="Navegación de Gym"><span class="tab-ind" aria-hidden="true"></span><div id="tabbarItems"></div></nav>
@@ -41,6 +41,7 @@
 </dialog>
 <dialog id="uiDialog" class="dialog" aria-labelledby="uiTitle"><form method="dialog" id="uiForm"><h2 id="uiTitle"></h2><p id="uiMsg"></p><div id="uiField"></div><div class="dialog-actions" id="uiActions"></div></form></dialog>
 <div id="toast" role="status" aria-live="polite"></div>
+<script src="./js/version.js"></script>
 <script src="./lib/supabase-2.118.0.js"></script>
 <script src="./js/cloud-config.js"></script>
 <script src="./js/util.js"></script>

@@ -150,6 +150,8 @@ async function gymLoadProfile(){
   const p=await gymClient.from('gym_profiles').select('*').eq('user_id',GS.user.id).maybeSingle();
   if(p.error){GS.profileSchema=!/schema cache|does not exist|relation/i.test(p.error.message||'')?true:false;GS.profile=null;GS.targets=[];return false}
   GS.profileSchema=true;GS.profile=p.data||null;
+  // ¿Existen las columnas de consentimiento (migración 20261115130000)? Sin ellas se guarda igual, sin registro.
+  const c=await gymClient.from('gym_profiles').select('health_consent_at').limit(1);GS.consentSchema=!c.error;
   const t=await gymClient.from('nutrition_targets').select('*').eq('user_id',GS.user.id).order('created_at',{ascending:false}).limit(50);
   GS.targets=t.error?[]:[...(t.data||[])].sort((a,b)=>String(b.created_at).localeCompare(String(a.created_at)));
   return true;
@@ -166,11 +168,17 @@ function gymProfileRow(v){
   const num=x=>x===''||x===undefined||x===null?null:+x,b=x=>x===true||x==='on'||x==='1'||x==='true';
   return{birth_year:num(v.birth_year),sex:v.sex,height_cm:num(v.height_cm),weight_kg:num(v.weight_kg),goal:v.goal,secondary_goals:[].concat(v.secondary_goals||[]).filter(g=>g&&g!==v.goal),
     experience:v.experience,occupation:v.occupation,walking:v.walking,training_days:num(v.training_days),session_min:num(v.session_min),cardio_min_week:num(v.cardio_min_week)||0,
-    equipment:v.equipment||'gym',sleep_hours:num(v.sleep_hours),pregnant:b(v.pregnant),lactating:b(v.lactating),condition:b(v.condition),medication:b(v.medication),eating_disorder:b(v.eating_disorder),notes:String(v.notes||'').slice(0,500)};
+    equipment:v.equipment||'gym',sleep_hours:num(v.sleep_hours),pregnant:b(v.pregnant),lactating:b(v.lactating),condition:b(v.condition),medication:b(v.medication),eating_disorder:b(v.eating_disorder),notes:String(v.notes||'').slice(0,500),
+    health_consent:b(v.health_consent)};
 }
+/* Versión del texto de autorización de datos de salud (cambiarla obliga a volver a autorizar). */
+const GYM_CONSENT_VERSION='2026-11-15';
 async function gymSaveProfile(row){
   if(!GS.profileSchema)throw new Error('La evaluación aún no se puede guardar: falta aplicar la actualización de la base de datos de Gym.');
-  const body={...row,user_id:GS.user.id,assessment_version:1,completed_at:new Date().toISOString()};
+  const {health_consent,...data}=row;
+  if(!health_consent)throw new Error('Para guardar la evaluación necesitas autorizar el tratamiento de tus datos de salud (último paso).');
+  const body={...data,user_id:GS.user.id,assessment_version:1,completed_at:new Date().toISOString(),
+    ...(GS.consentSchema?{health_consent_at:new Date().toISOString(),health_consent_version:GYM_CONSENT_VERSION}:{})};
   const saved=await gq(gymClient.from('gym_profiles').upsert(body,{onConflict:'user_id'}).select('*').single());
   GS.profile=saved;return saved;
 }

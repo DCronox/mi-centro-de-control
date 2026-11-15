@@ -95,7 +95,11 @@ document.addEventListener('click',async e=>{
   const b=e.target.closest('[data-nact]');if(!b)return;const a=b.dataset.nact,date=gnDate();
   if(a==='prevDay'||a==='nextDay'||a==='today'){
     const next=a==='today'?gymToday():gymAddDays(date,a==='prevDay'?-1:1);if(next>gymToday())return;
-    gNutDate=next===gymToday()?null:next;gNutAdd=null;await gymEnsureNutritionFor(next);gRender(false);return}
+    // Si hay una comida a medio registrar, no se descarta sin preguntar (antes se perdía al cambiar de día).
+    const pending=gNutAdd&&(gNutItems?.length||String(gNutText||'').trim()||Object.values(gNutManual||{}).some(v=>v!==''&&v!==false&&v!==undefined));
+    if(pending&&!await ask(`Tienes una comida sin guardar del ${fdate(date)}. Si cambias de día, se descartará.`,{title:'¿Descartar la comida sin guardar?',confirmLabel:'Descartar y cambiar',cancelLabel:'Seguir registrando',danger:true}))return;
+    if(gNutAdd)gnfDraftClear();
+    gNutDate=next===gymToday()?null:next;gNutAdd=null;gNutItems=null;gNutText='';await gymEnsureNutritionFor(next);gRender(false);return}
   if(a==='water'){b.disabled=true;const r=await gTry(()=>gymAddWater(date,+b.dataset.ml));if(r){sfx('check');gRender(false)}else b.disabled=false;return}
   if(a==='undoWater'){const r=await gTry(()=>gymUndoWater(date));if(r){gToast(`Se quitaron ${r.ml} ml`);gRender(false)}return}
   if(a==='addFood'){gnfDraftClear();gNutAdd=b.dataset.meal;gNutItems=null;gNutText='';gNutMode='text';gRender(false);document.querySelector('#fNlp textarea')?.focus();return}
