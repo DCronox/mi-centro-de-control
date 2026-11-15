@@ -6,12 +6,12 @@ Regla: **ninguna migración se aplica en producción sin una copia verificada de
 
 1. Supabase › proyecto «Mi centro de control» › **SQL Editor** › nueva consulta.
 2. Pega el contenido de [`tools/copias/export.sql`](tools/copias/export.sql) y pulsa **Run**. Devuelve una fila por tabla (15 tablas) con `tabla`, `filas`, `md5` y `datos`.
-3. Pulsa **Export › JSON** y guarda el archivo **fuera del repositorio**, por ejemplo
-   `C:\Users\<usuario>\Documents\MCC_respaldos\mcc-AAAA-MM-DD.json`.
+3. Pulsa **Export › Download CSV** en tu navegador habitual (el panel integrado de Claude no guarda descargas) y mueve el archivo **fuera del repositorio**, por ejemplo
+   `C:\Users\<usuario>\Documents\MCC_respaldos\mcc-AAAA-MM-DD.csv`.
    Contiene datos personales de todos los usuarios (incluidos datos de salud): no lo subas a GitHub, a chats ni a servicios en la nube sin cifrar.
 4. Verifica la copia:
    ```
-   node tools/copias/verify.mjs "C:\Users\<usuario>\Documents\MCC_respaldos\mcc-AAAA-MM-DD.json"
+   node tools/copias/verify.mjs "C:\Users\<usuario>\Documents\MCC_respaldos\mcc-AAAA-MM-DD.csv"
    ```
    Debe terminar con «Copia verificada: todas las tablas coinciden». Si alguna tabla dice FALLO, la copia **no sirve** (por ejemplo, el panel recortó un valor); repítela.
 
