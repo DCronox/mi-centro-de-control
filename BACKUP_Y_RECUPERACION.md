@@ -5,13 +5,13 @@ Regla: **ninguna migración se aplica en producción sin una copia verificada de
 ## 1. Hacer la copia (solo lectura, ~2 minutos)
 
 1. Supabase › proyecto «Mi centro de control» › **SQL Editor** › nueva consulta.
-2. Pega el contenido de [`tools/backup/export.sql`](tools/backup/export.sql) y pulsa **Run**. Devuelve una fila por tabla (15 tablas) con `tabla`, `filas`, `md5` y `datos`.
+2. Pega el contenido de [`tools/copias/export.sql`](tools/copias/export.sql) y pulsa **Run**. Devuelve una fila por tabla (15 tablas) con `tabla`, `filas`, `md5` y `datos`.
 3. Pulsa **Export › JSON** y guarda el archivo **fuera del repositorio**, por ejemplo
    `C:\Users\<usuario>\Documents\MCC_respaldos\mcc-AAAA-MM-DD.json`.
    Contiene datos personales de todos los usuarios (incluidos datos de salud): no lo subas a GitHub, a chats ni a servicios en la nube sin cifrar.
 4. Verifica la copia:
    ```
-   node tools/backup/verify.mjs "C:\Users\<usuario>\Documents\MCC_respaldos\mcc-AAAA-MM-DD.json"
+   node tools/copias/verify.mjs "C:\Users\<usuario>\Documents\MCC_respaldos\mcc-AAAA-MM-DD.json"
    ```
    Debe terminar con «Copia verificada: todas las tablas coinciden». Si alguna tabla dice FALLO, la copia **no sirve** (por ejemplo, el panel recortó un valor); repítela.
 
@@ -27,7 +27,7 @@ Una copia solo está verificada cuando se ha restaurado con éxito en otro proye
 1. Proyecto de staging en Supabase con las mismas migraciones (`supabase/migrations/` en orden).
 2. Crear en staging las cuentas de la copia (mismo `id`) con la API de administración.
 3. Insertar cada tabla desde el JSON (script de restauración: se preparará cuando exista el proyecto de staging).
-4. Repetir `tools/backup/export.sql` en staging: los MD5 de cada tabla deben coincidir con los de la copia.
+4. Repetir `tools/copias/export.sql` en staging: los MD5 de cada tabla deben coincidir con los de la copia.
 
 ## 3. Recuperación ante un problema
 

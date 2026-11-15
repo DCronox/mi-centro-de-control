@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { verifyBackup } from '../tools/backup/verify.mjs';
+import { verifyBackup } from '../tools/copias/verify.mjs';
 
 const md5 = (s) => createHash('md5').update(s, 'utf8').digest('hex');
 const row = (tabla, arr) => { const datos = JSON.stringify(arr); return { tabla, filas: arr.length, md5: md5(datos), datos }; };
