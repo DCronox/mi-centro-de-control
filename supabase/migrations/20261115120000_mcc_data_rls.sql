@@ -34,7 +34,13 @@ create policy mcc_data_insert_own on public.mcc_data for insert to authenticated
 create policy mcc_data_update_own on public.mcc_data for update to authenticated
   using ((select auth.uid()) = user_id) with check ((select auth.uid()) = user_id);
 
-revoke execute on function public.rls_auto_enable() from public, anon, authenticated;
+-- rls_auto_enable() la crea la plataforma solo en algunos proyectos (existe en producción, no en staging).
+do $$
+begin
+  if to_regprocedure('public.rls_auto_enable()') is not null then
+    execute 'revoke execute on function public.rls_auto_enable() from public, anon, authenticated';
+  end if;
+end $$;
 
 commit;
 
@@ -56,5 +62,5 @@ commit;
 -- create policy "Cada usuario puede actualizar sus propios datos" on public.mcc_data for update to authenticated using (auth.uid() = user_id) with check (auth.uid() = user_id);
 -- create policy "Cada usuario puede eliminar sus propios datos" on public.mcc_data for delete to authenticated using (auth.uid() = user_id);
 -- grant all on table public.mcc_data to anon, authenticated;  -- estado observado: ambos roles con todos los permisos
--- grant execute on function public.rls_auto_enable() to public, anon, authenticated;
+-- grant execute on function public.rls_auto_enable() to public, anon, authenticated;  -- solo si la función existe
 -- commit;
