@@ -24,10 +24,16 @@ Qué **no** incluye y por qué:
 ## 2. Probar la restauración (staging)
 
 Una copia solo está verificada cuando se ha restaurado con éxito en otro proyecto:
-1. Proyecto de staging en Supabase con las mismas migraciones (`supabase/migrations/` en orden).
-2. Crear en staging las cuentas de la copia (mismo `id`) con la API de administración.
-3. Insertar cada tabla desde el JSON (script de restauración: se preparará cuando exista el proyecto de staging).
-4. Repetir `tools/copias/export.sql` en staging: los MD5 de cada tabla deben coincidir con los de la copia.
+1. Proyecto de staging en Supabase (`mcc-staging`) **vacío** y con las mismas migraciones (`supabase/migrations/` en orden).
+2. Generar el SQL de restauración y el de limpieza (se guardan fuera del repositorio porque contienen datos personales):
+   ```
+   node tools/copias/restore-sql.mjs "C:\Users\<usuario>\Documents\MCC_respaldos\mcc-AAAA-MM-DD.csv" "C:\Users\<usuario>\Documents\MCC_respaldos\restaurar.sql" "C:\Users\<usuario>\Documents\MCC_respaldos\limpiar.sql"
+   ```
+   El generador se niega si la copia no supera la verificación de integridad.
+3. Pegar `restaurar.sql` en el SQL Editor de **staging** y pulsar Run. Crea las cuentas con el mismo `id` (sin contraseña: nadie puede iniciar sesión), inserta las tablas sin disparar la auditoría y recalcula el MD5 de cada tabla como `export.sql`. Debe terminar con «15 de 15 tablas idénticas a la copia». Es todo o nada: si falla, no queda nada a medias.
+4. En cuanto se compruebe el resultado, pegar `limpiar.sql` en staging: los datos reales de otras personas no deben quedarse allí.
+
+Registro: copia del 2026-11-15 restaurada en staging el 2026-11-16 → 15 de 15 tablas idénticas.
 
 ## 3. Recuperación ante un problema
 
